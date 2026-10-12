@@ -1,0 +1,46 @@
+# Free Android APK build on GitHub Actions.
+# Runs automatically on every push to main or feature/* that changes mobile/, or manually:
+# GitHub repo -> Actions -> "Build Android APK" -> Run workflow (optionally enter an API URL).
+# Download it: open the finished run -> Artifacts -> jaathiya-vaarthalu-apk (a zip containing app-release.apk).
+name: Build Android APK
+on:
+  push:
+    branches: ["feature/**", "main"]
+    paths: ["mobile/**", ".github/workflows/android-apk.yml"]
+  workflow_dispatch:
+    inputs:
+      api_url:
+        description: "API server URL the app should use (e.g. https://jaathiya-api.onrender.com or http://192.168.1.10:4000)"
+        required: false
+        default: ""
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 17 }
+      - uses: android-actions/setup-android@v3
+      - name: Create Expo project and install libraries
+        working-directory: mobile
+        run: ./setup.sh
+      - name: Point the app at your server (manual runs can override mobile/src/config.js)
+        working-directory: mobile/jv-mobile
+        env:
+          API_URL: ${{ github.event.inputs.api_url }}
+        run: |
+          if [ -n "$API_URL" ]; then echo "export const API_BASE = '$API_URL';" > src/config.js; fi
+          cat src/config.js
+      - name: Generate the native Android project
+        working-directory: mobile/jv-mobile
+        run: npx expo prebuild --platform android --no-install
+      - name: Build release APK (signed with the debug key, for testing only)
+        working-directory: mobile/jv-mobile/android
+        run: ./gradlew assembleRelease --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jaathiya-vaarthalu-apk
+          path: mobile/jv-mobile/android/app/build/outputs/apk/release/app-release.apk
