@@ -31,6 +31,7 @@ app.use('/api/uploads', require('./routes/uploads'));
 app.use('/api/epapers', require('./routes/epapers'));
 app.use('/api/public', require('./routes/public'));
 app.use('/uploads', express.static(path.join(__dirname, '../uploads'), { maxAge: '7d' }));
+app.get('/logo.png', (_req, res) => res.sendFile(path.join(__dirname, '../public/logo.png'), { maxAge: '7d' }));
 
 // E-paper studio (editors) and public reader share one page; the server tells it where the API is.
 const studioFile = path.join(__dirname, '../public/epaper-studio.html');

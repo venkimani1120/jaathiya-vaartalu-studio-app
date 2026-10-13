@@ -6,13 +6,13 @@
 <title>E-paper Studio – Jaathiya Vaarthalu</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Telugu:wght@400;600;700&family=Noto+Serif+Telugu:wght@400;700&family=Ramabhadra&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Telugu:wght@400;600;700&family=Noto+Serif+Telugu:wght@400;700&family=Ramabhadra&family=Anek+Telugu:wdth,wght@75..100,600..800&display=swap" rel="stylesheet">
 <!--JV_CONFIG-->
 <style>
 :root{
   --bg:#E4E7EC;--panel:#FFFFFF;--panel2:#F2F4F7;--ink:#1A2130;--muted:#586274;--line:#C8CFD9;
   --act:#1F3C99;--act-ink:#FFFFFF;--warn:#B4231F;--ok:#17734A;
-  --np-red:#E31E24;--np-deep:#9E1118;--np-blue:#1F3C99;--np-yellow:#FFD60A;--np-pink:#D8127A;--np-ink:#141414;--paper:#FFFFFF;
+  --np-red:#E31E24;--np-deep:#9E1118;--np-gold:#F2B630;--np-navy:#1B2A6B;--np-blue:#1F3C99;--np-yellow:#FFD60A;--np-pink:#D8127A;--np-ink:#141414;--paper:#FFFFFF;
   --s:1;--inv:1;
   box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
   color-scheme:light dark;
@@ -33,7 +33,10 @@ button{cursor:pointer}
 .logo{width:34px;height:34px;display:grid;place-items:center;background:var(--np-red);color:#fff;font:22px Ramabhadra,sans-serif;border-radius:6px}
 .brand b{display:block;font-size:14px;line-height:1.1}.brand small{color:var(--muted);font-size:12px}
 .spacer{flex:1}
+.savestate{font-size:12px;color:var(--muted);white-space:nowrap}
+.savestate.warn{color:#C77700;font-weight:600}.savestate.err{color:#D62828;font-weight:600}
 .btn{border:1px solid var(--line);background:var(--panel2);padding:7px 12px;border-radius:8px;font-size:14px;white-space:nowrap}
+.btn:disabled{opacity:.45;cursor:not-allowed}
 .btn:hover{border-color:var(--act)}
 .btn.primary{background:var(--act);color:var(--act-ink);border-color:var(--act);font-weight:700}
 .btn.danger{color:var(--warn)}
@@ -78,18 +81,30 @@ select{border:1px solid var(--line);background:var(--panel2);padding:7px 8px;bor
 .stage{display:flex;flex-direction:column;min-height:0;min-width:0}
 .pagebar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line);background:var(--panel)}
 .pagebar input{border:1px solid var(--line);background:var(--panel2);padding:6px 8px;border-radius:8px;width:150px}
-.canvas{flex:1;overflow:auto;padding:16px}
+.canvas{flex:1;overflow:auto;padding:16px 16px 96px} /* bottom room so the pick bar never covers the page */
 
 /* ---------- newspaper ---------- */
 .pg-outer{width:calc(820px*var(--s));height:calc(1240px*var(--s));margin:0 auto 22px;position:relative}
 .paper{position:absolute;top:0;left:0;width:820px;height:1240px;transform:scale(var(--s));transform-origin:0 0;background:var(--paper);color:var(--np-ink);padding:22px 24px 16px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.2),0 10px 30px rgba(15,25,45,.18)}
 .mast{display:grid;grid-template-columns:150px 1fr 168px;gap:14px;height:168px}
+.tribute.haslogo{background:transparent}
+.tribute .mlogo{width:100%;height:100%;object-fit:contain}
+.ilogo{height:52px;width:auto}
 .tribute{background:#ECECEC;overflow:hidden;display:grid;place-items:center;color:#999;font-size:13px;text-align:center}
 .tribute img{width:100%;height:100%;object-fit:cover}
 .mtitle{display:flex;flex-direction:column;align-items:center;justify-content:center}
 .mtitle{min-width:0;overflow:hidden}
-.mt{font:96px/1 Ramabhadra,sans-serif;color:var(--np-red);text-shadow:4px 4px 0 var(--np-deep);white-space:nowrap;transform-origin:center}
-.tg{font:700 14px "Noto Sans Telugu",sans-serif;color:var(--np-red);margin-top:4px}
+/* Masthead title: Anek Telugu ExtraBold (condensed), crimson-to-deep-red fill with a gold and navy
+   3D edge that picks up the logo's colours. Falls back to solid red where text gradients aren't supported. */
+.mt{font:800 96px/1.1 'Anek Telugu',Ramabhadra,sans-serif;font-stretch:75%;color:var(--np-red);white-space:nowrap;transform-origin:center;
+  /* Telugu vowel signs rise above the line box and the gradient only paints inside the element's box,
+     so pad it to cover the full glyph height (otherwise the tops of ి, ా… are clipped). */
+  padding:.24em .06em .14em;margin:-.2em 0 -.1em;
+  filter:drop-shadow(2px 2px 0 var(--np-gold)) drop-shadow(2px 2px 0 var(--np-navy))}
+@supports ((-webkit-background-clip:text) or (background-clip:text)){
+  .mt{background:linear-gradient(180deg,#FF3A3F 0%,var(--np-red) 52%,#9E0C12 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+}
+.tg{font:700 15px 'Anek Telugu',"Noto Sans Telugu",sans-serif;color:var(--np-navy);letter-spacing:.5px;margin-top:4px}
 .adbox{border:2px solid var(--np-red);padding:5px;text-align:center;font:600 12px/1.35 "Noto Sans Telugu",sans-serif;display:flex;flex-direction:column;gap:4px}
 .adbox b{background:var(--np-red);color:var(--np-yellow);font:400 24px/1.15 Ramabhadra,sans-serif;padding:3px}
 .adbox p{margin:0;flex:1;overflow:hidden}
@@ -101,7 +116,7 @@ select{border:1px solid var(--line);background:var(--panel2);padding:7px 8px;bor
 .info .grow{flex:1;text-align:center}
 .ihead{display:flex;align-items:center;gap:12px;border-bottom:3px solid var(--np-blue);padding-bottom:7px;margin-bottom:12px}
 .pno{width:46px;height:46px;border-radius:50%;background:var(--np-red);color:#fff;display:grid;place-items:center;font:28px Ramabhadra,sans-serif}
-.minimast{background:var(--np-yellow);color:var(--np-red);font:30px/1.25 Ramabhadra,sans-serif;padding:0 14px;border:2px solid var(--np-red)}
+.minimast{background:var(--np-yellow);color:var(--np-red);font:800 32px/1.45 'Anek Telugu',Ramabhadra,sans-serif;font-stretch:75%;padding:2px 14px 0;border:2px solid var(--np-red);text-shadow:1px 1px 0 var(--np-navy)}
 .seclabel{font:700 16px "Noto Sans Telugu",sans-serif;color:var(--np-red)}
 .datebar{margin-left:auto;background:var(--np-blue);color:#fff;font:700 17px "Noto Sans Telugu",sans-serif;padding:7px 16px}
 .grid{flex:1;min-height:0;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:14px}
@@ -126,6 +141,14 @@ select{border:1px solid var(--line);background:var(--panel2);padding:7px 8px;bor
 .story.cut .body{flex:1 1 0;min-height:0;overflow:hidden;-webkit-mask-image:linear-gradient(#000 88%,transparent);mask-image:linear-gradient(#000 88%,transparent)}
 .story.cut .pics{flex:0 0 var(--ph)}
 .story.nophoto .pics{display:none}
+.k-story .pics img:nth-child(n+2),.k-brief .pics img:nth-child(n+2),.k-brief .deck{display:none}
+.grid.measure .pics{flex:0 0 70px!important;min-height:0!important;max-height:none!important}
+.slot.addslot{position:absolute;left:50%;bottom:calc(10px*var(--inv));transform:translateX(-50%);z-index:3;overflow:visible;white-space:nowrap;cursor:pointer;
+  background:var(--panel);color:var(--np-pink);border:2px dashed var(--np-pink);border-radius:99px;font:700 calc(13px*var(--inv)) system-ui,sans-serif;padding:calc(6px*var(--inv)) calc(14px*var(--inv));box-shadow:0 4px 14px rgba(0,0,0,.18)}
+.pick .slot.addslot{background:var(--np-pink);color:#fff}
+.addslot.over{position:absolute;left:50%;bottom:calc(10px*var(--inv));transform:translateX(-50%);z-index:3;white-space:nowrap;background:#D62828;color:#fff;border:0;border-radius:99px;
+  font:700 calc(13px*var(--inv)) system-ui,sans-serif;padding:calc(6px*var(--inv)) calc(14px*var(--inv));box-shadow:0 4px 14px rgba(0,0,0,.18)}
+.thumb .tc.over{color:#fff;background:#D62828;border-radius:99px;padding:0 6px}
 .cutflag{position:absolute;left:4px;bottom:10px;z-index:2;background:var(--np-red);color:#fff;font:700 calc(11px*var(--inv)) system-ui,sans-serif;padding:calc(2px*var(--inv)) calc(7px*var(--inv));border-radius:99px;pointer-events:none}
 .k-lead .body{column-count:2;column-gap:16px}
 .body b{font-family:"Noto Sans Telugu",sans-serif}
@@ -157,7 +180,7 @@ select{border:1px solid var(--line);background:var(--panel2);padding:7px 8px;bor
 .reader .deck{border-radius:6px;margin-bottom:10px;text-align:left}
 .linkbox{display:flex;gap:6px}.linkbox input{flex:1}
 
-.viewer .pool,.viewer .pagebar,.viewer #newEd,.viewer #edSel,.viewer #publishBtn,.viewer #settingsBtn,.viewer #previewBtn,.viewer .addpage,.viewer .thumb .handle,.viewer .fab{display:none!important}
+.viewer .pool,.viewer .pagebar,.viewer #newEd,.viewer #edSel,.viewer #publishBtn,.viewer #settingsBtn,.viewer #previewBtn,.viewer #saveBtn,.viewer #saveState,.viewer #logoutBtn,.viewer .addpage,.viewer .thumb .handle,.viewer .fab{display:none!important}
 .viewer .main,.previewing .main{grid-template-columns:1fr}
 .previewing .pool,.previewing .pagebar,.previewing .fab{display:none!important}
 
@@ -167,7 +190,7 @@ select{border:1px solid var(--line);background:var(--panel2);padding:7px 8px;bor
   .pool.open{transform:none}
   .pool-head .x{display:block}
   .fab{display:block;position:fixed;right:14px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:35;border:0;background:var(--act);color:var(--act-ink);font-weight:700;padding:12px 16px;border-radius:99px;box-shadow:0 6px 18px rgba(0,0,0,.28)}
-  .canvas{padding:10px}
+  .canvas{padding:10px 10px 96px}
   .top{gap:6px}.brand small{display:none}
   .btn{padding:6px 9px;font-size:13px}
 }
@@ -182,7 +205,7 @@ select{border:1px solid var(--line);background:var(--panel2);padding:7px 8px;bor
   .app{display:block;height:auto}.canvas{padding:0;overflow:visible}
   .pg-outer{width:820px!important;height:1240px!important;margin:0;break-after:page}
   .paper{transform:none!important;box-shadow:none}
-  .tools,.empty,.cutflag{display:none!important}
+  .tools,.empty,.cutflag,.addslot{display:none!important}
 }
 </style>
 </head>
@@ -193,11 +216,14 @@ select{border:1px solid var(--line);background:var(--panel2);padding:7px 8px;bor
     <select id="edSel" aria-label="Edition"></select>
     <button class="btn" id="newEd">New edition</button>
     <span class="chip" id="status"></span>
+    <span class="savestate" id="saveState" role="status" aria-live="polite"></span>
     <div class="spacer"></div>
+    <button class="btn" id="saveBtn" title="Save (Ctrl+S)">Save</button>
     <button class="btn" id="settingsBtn">Masthead</button>
     <button class="btn" id="previewBtn">Preview</button>
     <button class="btn" id="printBtn">PDF</button>
     <button class="btn primary" id="publishBtn">Publish</button>
+    <button class="btn" id="logoutBtn" hidden>Log out</button>
   </header>
   <nav class="strip" id="strip" aria-label="Pages"></nav>
   <div class="main">
@@ -237,6 +263,7 @@ const store = {
 
 /* ---------- Brand (edit here) ---------- */
 const BRAND = {
+  logo: MODE === 'api' ? '/logo.png' : 'logo.png', // server/public/logo.png
   masthead: 'జాతియ వార్తలు',
   tagline: 'జాతియ తెలుగు దిన పత్రిక',
   publishedFrom: 'Published from Guntur, Bapatla, Palnadu, Amaravathi, Nellore, Visakhapatnam, Kakinada, Rayalaseema – All Districts of Andhra Pradesh',
@@ -266,6 +293,55 @@ for (const t of Object.values(TEMPLATES)) {
   const seen = [];
   t.areas.join(' ').split(/\s+/).forEach(a => { if (!seen.includes(a)) seen.push(a); });
   t.slots = seen.map(id => ({ id, kind: id === 'lead' ? 'lead' : id[0] === 'b' ? 'brief' : 'story' }));
+}
+// Auto layout: the front page holds up to 10 stories, every other page up to 20, and the boxes are
+// generated from how many are placed. Stories keep the order of SLOT_ORDER (the lead first); the
+// template slot ids come first so saved editions keep their order.
+const FRONT_MAX = 10, PAGE_MAX = 20;
+const capFor = i => i === 0 ? FRONT_MAX : PAGE_MAX;
+const SLOT_ORDER = ['lead', 's1', 's2', 's3', 's4', 's5', 's6', 's7', 's8', 'b1', 'b2', 'b3', 'b4', 'b5', 'b6', 'b7', 'b8', 'b9', 'b10', 'b11'];
+const COLS = 12;
+const genCache = {};
+// Candidate arrangements for n stories on a 12-column grid: a full-width lead, or a lead (8 cols)
+// with 1-3 stories stacked beside it; the rest go in rows of up to 4. Quarter-width boxes are briefs.
+function genLayouts(n) {
+  if (genCache[n]) return genCache[n];
+  const out = [];
+  if (n === 1) return genCache[1] = [{ rows: [Array(COLS).fill(0)], w: [1], kinds: ['lead'] }];
+  const rowOf = idxs => idxs.flatMap(ix => Array(COLS / idxs.length).fill(ix));
+  for (const side of [0, 1, 2, 3]) {
+    const m = n - 1 - side; if (m < 0) continue;
+    const splits = [];
+    if (!m) splits.push([]);
+    else for (let R = Math.ceil(m / 4); R <= Math.min(m, Math.ceil(m / 4) + 1); R++) {
+      const base = Math.floor(m / R), extra = m % R;
+      const small = Array(R - extra).fill(base), big = Array(extra).fill(base + 1);
+      splits.push([...small, ...big]); if (extra && R - extra) splits.push([...big, ...small]);
+    }
+    for (const counts of splits) for (const hL of counts.length ? [2.4, 1.6] : [1]) {
+      const rows = [], w = [], kinds = ['lead'];
+      if (!side) { rows.push(Array(COLS).fill(0)); w.push(hL); }
+      else for (let k = 1; k <= side; k++) { rows.push([...Array(8).fill(0), ...Array(4).fill(k)]); w.push(hL / side); kinds[k] = 'story'; }
+      let next = 1 + side;
+      for (const c of counts) {
+        const idxs = Array.from({ length: c }, (_, k) => next + k); next += c;
+        rows.push(rowOf(idxs)); w.push(1); idxs.forEach(ix => { kinds[ix] = COLS / c >= 4 ? 'story' : 'brief'; });
+      }
+      out.push({ rows, w, kinds });
+    }
+  }
+  return genCache[n] = out;
+}
+const layoutCache = new Map(); // story set -> chosen arrangement, so editing stays fast
+const pageIds = p => SLOT_ORDER.filter(id => p.slots[id] && byId(p.slots[id]));
+function autoInfo(p, i) {
+  const ids = pageIds(p); if (!ids.length) return null;
+  return {
+    ids, cap: capFor(i), free: ids.length < capFor(i) ? SLOT_ORDER.find(id => !p.slots[id] || !byId(p.slots[id])) : null,
+    variants: genLayouts(ids.length).map(L => ({ rows: L.rows.map(r => r.map(ix => ids[ix])), w: L.w,
+      kinds: Object.fromEntries(ids.map((id, k) => [id, L.kinds[k]])) })),
+    key: ids.map(id => p.slots[id] + ':' + ((p.styles || {})[id] || '')).join('|')
+  };
 }
 const EDITION_TYPES = {
   state:        { label:'State edition', pages:[['front','మొదటి పేజీ'],['local','రాష్ట్రం – జిల్లాలు'],['sports','క్రీడలు'],['business','వాణిజ్యం']] },
@@ -338,12 +414,25 @@ function placements() {
 }
 
 /* ---------- API (when served by the backend) ---------- */
+// The access token lasts 15 minutes; on a 401 the studio swaps its 30-day refresh token for a new
+// pair once and retries, so long editing sessions keep saving. (Inside the mobile app the app owns
+// the session and passes window.__JV_TOKEN instead.)
+const setSession = d => { store.set('jv_token', d.accessToken); store.set('jv_refresh', d.refreshToken); if (d.user) store.set('jv_user', d.user); };
+const clearSession = () => ['jv_token', 'jv_refresh', 'jv_user'].forEach(k => store.del(k));
 const API = {
   token: () => window.__JV_TOKEN || store.get('jv_token', null),
-  async req(path, opt = {}) {
+  refresh() {
+    const rt = !window.__JV_TOKEN && store.get('jv_refresh', null); if (!rt) return Promise.resolve(false);
+    return API._ref = API._ref || fetch(CFG.apiBase + '/auth/refresh', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ refreshToken: rt }) })
+      .then(r => r.ok ? r.json().then(d => { setSession(d); return true; }) : false).catch(() => false).finally(() => { API._ref = null; });
+  },
+  async req(path, opt = {}, retry = true) {
     const t = API.token();
     const r = await fetch(CFG.apiBase + path, { ...opt, headers: { 'Content-Type': 'application/json', ...(t ? { Authorization: 'Bearer ' + t } : {}) } });
-    if (r.status === 401) { showLogin(); throw new Error('Sign in to continue.'); }
+    if (r.status === 401) {
+      if (retry && await API.refresh()) return API.req(path, opt, false);
+      showLogin(); throw new Error('Sign in to continue.');
+    }
     const d = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(d.message || 'Request failed (' + r.status + ')');
     return d;
@@ -390,13 +479,46 @@ async function loadEditionNews() {
 const stripEd = e => ({ title: e.title, type: e.type, key: e.key, editionDate: e.editionDate, volume: e.volume, issue: e.issue,
   price: e.price, ad: e.ad, tribute: e.tribute, pages: e.pages });
 
-let saveTimer = null;
-function persistNow() {
-  if (MODE === 'demo') { store.set('jv_editions', S.editions); return; }
-  const e = ed();
-  API.req('/epapers/' + e.id, { method: 'PUT', body: JSON.stringify(stripEd(e)) }).catch(err => toast(err.message));
+// Saving: every change marks its edition unsaved and autosaves after a short pause; Save / Ctrl+S
+// save at once. Unsaved editions are tracked by id so switching editions never loses a change.
+let saveTimer = null, saving = null, saveErr = null;
+const unsaved = new Set();
+function showSave() {
+  const el = $('#saveState'); if (!el) return;
+  const [txt, cls] = saving ? ['Saving…', ''] : saveErr ? ['Not saved', 'err'] : unsaved.size ? ['Unsaved changes', 'warn'] : ['All changes saved', ''];
+  el.textContent = txt; el.className = 'savestate' + (cls ? ' ' + cls : ''); el.title = saveErr || '';
 }
-function persist() { clearTimeout(saveTimer); saveTimer = setTimeout(persistNow, 700); }
+// Saves every edition with unsaved changes; resolves true when everything is saved.
+async function saveAll() {
+  clearTimeout(saveTimer);
+  if (saving) { await saving; if (!unsaved.size) return !saveErr; }
+  if (MODE === 'demo') { store.set('jv_editions', S.editions); unsaved.clear(); saveErr = null; showSave(); return true; }
+  if (!unsaved.size) { showSave(); return !saveErr; }
+  saving = (async () => {
+    saveErr = null;
+    for (const id of [...unsaved]) {
+      const e = S.editions.find(x => x.id === id); if (!e) { unsaved.delete(id); continue; }
+      unsaved.delete(id); // a change made while this request is in flight marks it unsaved again
+      try { await API.req('/epapers/' + id, { method: 'PUT', body: JSON.stringify(stripEd(e)) }); }
+      catch (err) { unsaved.add(id); saveErr = err.message; }
+    }
+  })();
+  showSave();
+  await saving; saving = null; showSave();
+  return !saveErr;
+}
+const persistNow = () => saveAll();
+function persist() { const e = ed(); if (e) unsaved.add(e.id); showSave(); clearTimeout(saveTimer); saveTimer = setTimeout(saveAll, 1200); }
+async function saveClick() {
+  if (await saveAll()) toast('Edition saved'); else toast('Could not save: ' + (saveErr || 'try again'));
+}
+async function logout() {
+  if (!(await saveAll()) && !confirm('Your latest changes could not be saved. Log out anyway and lose them?')) return;
+  clearSession(); unsaved.clear(); saveErr = null;
+  S.editions = []; S.news = []; S.cur = null; S.sel = null; S.preview = false;
+  $('#canvas').innerHTML = ''; $('#logoutBtn').hidden = true; $('#modeTag').textContent = '';
+  showLogin();
+}
 function commit() { const e = ed(); if (e.status === 'published') e.dirty = true; persist(); renderAll(); }
 
 /* ---------- layout operations ---------- */
@@ -409,14 +531,14 @@ function placeNews(newsId, pageIdx, slotId) {
   S.sel = null; commit();
 }
 function unplace(newsId) { const p = placements()[newsId]; if (!p) return; delete ed().pages[p.page].slots[p.slot]; commit(); }
-function fill(page, ids) {
-  const tpl = TEMPLATES[page.template]; const left = ids.filter(Boolean);
-  for (const s of tpl.slots) {
-    if (page.slots[s.id] || !left.length) continue;
-    let i = s.kind === 'brief' ? left.findIndex(id => !(byId(id)?.images || []).length)
-                               : left.findIndex(id => (byId(id)?.images || []).length);
-    if (i < 0) i = 0;
-    page.slots[s.id] = left.splice(i, 1)[0];
+// Puts stories into the page's free boxes (lead first, preferring a story with a photo), up to
+// `cap` stories on the page. Returns the ones that did not fit.
+function fill(page, ids, cap = PAGE_MAX) {
+  const left = ids.filter(Boolean); let count = pageIds(page).length;
+  for (const id of SLOT_ORDER) {
+    if ((page.slots[id] && byId(page.slots[id])) || !left.length || count >= cap) continue;
+    let i = id === 'lead' ? left.findIndex(x => (byId(x)?.images || []).length) : 0;
+    page.slots[id] = left.splice(Math.max(0, i), 1)[0]; count++;
   }
   return left;
 }
@@ -424,8 +546,11 @@ function autoFill(silent) {
   const placed = placements();
   const ids = filteredNews(pageFilter()).filter(n => !placed[n.id]).map(n => n.id);
   if (!ids.length) { if (!silent) toast('No unplaced news matches this page. Change the filters or approve more news.'); return; }
-  fill(ed().pages[S.pageIdx], ids);
-  if (!silent) commit();
+  // Auto-fill stops at the layout's usual size; more stories (up to the page limit) can be added by hand.
+  const page = ed().pages[S.pageIdx]; const max = capFor(S.pageIdx);
+  const cap = Math.min(max, (TEMPLATES[page.template] || TEMPLATES.merged).slots.length);
+  const before = pageIds(page).length; fill(page, ids, cap);
+  if (!silent) { if (pageIds(page).length === before) toast(before >= max ? `This page is full (${max} stories).` : `This page already has ${before} stories. Drag more onto it to add up to ${max}.`); commit(); }
 }
 function pageFilter() {
   const e = ed(); const p = e.pages[S.pageIdx];
@@ -437,23 +562,32 @@ function silentFilterFromPage(p) {
   if (p.template === 'business') return { section: 'business' };
   return null;
 }
-function setTemplate(i, t) {
-  const p = ed().pages[i]; const ids = Object.values(p.slots);
-  p.template = t; p.slots = {}; p.styles = {};
-  const over = fill(p, ids); commit();
-  if (over.length) toast(`${over.length} ${over.length === 1 ? 'story' : 'stories'} went back to the news pool`);
-}
+// Boxes are generated from the stories, so changing the layout type keeps every story on the page
+// (it changes the empty-page boxes and which news Auto-fill picks).
+function setTemplate(i, t) { ed().pages[i].template = t; commit(); }
 function mergeWithNext(i) {
   const e = ed(); if (i >= e.pages.length - 1) { toast('This is the last page. Select the earlier of the two pages to merge.'); return; }
   const a = e.pages[i], b = e.pages[i + 1];
   const merged = { id: 'p' + uid(), template: 'merged', label: a.label, slots: {}, styles: {} };
-  const over = fill(merged, [...Object.values(a.slots), ...Object.values(b.slots)]);
+  const over = fill(merged, [...pageIds(a).map(id => a.slots[id]), ...pageIds(b).map(id => b.slots[id])], capFor(i));
   e.pages.splice(i, 2, merged); S.pageIdx = i; commit();
   toast(over.length ? `Pages merged. ${over.length} stories went back to the pool.` : 'Pages merged');
 }
 function movePage(from, to) {
   const e = ed(); if (from === to) return;
   const [p] = e.pages.splice(from, 1); e.pages.splice(to, 0, p); S.pageIdx = to; commit();
+}
+// Empties one page: its stories go back to the pool. Undo puts back the ones not used elsewhere since.
+function clearPage(i) {
+  const e = ed(); const p = e.pages[i]; const n = pageIds(p).length; if (!n) return;
+  const slots = { ...p.slots }, styles = { ...(p.styles || {}) };
+  p.slots = {}; p.styles = {}; commit();
+  toast(`Cleared ${n} ${n === 1 ? 'story' : 'stories'} from page ${i + 1}`, 'Undo', () => {
+    const page = e.pages.find(x => x.id === p.id); if (!page) return;
+    const placed = placements();
+    for (const [slot, id] of Object.entries(slots)) if (id && !placed[id] && !page.slots[slot]) { page.slots[slot] = id; if (styles[slot]) page.styles[slot] = styles[slot]; }
+    S.pageIdx = e.pages.indexOf(page); commit();
+  });
 }
 function deletePage(i) {
   const e = ed(); if (e.pages.length === 1) { toast('An edition needs at least one page.'); return; }
@@ -489,7 +623,7 @@ function filterForEdition(e) {
 function mastHTML(e) {
   const pages = e.pages.length;
   return `<header class="mast">
-    <div class="tribute">${e.tribute ? `<img src="${e.tribute}" alt="">` : 'Photo<br>(Masthead settings)'}</div>
+    <div class="tribute${e.tribute ? '' : ' haslogo'}">${e.tribute ? `<img src="${e.tribute}" alt="">` : `<img class="mlogo" src="${BRAND.logo}" alt="Jaathiya Vaartalu News">`}</div>
     <div class="mtitle"><div class="mt">${esc(BRAND.masthead)}</div><div class="tg">${esc(BRAND.tagline)}</div></div>
     <div class="adbox"><b>${esc(e.ad.title)}</b><p>${esc(e.ad.text)}</p><span class="ph">Cell : ${esc(e.ad.phone)}</span></div>
   </header>
@@ -499,12 +633,14 @@ function mastHTML(e) {
     <span class="r">ప్రచురణ : ${esc(BRAND.centre)}</span><span class="r">పేజీలు : ${pages}</span><span class="r">వెల : ${esc(e.price)}</span></div>`;
 }
 function innerHead(e, i, p) {
-  return `<div class="ihead"><span class="pno">${i + 1}</span><span class="minimast">${esc(BRAND.masthead)}</span>
+  return `<div class="ihead"><span class="pno">${i + 1}</span><img class="ilogo" src="${BRAND.logo}" alt=""><span class="minimast">${esc(BRAND.masthead)}</span>
     <span class="seclabel">${esc(p.label || '')}</span><span class="datebar">${teDate(e.editionDate)}</span></div>`;
 }
 function storyHTML(e, n, kind, style) {
-  const imgs = kind === 'brief' ? [] : (n.images || []).slice(0, kind === 'lead' ? 2 : 1);
-  const hl = kind !== 'brief' && (n.highlights || []).length ? `<ul class="deck">${n.highlights.map(h => `<li>${esc(String(h).replace(/^[-–]\s*/, ''))}</li>`).join('')}</ul>` : '';
+  // Same markup for every box size (CSS hides the 2nd photo and, in briefs, the deck), so the
+  // auto layout can try arrangements without re-rendering.
+  const imgs = (n.images || []).slice(0, 2);
+  const hl = (n.highlights || []).length ? `<ul class="deck">${n.highlights.map(h => `<li>${esc(String(h).replace(/^[-–]\s*/, ''))}</li>`).join('')}</ul>` : '';
   const pics = imgs.length ? `<div class="pics">${imgs.map(u => `<img src="${esc(u)}" alt="">`).join('')}</div>` : '';
   const place = n.dateline || n.constituency || n.district || 'అమరావతి';
   return `<article class="story s-${style}${imgs.length ? '' : ' nopic'}" data-read="${esc(n.id)}"><h3>${esc(n.title)}</h3>${hl}${pics}
@@ -513,7 +649,10 @@ function storyHTML(e, n, kind, style) {
 function pageHTML(e, p, i, edit) {
   const tpl = TEMPLATES[p.template] || TEMPLATES.merged;
   const head = i === 0 ? mastHTML(e) : innerHead(e, i, p);
-  const cells = tpl.slots.map(s => {
+  const auto = autoInfo(p, i);
+  const lay = auto && auto.variants[layoutCache.get(auto.key) || 0];
+  const slots = auto ? auto.ids.map(id => ({ id, kind: lay.kinds[id] })) : tpl.slots;
+  const cells = slots.map(s => {
     const id = p.slots[s.id]; const n = id && byId(id); const style = (p.styles || {})[s.id] || 'red';
     if (!n && !edit) return ''; // its space was given to a neighbour (collapseEmpty)
     const inner = n ? storyHTML(e, n, s.kind, style) : (edit ? `<div class="empty">${S.sel ? 'Tap to place here' : KIND_LABEL[s.kind]}</div>` : '');
@@ -521,10 +660,48 @@ function pageHTML(e, p, i, edit) {
     return `<div class="slot k-${s.kind}${n ? ' filled' : ''}${edit ? ' editable' : ''}" style="grid-area:${s.id}" data-drop="slot" data-page="${i}" data-slot="${s.id}"${n ? ` data-news="${esc(n.id)}"` : ''}${edit && !n ? ' tabindex="0"' : ''}>${inner}${tools}</div>`;
   }).join('');
   const foot = i === e.pages.length - 1 ? `<footer class="imprint">${esc(BRAND.imprint)}</footer>` : '';
-  const rows = edit ? tpl.areas.map(r => r.split(/\s+/)) : collapseEmpty(tpl.areas, s => !!(p.slots[s] && byId(p.slots[s])));
-  const areas = rows.map(r => `'${r.join(' ')}'`).join(' ');
-  return `<div class="pg-outer" id="pg-${i}"><div class="paper${edit && S.sel ? ' pick' : ''}">${head}<div class="grid" style="grid-template-areas:${areas};grid-template-rows:repeat(${rows.length},minmax(0,1fr))">${cells}</div>${foot}</div></div>`;
+  const layout = auto ? lay : { rows: edit ? tpl.areas.map(r => r.split(/\s+/)) : collapseEmpty(tpl.areas, s => !!(p.slots[s] && byId(p.slots[s]))) };
+  const extra = auto ? auto.ids.length - auto.cap : 0;
+  const add = !auto || !edit ? ''
+    : extra > 0 ? `<div class="addslot over" role="alert">Page ${i + 1} holds up to ${auto.cap} stories: remove ${extra}</div>`
+    : auto.free ? `<div class="slot addslot" data-drop="slot" data-page="${i}" data-slot="${auto.free}" tabindex="0">${S.sel ? `Tap here to add it to page ${i + 1}` : `+ Add a story (${auto.ids.length}/${auto.cap}): drop or tap here`}</div>` : '';
+  return `<div class="pg-outer" id="pg-${i}"><div class="paper${edit && S.sel ? ' pick' : ''}"${auto ? ` data-auto="${i}"` : ''}>${head}<div class="grid" style="${areasStyle(layout)}">${cells}</div>${add}${foot}</div></div>`;
 }
+const areasStyle = L => `grid-template-columns:repeat(${L.rows[0].length},minmax(0,1fr));grid-template-areas:${L.rows.map(r => `'${r.join(' ')}'`).join(' ')};` +
+  `grid-template-rows:${(L.w || L.rows.map(() => 1)).map(x => `minmax(0,${+x.toFixed(3)}fr)`).join(' ')}`;
+// Pick the arrangement that suits the stories: lay each candidate out once with normal type and a
+// small photo, compare how much text each box needs with the room it has, keep the best.
+function applyLayout(paper, L) {
+  paper.querySelector('.grid').style.cssText = areasStyle(L);
+  paper.querySelectorAll('.grid > .slot').forEach(el => { const k = L.kinds[el.dataset.slot]; if (k) el.className = el.className.replace(/\bk-\w+/, 'k-' + k); });
+}
+function layoutScore(paper) {
+  const res = [...paper.querySelectorAll('.story')].map(st => {
+    const b = st.querySelector('.body'); return [st.clientHeight, b.offsetTop + b.offsetHeight - st.offsetTop, st.parentElement.classList.contains('k-lead')];
+  });
+  return res.reduce((sc, [have, need, lead]) => {
+    if (!have) return sc + 50;
+    const over = (need - have) / have;
+    return sc + (lead ? 1.5 : 1) * (over > 0 ? 3 * over + (over > 0.4 ? 8 * (over - 0.4) : 0) : -0.5 * over);
+  }, 0);
+}
+function autoLayout() {
+  document.querySelectorAll('#canvas .paper[data-auto]').forEach(paper => {
+    const i = +paper.dataset.auto; const info = autoInfo(ed().pages[i], i); if (!info) return;
+    let best = layoutCache.get(info.key);
+    if (best === undefined || !info.variants[best]) {
+      const grid = paper.querySelector('.grid');
+      paper.querySelectorAll('.story').forEach(st => { st.classList.remove('cut', 'nophoto'); ['--fs', '--ph', '--pmax'].forEach(v => st.style.removeProperty(v)); });
+      grid.classList.add('measure');
+      let bestScore = Infinity; best = 0;
+      info.variants.forEach((L, k) => { applyLayout(paper, L); const sc = layoutScore(paper); if (sc < bestScore - 0.01) { bestScore = sc; best = k; } });
+      grid.classList.remove('measure');
+      layoutCache.set(info.key, best);
+    }
+    applyLayout(paper, info.variants[best]);
+  });
+}
+function relayout() { autoLayout(); fitStories(); }
 // Readers should not see blank boxes: give each empty box's cells to a filled neighbour that
 // shares its whole edge (so every area stays a rectangle), and drop rows left fully empty.
 function collapseEmpty(areas, isFilled) {
@@ -552,7 +729,9 @@ function collapseEmpty(areas, isFilled) {
 }
 function renderTop() {
   const e = ed();
-  $('#modeTag').textContent = MODE === 'demo' ? 'Demo data, saved in this browser' : 'Connected';
+  const who = MODE === 'api' && store.get('jv_user', null);
+  $('#modeTag').textContent = MODE === 'demo' ? 'Demo data, saved in this browser' : 'Connected' + (who ? ' · ' + who.name : '');
+  showSave();
   $('#edSel').innerHTML = S.editions.map(x => `<option value="${x.id}"${x.id === S.cur ? ' selected' : ''}>${esc(x.title)} – ${x.editionDate}</option>`).join('');
   const st = $('#status');
   st.className = 'chip' + (e.status === 'published' ? (e.dirty ? ' dirty' : ' pub') : '');
@@ -564,9 +743,9 @@ function renderTop() {
 function renderStrip() {
   const e = ed();
   $('#strip').innerHTML = e.pages.map((p, i) => {
-    const t = TEMPLATES[p.template] || TEMPLATES.merged; const used = Object.values(p.slots).filter(Boolean).length;
+    const used = pageIds(p).length;
     return `<button class="thumb${i === S.pageIdx && !S.preview ? ' active' : ''}" data-thumb="${i}" data-drop="thumb" data-index="${i}" aria-label="Page ${i + 1}">
-      <span class="handle" data-phandle aria-hidden="true">⠿</span><span class="tn">${i + 1}</span><span class="tl">${esc(p.label)}</span><span class="tc">${used}/${t.slots.length}</span></button>`;
+      <span class="handle" data-phandle aria-hidden="true">⠿</span><span class="tn">${i + 1}</span><span class="tl">${esc(p.label)}</span><span class="tc${used > capFor(i) ? ' over' : ''}">${used}/${capFor(i)}</span></button>`;
   }).join('') + (S.viewer ? '' : `<button class="addpage" id="addPageBtn">+ Page</button>`);
 }
 function renderPageBar() {
@@ -575,6 +754,7 @@ function renderPageBar() {
     <input id="pageLabel" value="${esc(p.label)}" aria-label="Page name">
     <select id="tplSel" aria-label="Layout">${Object.entries(TEMPLATES).map(([k, t]) => `<option value="${k}"${k === p.template ? ' selected' : ''}>${t.name}</option>`).join('')}</select>
     <button class="btn" id="autoBtn">Auto-fill</button>
+    <button class="btn" id="clearPageBtn"${pageIds(p).length ? '' : ' disabled'} title="Send every story on this page back to the news pool">Clear page</button>
     <button class="btn" id="mergeBtn">Merge with next</button>
     <button class="btn danger" id="delPageBtn">Delete page</button>`;
 }
@@ -582,7 +762,7 @@ function renderCanvas() {
   const e = ed();
   if (S.preview || S.viewer) $('#canvas').innerHTML = e.pages.map((p, i) => pageHTML(e, p, i, false)).join('');
   else $('#canvas').innerHTML = pageHTML(e, e.pages[S.pageIdx], S.pageIdx, true);
-  fit(); fitStories();
+  fit(); relayout();
 }
 function renderPool() {
   const f = S.filter; const placed = placements(); const list = filteredNews();
@@ -631,19 +811,27 @@ function fitText() {
 // needed (down to 72%); a short story gets slightly larger type. Stories that still don't fit are
 // faded at the bottom and flagged "Text cut" for the editor.
 const FS_STEPS = [1.12, 1.06, 1, 0.94, 0.88, 0.83, 0.78, 0.72];
-function fitStories() {
-  document.querySelectorAll('#canvas .story').forEach(st => {
+function fitStories(root = document.getElementById('canvas')) {
+  let score = 0; // lower is better: cut text and hidden photos cost most, smaller type a little
+  root.querySelectorAll('.story').forEach(st => {
     const slot = st.parentElement;
     st.classList.remove('cut', 'nophoto'); st.style.removeProperty('--ph'); st.style.removeProperty('--pmax');
     const H = st.clientHeight; if (!H) return;
     const prev = slot.querySelector('.cutflag'); if (prev) prev.remove();
     const fits = () => st.scrollHeight <= H + 1;
     const pics = st.querySelector('.pics');
-    const tryAll = list => list.find(([k, ph]) => { st.style.setProperty('--fs', k); if (ph) st.style.setProperty('--ph', ph + 'px'); return fits(); });
+    // Options are ordered from roomiest to most compact, so the first that fits is found by halving.
+    const use = ([k, ph]) => { st.style.setProperty('--fs', k); if (ph) st.style.setProperty('--ph', ph + 'px'); };
+    const tryAll = list => {
+      let lo = 0, hi = list.length;
+      while (lo < hi) { const mid = (lo + hi) >> 1; use(list[mid]); if (fits()) hi = mid; else lo = mid + 1; }
+      if (lo === list.length) return undefined; use(list[lo]); return list[lo];
+    };
     let ok;
     if (pics) {
       // Order of preference: full-size type with a big photo, then a smaller photo, then smaller type.
-      const pmax = Math.max(60, st.clientWidth / pics.children.length * 0.8);
+      const shown = [...pics.children].filter(im => getComputedStyle(im).display !== 'none').length || 1;
+      const pmax = Math.max(60, st.clientWidth / shown * 0.8);
       const pref = Math.min(pmax, H * 0.45), pmin = Math.min(pref, Math.max(56, H * 0.18));
       st.style.setProperty('--pmax', pmax + 'px');
       ok = tryAll([...FS_STEPS.filter(k => k >= 1).map(k => [k, pref]),
@@ -652,11 +840,13 @@ function fitStories() {
       // Box too small for photo + readable text: drop the photo rather than print tiny type.
       if (ok === undefined) { st.classList.add('nophoto'); ok = tryAll(FS_STEPS.filter(k => k <= 1).map(k => [k])); if (ok !== undefined) note(slot, 'Photo hidden: box too small'); }
     } else ok = tryAll(FS_STEPS.map(k => [k]));
-    if (ok === undefined) { st.classList.add('cut'); note(slot, 'Text cut'); }
+    if (ok === undefined) { st.classList.add('cut'); note(slot, 'Text cut'); score += 100; }
+    else score += (st.classList.contains('nophoto') ? 8 : 0) + Math.max(0, 1 - ok[0]) * 20;
   });
+  return score;
 }
 function note(slot, msg) { if (slot.classList.contains('editable')) slot.insertAdjacentHTML('beforeend', `<span class="cutflag">${msg}</span>`); }
-if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { fitText(); fitStories(); });
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { layoutCache.clear(); fitText(); relayout(); });
 
 /* ---------- toast & modal ---------- */
 let toastT;
@@ -715,7 +905,7 @@ function openSettings() {
     <label>Box heading (right of masthead)</label><input id="sAdT" value="${esc(e.ad.title)}">
     <label>Box text</label><textarea id="sAdX" rows="3">${esc(e.ad.text)}</textarea>
     <label>Phone</label><input id="sAdP" value="${esc(e.ad.phone)}">
-    <label>Photo left of masthead</label><input id="sImg" type="file" accept="image/*">
+    <label>Photo left of masthead (shows the logo when empty)</label><input id="sImg" type="file" accept="image/*">
     ${e.tribute ? '<button class="btn danger" id="sImgDel" style="margin-top:8px">Remove photo</button>' : ''}
     <div class="acts"><button class="btn" data-close>Cancel</button><button class="btn primary" id="sSave">Save details</button></div>`, sh => {
     let img = e.tribute;
@@ -743,11 +933,14 @@ async function publish() {
   const e = ed();
   const empty = e.pages.filter(p => !Object.values(p.slots).some(Boolean)).length;
   if (empty) { toast(`${empty} page${empty > 1 ? 's have' : ' has'} no news. Fill or delete ${empty > 1 ? 'them' : 'it'} before publishing.`); return; }
+  const full = e.pages.findIndex((p, i) => pageIds(p).length > capFor(i));
+  if (full >= 0) { S.pageIdx = full; S.preview = false; renderAll(); toast(`Page ${full + 1} has ${pageIds(e.pages[full]).length} stories; it holds up to ${capFor(full)}. Remove some before publishing.`); return; }
   if (e.status === 'published' && !e.dirty) { openShare(); return; }
   try {
     if (MODE === 'api') {
-      persistNow(); clearTimeout(saveTimer);
+      clearTimeout(saveTimer);
       await API.req('/epapers/' + e.id, { method: 'PUT', body: JSON.stringify(stripEd(e)) });
+      unsaved.delete(e.id); showSave();
       const d = await API.req('/epapers/' + e.id + '/publish', { method: 'POST' });
       Object.assign(e, mapEd(d.epaper)); e.shareUrl = d.shareUrl;
     } else {
@@ -780,7 +973,7 @@ async function printEdition() {
   const was = S.preview; S.preview = true; renderAll();
   try { await document.fonts.ready; } catch (_) {}
   await Promise.all([...document.querySelectorAll('#canvas img')].map(im => im.complete ? 0 : new Promise(r => { im.onload = im.onerror = r; })));
-  fitText(); fitStories();
+  fitText(); relayout();
   const restore = () => { window.removeEventListener('afterprint', restore); if (S.preview !== was) { S.preview = was; renderAll(); } };
   window.addEventListener('afterprint', restore);
   try { window.print(); } catch (_) { restore(); toast('Printing is blocked here. Open the published link in a browser to save the PDF.'); }
@@ -797,7 +990,10 @@ function showLogin() {
           body: JSON.stringify({ email: sh.querySelector('#lgEmail').value, password: sh.querySelector('#lgPass').value }) });
         const d = await r.json(); if (!r.ok) throw new Error(d.message || 'Sign-in failed');
         if (!['admin', 'editor'].includes(d.user.role)) throw new Error('Only editors and admins can build the e-paper.');
-        store.set('jv_token', d.accessToken); closeModal(); boot();
+        setSession(d); closeModal();
+        // Signed out mid-edit (session expired): keep the open work and save it, don't reload over it.
+        if (S.editions.length && unsaved.size) { $('#logoutBtn').hidden = !!window.__JV_TOKEN; showUser(); await saveAll(); renderAll(); }
+        else boot();
       } catch (err) { sh.querySelector('#lgErr').textContent = err.message; }
     };
   });
@@ -833,7 +1029,7 @@ function endDrag(e, cancel) {
     const i = +t.dataset.index; const p = ed().pages[i]; const prev = placements()[P.id];
     if (prev) delete ed().pages[prev.page].slots[prev.slot];
     const over = fill(p, [P.id]); if (over.length && prev) ed().pages[prev.page].slots[prev.slot] = P.id;
-    S.pageIdx = i; commit(); if (over.length) toast('That page is full. Change its layout or free a box first.');
+    S.pageIdx = i; commit(); if (over.length) toast(`That page is full (${capFor(i)} stories). Remove a story or use another page.`);
   }
   else if (P.type === 'page' && kind === 'thumb') movePage(P.index, +t.dataset.index);
 }
@@ -892,6 +1088,7 @@ $('#pagebar').addEventListener('change', e => {
 $('#pagebar').addEventListener('click', e => {
   if (e.target.id === 'autoBtn') autoFill(false);
   if (e.target.id === 'mergeBtn') mergeWithNext(S.pageIdx);
+  if (e.target.id === 'clearPageBtn') clearPage(S.pageIdx);
   if (e.target.id === 'delPageBtn') deletePage(S.pageIdx);
 });
 $('#secChips').addEventListener('click', e => { const b = e.target.closest('[data-sec]'); if (b) { S.filter.section = b.dataset.sec; renderPool(); } });
@@ -906,11 +1103,19 @@ $('#q').oninput = e => { S.filter.q = e.target.value; renderPool(); };
 $('#poolFab').onclick = () => $('#pool').classList.add('open');
 $('#poolClose').onclick = () => $('#pool').classList.remove('open');
 $('#pickCancel').onclick = () => { S.sel = null; renderAll(); };
-$('#edSel').onchange = async e => { S.cur = e.target.value; S.pageIdx = 0; filterForEdition(ed()); try { await loadEditionNews(); } catch (err) { toast(err.message); } renderAll(); };
+$('#edSel').onchange = async e => { await saveAll(); S.cur = e.target.value; S.pageIdx = 0; filterForEdition(ed()); try { await loadEditionNews(); } catch (err) { toast(err.message); } renderAll(); };
 $('#newEd').onclick = openNewEdition;
 $('#settingsBtn').onclick = openSettings;
 $('#previewBtn').onclick = () => { S.preview = !S.preview; S.sel = null; renderAll(); $('#canvas').scrollTop = 0; };
 $('#printBtn').onclick = printEdition;
+$('#saveBtn').onclick = saveClick;
+$('#logoutBtn').onclick = logout;
+document.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's' && !S.viewer) { e.preventDefault(); saveClick(); } });
+window.addEventListener('beforeunload', e => { if (unsaved.size || saving) { saveAll(); e.preventDefault(); e.returnValue = ''; } });
+function showUser() {
+  const u = store.get('jv_user', null);
+  if (MODE === 'api' && u) { $('#modeTag').textContent = `Connected · ${u.name}`; $('#logoutBtn').title = `Signed in as ${u.name} (${u.email})`; }
+}
 $('#publishBtn').onclick = publish;
 new ResizeObserver(fit).observe($('#canvas'));
 
@@ -932,6 +1137,7 @@ async function boot() {
     }
     if (MODE === 'api' && !API.token()) { showLogin(); return; }
     await loadAll(); filterForEdition(ed()); renderAll();
+    $('#logoutBtn').hidden = MODE !== 'api' || !!window.__JV_TOKEN; showUser(); showSave();
   } catch (err) {
     $('#canvas').innerHTML = `<p style="padding:24px;text-align:center">${esc(err.message)}</p>`;
   }
