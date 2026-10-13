@@ -113,16 +113,20 @@ select{border:1px solid var(--line);background:var(--panel2);padding:7px 8px;bor
 .pick .empty{border-color:var(--np-pink);color:var(--np-pink)}
 .story{height:100%;display:flex;flex-direction:column;gap:7px;overflow:hidden}
 .story h3{margin:0;font-family:Ramabhadra,sans-serif;font-weight:400;color:var(--np-red);line-height:1.18}
-.k-lead h3{font-size:44px}.k-story h3{font-size:26px}.k-brief h3{font-size:19px;color:var(--np-deep)}
+.k-lead h3{font-size:calc(44px*var(--fs,1))}.k-story h3{font-size:calc(26px*var(--fs,1))}.k-brief h3{font-size:calc(19px*var(--fs,1));color:var(--np-deep)}
 .s-blue h3{background:var(--np-blue);color:#fff;padding:5px 10px}
 .s-boxed{border:3px solid var(--np-red);padding:7px}
 .s-boxed h3{color:var(--np-blue);text-align:center}
-.deck{list-style:none;margin:0;padding:6px 10px;background:var(--np-pink);color:#fff;font:700 14px/1.55 "Noto Sans Telugu",sans-serif;text-align:center}
+.deck{list-style:none;margin:0;padding:6px 10px;background:var(--np-pink);color:#fff;font:700 calc(14px*var(--fs,1))/1.55 "Noto Sans Telugu",sans-serif;text-align:center}
 .deck li::before{content:"- "}
-.pics{flex:1 1 130px;min-height:70px;display:flex;gap:6px}
+/* auto-fit (fitStories): the photo takes the space the text leaves, between --ph and --pmax */
+.pics{flex:1 1 var(--ph,130px);min-height:var(--ph,70px);max-height:var(--pmax,none);display:flex;gap:6px}
 .pics img{flex:1;min-width:0;width:100%;height:100%;object-fit:cover}
-.body{flex:0 1 auto;min-height:0;overflow:hidden;font:14px/1.62 "Noto Serif Telugu",serif;text-align:justify;-webkit-mask-image:linear-gradient(#000 88%,transparent);mask-image:linear-gradient(#000 88%,transparent)}
-.story.nopic .body{flex:1}
+.body{flex:none;font:calc(14px*var(--fs,1))/1.62 "Noto Serif Telugu",serif;text-align:justify}
+.story.cut .body{flex:1 1 0;min-height:0;overflow:hidden;-webkit-mask-image:linear-gradient(#000 88%,transparent);mask-image:linear-gradient(#000 88%,transparent)}
+.story.cut .pics{flex:0 0 var(--ph)}
+.story.nophoto .pics{display:none}
+.cutflag{position:absolute;left:4px;bottom:10px;z-index:2;background:var(--np-red);color:#fff;font:700 calc(11px*var(--inv)) system-ui,sans-serif;padding:calc(2px*var(--inv)) calc(7px*var(--inv));border-radius:99px;pointer-events:none}
 .k-lead .body{column-count:2;column-gap:16px}
 .body b{font-family:"Noto Sans Telugu",sans-serif}
 .by{font:600 11.5px "Noto Sans Telugu",sans-serif;color:#555}
@@ -157,7 +161,7 @@ select{border:1px solid var(--line);background:var(--panel2);padding:7px 8px;bor
 .viewer .main,.previewing .main{grid-template-columns:1fr}
 .previewing .pool,.previewing .pagebar,.previewing .fab{display:none!important}
 
-@media (max-width:860px){
+@media screen and (max-width:860px){
   .main{grid-template-columns:1fr}
   .pool{position:fixed;left:0;right:0;bottom:0;height:72vh;z-index:40;border-radius:16px 16px 0 0;border:1px solid var(--line);transform:translateY(105%);transition:transform .22s;box-shadow:0 -10px 30px rgba(0,0,0,.25);padding-bottom:env(safe-area-inset-bottom,0px)}
   .pool.open{transform:none}
@@ -170,12 +174,15 @@ select{border:1px solid var(--line);background:var(--panel2);padding:7px 8px;bor
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 @media print{
   @page{size:820px 1240px;margin:0}
-  body{background:#fff}
+  /* print the newspaper colours (red bands, pink decks, blue date bar) even when the
+     browser's "Background graphics" option is off, which is its default */
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  html,body{background:#fff!important;height:auto}
   .top,.strip,.pool,.pagebar,.fab,.pickbar,.toast,.modal{display:none!important}
   .app{display:block;height:auto}.canvas{padding:0;overflow:visible}
   .pg-outer{width:820px!important;height:1240px!important;margin:0;break-after:page}
   .paper{transform:none!important;box-shadow:none}
-  .tools,.empty{display:none!important}
+  .tools,.empty,.cutflag{display:none!important}
 }
 </style>
 </head>
@@ -508,13 +515,40 @@ function pageHTML(e, p, i, edit) {
   const head = i === 0 ? mastHTML(e) : innerHead(e, i, p);
   const cells = tpl.slots.map(s => {
     const id = p.slots[s.id]; const n = id && byId(id); const style = (p.styles || {})[s.id] || 'red';
+    if (!n && !edit) return ''; // its space was given to a neighbour (collapseEmpty)
     const inner = n ? storyHTML(e, n, s.kind, style) : (edit ? `<div class="empty">${S.sel ? 'Tap to place here' : KIND_LABEL[s.kind]}</div>` : '');
     const tools = edit && n ? `<div class="tools"><span class="tbtn" data-shandle title="Drag to move">⠿</span><button class="tbtn" data-act="style" data-slot="${s.id}" title="Headline style">Aa</button><button class="tbtn" data-act="remove" data-slot="${s.id}" title="Remove from page">✕</button></div>` : '';
     return `<div class="slot k-${s.kind}${n ? ' filled' : ''}${edit ? ' editable' : ''}" style="grid-area:${s.id}" data-drop="slot" data-page="${i}" data-slot="${s.id}"${n ? ` data-news="${esc(n.id)}"` : ''}${edit && !n ? ' tabindex="0"' : ''}>${inner}${tools}</div>`;
   }).join('');
   const foot = i === e.pages.length - 1 ? `<footer class="imprint">${esc(BRAND.imprint)}</footer>` : '';
-  const areas = tpl.areas.map(a => `'${a}'`).join(' ');
-  return `<div class="pg-outer" id="pg-${i}"><div class="paper${edit && S.sel ? ' pick' : ''}">${head}<div class="grid" style="grid-template-areas:${areas};grid-template-rows:repeat(${tpl.areas.length},minmax(0,1fr))">${cells}</div>${foot}</div></div>`;
+  const rows = edit ? tpl.areas.map(r => r.split(/\s+/)) : collapseEmpty(tpl.areas, s => !!(p.slots[s] && byId(p.slots[s])));
+  const areas = rows.map(r => `'${r.join(' ')}'`).join(' ');
+  return `<div class="pg-outer" id="pg-${i}"><div class="paper${edit && S.sel ? ' pick' : ''}">${head}<div class="grid" style="grid-template-areas:${areas};grid-template-rows:repeat(${rows.length},minmax(0,1fr))">${cells}</div>${foot}</div></div>`;
+}
+// Readers should not see blank boxes: give each empty box's cells to a filled neighbour that
+// shares its whole edge (so every area stays a rectangle), and drop rows left fully empty.
+function collapseEmpty(areas, isFilled) {
+  const g = areas.map(r => r.split(/\s+/));
+  const rect = id => { let r0 = 1e9, r1 = -1, c0 = 1e9, c1 = -1;
+    g.forEach((row, r) => row.forEach((v, c) => { if (v === id) { r0 = Math.min(r0, r); r1 = Math.max(r1, r); c0 = Math.min(c0, c); c1 = Math.max(c1, c); } }));
+    return r1 < 0 ? null : { r0, r1, c0, c1 }; };
+  const absorb = (empty, by) => g.forEach(row => row.forEach((v, c) => { if (v === empty) row[c] = by; }));
+  for (let changed = true; changed;) {
+    changed = false;
+    for (const id of [...new Set(g.flat())]) {
+      if (isFilled(id)) continue;
+      const a = rect(id); if (!a) continue;
+      const cand = [a.c0 > 0 && g[a.r0][a.c0 - 1], a.c1 < g[0].length - 1 && g[a.r0][a.c1 + 1],
+                    a.r0 > 0 && g[a.r0 - 1][a.c0], a.r1 < g.length - 1 && g[a.r1 + 1][a.c0]];
+      const nb = cand.find((n, k) => {
+        if (!n || n === id || !isFilled(n)) return false; const b = rect(n);
+        return k < 2 ? b.r0 === a.r0 && b.r1 === a.r1 : b.c0 === a.c0 && b.c1 === a.c1;
+      });
+      if (nb) { absorb(id, nb); changed = true; }
+    }
+  }
+  const kept = g.filter(row => row.some(isFilled));
+  return kept.length ? kept : g;
 }
 function renderTop() {
   const e = ed();
@@ -548,7 +582,7 @@ function renderCanvas() {
   const e = ed();
   if (S.preview || S.viewer) $('#canvas').innerHTML = e.pages.map((p, i) => pageHTML(e, p, i, false)).join('');
   else $('#canvas').innerHTML = pageHTML(e, e.pages[S.pageIdx], S.pageIdx, true);
-  fit();
+  fit(); fitStories();
 }
 function renderPool() {
   const f = S.filter; const placed = placements(); const list = filteredNews();
@@ -593,7 +627,36 @@ function fitText() {
     if (k < 1) el.style.transform = `scale(${k.toFixed(3)})`;
   });
 }
-if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitText);
+// Fit every story to its box: keep the photo at a good size and shrink the type only as far as
+// needed (down to 72%); a short story gets slightly larger type. Stories that still don't fit are
+// faded at the bottom and flagged "Text cut" for the editor.
+const FS_STEPS = [1.12, 1.06, 1, 0.94, 0.88, 0.83, 0.78, 0.72];
+function fitStories() {
+  document.querySelectorAll('#canvas .story').forEach(st => {
+    const slot = st.parentElement;
+    st.classList.remove('cut', 'nophoto'); st.style.removeProperty('--ph'); st.style.removeProperty('--pmax');
+    const H = st.clientHeight; if (!H) return;
+    const prev = slot.querySelector('.cutflag'); if (prev) prev.remove();
+    const fits = () => st.scrollHeight <= H + 1;
+    const pics = st.querySelector('.pics');
+    const tryAll = list => list.find(([k, ph]) => { st.style.setProperty('--fs', k); if (ph) st.style.setProperty('--ph', ph + 'px'); return fits(); });
+    let ok;
+    if (pics) {
+      // Order of preference: full-size type with a big photo, then a smaller photo, then smaller type.
+      const pmax = Math.max(60, st.clientWidth / pics.children.length * 0.8);
+      const pref = Math.min(pmax, H * 0.45), pmin = Math.min(pref, Math.max(56, H * 0.18));
+      st.style.setProperty('--pmax', pmax + 'px');
+      ok = tryAll([...FS_STEPS.filter(k => k >= 1).map(k => [k, pref]),
+                   ...[0.8, 0.6, 0.4, 0.2, 0].map(t => [1, pmin + (pref - pmin) * t]),
+                   ...FS_STEPS.filter(k => k < 1 && k >= 0.88).map(k => [k, pmin])]);
+      // Box too small for photo + readable text: drop the photo rather than print tiny type.
+      if (ok === undefined) { st.classList.add('nophoto'); ok = tryAll(FS_STEPS.filter(k => k <= 1).map(k => [k])); if (ok !== undefined) note(slot, 'Photo hidden: box too small'); }
+    } else ok = tryAll(FS_STEPS.map(k => [k]));
+    if (ok === undefined) { st.classList.add('cut'); note(slot, 'Text cut'); }
+  });
+}
+function note(slot, msg) { if (slot.classList.contains('editable')) slot.insertAdjacentHTML('beforeend', `<span class="cutflag">${msg}</span>`); }
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { fitText(); fitStories(); });
 
 /* ---------- toast & modal ---------- */
 let toastT;
@@ -710,12 +773,17 @@ function openShare() {
     sh.querySelector('#shPdf').onclick = () => { closeModal(); printEdition(); };
   });
 }
-function printEdition() {
+// Print exactly what the preview shows: wait for the Telugu fonts and photos so headlines and
+// text wrap the same way, fit the stories, then print. Restore the editor only after printing
+// (Safari's print() returns before the page is captured).
+async function printEdition() {
   const was = S.preview; S.preview = true; renderAll();
-  setTimeout(() => {
-    try { window.print(); } catch (_) { toast('Printing is blocked here. Open the published link in a browser to save the PDF.'); }
-    S.preview = was; renderAll();
-  }, 400);
+  try { await document.fonts.ready; } catch (_) {}
+  await Promise.all([...document.querySelectorAll('#canvas img')].map(im => im.complete ? 0 : new Promise(r => { im.onload = im.onerror = r; })));
+  fitText(); fitStories();
+  const restore = () => { window.removeEventListener('afterprint', restore); if (S.preview !== was) { S.preview = was; renderAll(); } };
+  window.addEventListener('afterprint', restore);
+  try { window.print(); } catch (_) { restore(); toast('Printing is blocked here. Open the published link in a browser to save the PDF.'); }
 }
 function showLogin() {
   if (!$('#modal').hidden && $('#lgEmail')) return;
