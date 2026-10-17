@@ -8,14 +8,16 @@ const userSchema = new Schema({
   passwordHash: { type: String, required: true, select: false },
   role: { type: String, enum: ROLES, default: 'reporter' },
   active: { type: Boolean, default: false },   // admin approves every new sign-up
+  approvedAt: Date,                             // first approval; unset = sign-up still waiting
   state: String,
   district: String,
   constituency: String,
+  avatar: { type: String, maxlength: 500 },  // profile photo URL
   tokenVersion: { type: Number, default: 0 }    // bump to sign the user out everywhere
 }, { timestamps: true });
 
 userSchema.methods.toPublic = function () {
-  const { _id, name, email, phone, role, active, state, district, constituency, createdAt } = this;
-  return { id: _id, name, email, phone, role, active, state, district, constituency, createdAt };
+  const { _id, name, email, phone, role, active, state, district, constituency, avatar, approvedAt, createdAt } = this;
+  return { id: _id, name, email, phone, role, active, state, district, constituency, avatar: avatar || null, approvedAt: approvedAt || null, createdAt };
 };
 module.exports = model('User', userSchema);

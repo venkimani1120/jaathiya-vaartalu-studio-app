@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>E-paper Studio – Jaathiya Vaarthalu</title>
+<link rel="icon" id="favicon" href="data:,">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Telugu:wght@400;600;700&family=Noto+Serif+Telugu:wght@400;700&family=Ramabhadra&family=Anek+Telugu:wdth,wght@75..100,600..800&display=swap" rel="stylesheet">
@@ -30,7 +31,7 @@ button{cursor:pointer}
 .app{height:100%;display:grid;grid-template-rows:auto auto 1fr;min-height:0}
 .top{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px 12px;background:var(--panel);border-bottom:1px solid var(--line)}
 .brand{display:flex;align-items:center;gap:8px;margin-right:6px}
-.logo{width:34px;height:34px;display:grid;place-items:center;background:var(--np-red);color:#fff;font:22px Ramabhadra,sans-serif;border-radius:6px}
+.logo{width:38px;height:38px;object-fit:contain;background:#fff;border-radius:8px;padding:2px}
 .brand b{display:block;font-size:14px;line-height:1.1}.brand small{color:var(--muted);font-size:12px}
 .spacer{flex:1}
 .savestate{font-size:12px;color:var(--muted);white-space:nowrap}
@@ -180,6 +181,7 @@ select{border:1px solid var(--line);background:var(--panel2);padding:7px 8px;bor
 .reader .deck{border-radius:6px;margin-bottom:10px;text-align:left}
 .linkbox{display:flex;gap:6px}.linkbox input{flex:1}
 
+.embedded .top .brand,.embedded #logoutBtn{display:none!important}
 .viewer .pool,.viewer .pagebar,.viewer #newEd,.viewer #delEd,.viewer #edSel,.viewer #publishBtn,.viewer #settingsBtn,.viewer #previewBtn,.viewer #saveBtn,.viewer #saveState,.viewer #logoutBtn,.viewer .addpage,.viewer .thumb .handle,.viewer .fab{display:none!important}
 .viewer .main,.previewing .main{grid-template-columns:1fr}
 .previewing .pool,.previewing .pagebar,.previewing .fab{display:none!important}
@@ -212,7 +214,7 @@ select{border:1px solid var(--line);background:var(--panel2);padding:7px 8px;bor
 <body>
 <div class="app" id="app">
   <header class="top">
-    <div class="brand"><span class="logo" aria-hidden="true">జా</span><div><b>E-paper Studio</b><small id="modeTag"></small></div></div>
+    <div class="brand"><img class="logo" id="brandLogo" alt="Jaathiya Vaartalu"><div><b>E-paper Studio</b><small id="modeTag"></small></div></div>
     <select id="edSel" aria-label="Edition"></select>
     <button class="btn" id="newEd">New edition</button>
     <button class="btn danger" id="delEd" title="Delete this edition">Delete</button>
@@ -393,6 +395,13 @@ const DEMO_NEWS = [
   N('d16','state','','','అమరావతి','రాష్ట్రవ్యాప్తంగా భారీ వర్షాలు',['తీర ప్రాంతాల్లో అధికారులు అప్రమత్తం','మత్స్యకారులు వేటకు వెళ్లొద్దని సూచన'],'బంగాళాఖాతంలో ఏర్పడిన అల్పపీడనం ప్రభావంతో రాష్ట్రవ్యాప్తంగా భారీ వర్షాలు కురిసే అవకాశం ఉందని వాతావరణ శాఖ తెలిపింది. తీర ప్రాంత జిల్లాల్లో అధికారులను అప్రమత్తం చేశారు. మత్స్యకారులు రెండు రోజుల పాటు సముద్రంలో వేటకు వెళ్లొద్దని సూచించారు. లోతట్టు ప్రాంతాల ప్రజలు జాగ్రత్తగా ఉండాలని కోరారు.',[art(210,'field')],'కె. శ్రీనివాస్'),
   N('d17','constituency','గుంటూరు','ప్రత్తిపాడు','ప్రత్తిపాడు','ప్రత్తిపాడులో రక్తదాన శిబిరం',[],'ప్రత్తిపాడులో యువజన సంఘం ఆధ్వర్యంలో రక్తదాన శిబిరం నిర్వహించారు. 60 మంది యువకులు రక్తదానం చేశారు. రక్తదాతలకు ధ్రువపత్రాలు అందజేశారు.',[],'ఎస్. ప్రసాద్')
 ];
+
+// header logo and tab icon (server/public/logo.png, mark.png)
+// Inside the web app (an iframe on the same site) the app's header already shows the logo and account menu.
+const EMBEDDED = (() => { try { return window.self !== window.top; } catch (_) { return true; } })();
+if (EMBEDDED) document.documentElement.classList.add('embedded');
+const MARK = BRAND.logo.replace('logo.png', 'mark.png');
+document.getElementById('brandLogo').src = MARK; document.getElementById('favicon').href = MARK;
 
 /* ---------- state ---------- */
 const S = { news: [], editions: [], cur: null, pageIdx: 0, sel: null, preview: false, viewer: false,
@@ -1149,6 +1158,13 @@ function showUser() {
   if (MODE === 'api' && u) { $('#modeTag').textContent = `Connected · ${u.name}`; $('#logoutBtn').title = `Signed in as ${u.name} (${u.email})`; }
 }
 $('#publishBtn').onclick = publish;
+// The web app keeps this page loaded while the editor uses other tabs; when they come back it asks for
+// the latest approved news so stories approved meanwhile show up in the pool.
+window.addEventListener('message', e => {
+  if (e.origin !== location.origin || !e.data || e.data.type !== 'jv:refresh-pool') return;
+  if (MODE !== 'api' || S.viewer || !S.editions.length || !API.token()) return;
+  API.req('/news?status=approved&limit=300').then(p => { mergeNews(p.items); renderAll(); }).catch(() => {});
+});
 new ResizeObserver(fit).observe($('#canvas'));
 
 /* ---------- boot ---------- */

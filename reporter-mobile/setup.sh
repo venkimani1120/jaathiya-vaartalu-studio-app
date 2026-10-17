@@ -6,7 +6,7 @@ if [ ! -d jv-mobile ]; then
   npx --yes create-expo-app@latest jv-mobile --template blank --yes
 fi
 rm -rf jv-mobile/src   # drop screens removed from this app
-cp -r App.js app.json eas.json src jv-mobile/
+cp -r App.js app.json eas.json src assets jv-mobile/
 cd jv-mobile
 npx expo install @react-navigation/native @react-navigation/native-stack react-native-screens react-native-safe-area-context \
   expo-image-picker expo-secure-store expo-status-bar expo-build-properties

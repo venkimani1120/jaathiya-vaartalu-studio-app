@@ -4,15 +4,33 @@ const Epaper = require('../models/Epaper');
 const News = require('../models/News');
 const { authenticate, authorize } = require('../middleware/auth');
 const { HttpError, wrap, pick } = require('../utils/http');
+const { EDITION_TYPES } = require('../config/constants');
 
 const FIELDS = ['title', 'type', 'key', 'editionDate', 'volume', 'issue', 'price', 'ad', 'tribute', 'pages'];
 router.use(authenticate, authorize('editor', 'admin'));
 
+// ?status=published&type=district&from=2026-10-01&to=2026-10-17 (dates are edition dates, both ends included)
+const DAY = /^\d{4}-\d{2}-\d{2}$/;
 router.get('/', wrap(async (req, res) => {
+  const { status, type, from, to } = req.query;
   const limit = Math.min(Number(req.query.limit) || 30, 100);
-  const items = await Epaper.find(req.query.status ? { status: req.query.status } : {})
-    .sort({ editionDate: -1, createdAt: -1 }).limit(limit).select('-tribute');
-  res.json({ items });
+  const filter = {};
+  if (status) filter.status = status;
+  if (type) {
+    if (!EDITION_TYPES.includes(type)) throw new HttpError(400, 'Unknown edition type.');
+    filter.type = type;
+  }
+  if ((from && !DAY.test(from)) || (to && !DAY.test(to))) throw new HttpError(400, 'Dates must look like 2026-10-17.');
+  if (from || to) {
+    filter.editionDate = {};
+    if (from) filter.editionDate.$gte = new Date(`${from}T00:00:00Z`);
+    if (to) filter.editionDate.$lt = new Date(new Date(`${to}T00:00:00Z`).getTime() + 864e5);
+  }
+  const [items, total] = await Promise.all([
+    Epaper.find(filter).sort({ editionDate: -1, createdAt: -1 }).limit(limit).select('-tribute'),
+    Epaper.countDocuments(filter)
+  ]);
+  res.json({ items, total });
 }));
 
 router.get('/:id', wrap(async (req, res) => {

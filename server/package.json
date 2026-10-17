@@ -8,7 +8,7 @@
     "dev": "node --watch src/index.js",
     "create-admin": "node scripts/create-admin.js",
     "seed": "node scripts/seed-test-data.js",
-    "build:web": "cd ../reporter-web && npm ci && npm run build && cd ../admin-web && npm ci && npm run build"
+    "build:web": "cd ../web && npm ci && npm run build"
   },
   "engines": {
     "node": ">=18"

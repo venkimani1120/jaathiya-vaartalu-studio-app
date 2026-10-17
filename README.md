@@ -1,23 +1,22 @@
 # Jaathiya Vaarthalu – News Desk apps + E-paper Studio
 
-Four apps, one backend:
+Three apps, one backend:
 
 | Project | Who uses it | What it does | Tech |
 |---|---|---|---|
 | `reporter-mobile/` | Reporters | Sign up, log in, upload and edit own news cards (photos from gallery or camera), see review notes and daily quota | React Native (Expo) – APK `JV Reporter` |
-| `reporter-web/` | Reporters | Same as the reporter mobile app, in a browser (drag-and-drop photos) | React + Vite, static site |
 | `admin-mobile/` | Editors, Admins | Review queue, approve / send back, edit any card, upload news, e-paper studio, team accounts (admin) | React Native (Expo) – APK `JV Desk` |
-| `admin-web/` | Editors, Admins | Same as the desk mobile app, in a browser, with filters, paging and a link to the layout studio | React + Vite, static site |
+| `web/` | Everyone | One web app for every role. After sign-in it shows each person their own pages: reporters get My news, Approved (last 30 days) and the news card editor; editors and admins get the review queue, all news with filters and paging, e-paper editions and a link to the layout studio; admins also get Team accounts. Everyone gets My profile (photo, name, phone) and Change password | React + Vite, static site |
 
-Shared by all four:
+Shared by all of them:
 
 | Part | What it does | Tech |
 |---|---|---|
-| `server/` | REST API, JWT auth with roles, 50-cards-per-day limit, review workflow, e-paper storage and publishing. Also hosts the two web apps at `/reporter/` and `/desk/` when they are built | Node.js, Express, MongoDB |
+| `server/` | REST API, JWT auth with roles, 50-cards-per-day limit, review workflow, e-paper storage and publishing. Also hosts the web app at `/app/` when it is built (the old `/reporter/` and `/desk/` addresses forward there) | Node.js, Express, MongoDB |
 | `server/public/epaper-studio.html` | Drag-and-drop page layout (matches the printed paper), merge pages, publish, share link, save as PDF. Also the public reader at `/e/<link>` | Plain HTML/JS, served by the API |
 | `shared/` | States, districts and constituencies, copied into every project | Python scripts |
 
-Each app only lets in its own roles: a reporter signing in to a Desk app, or an editor signing in to a Reporter app, is told to use the other app. The server still enforces every rule on its own.
+Each mobile app only lets in its own roles: a reporter signing in to the Desk app, or an editor signing in to the Reporter app, is told to use the other app. The web app lets everyone in and picks the pages from the signed-in person's role. The server still enforces every rule on its own.
 
 The two mobile apps have different package ids (`com.jaathiyavaarthalu.reporter`, `com.jaathiyavaarthalu.desk`), so both can be installed on one phone. The old single app (`com.jaathiyavaarthalu.newsdesk`) is not updated by them; uninstall it once the team has moved over.
 
@@ -50,7 +49,7 @@ GET|POST /api/epapers   GET|PUT /api/epapers/:id   POST /api/epapers/:id/publish
 GET  /api/users?pending=true   PATCH /api/users/:id {role, active}   (admin)
 GET  /api/public/epapers/:slug   GET /api/public/meta              (no login)
 GET  /studio  (layout studio)    GET /e/:slug  (public reader)
-GET  /reporter/  /desk/  (web apps, when built)
+GET  /app/  (web app, when built)
 ```
 
 ## E-paper layouts
@@ -86,9 +85,8 @@ npm install
 npm run create-admin          # creates the first admin from ADMIN_EMAIL / ADMIN_PASSWORD
 npm run dev                   # http://localhost:4000/studio
 
-# 2. Web apps (each in its own terminal; they call the local API through the Vite proxy)
-cd reporter-web && npm install && npm run dev    # http://localhost:5173
-cd admin-web    && npm install && npm run dev    # http://localhost:5174
+# 2. Web app (in its own terminal; it calls the local API through the Vite proxy)
+cd web && npm install && npm run dev    # http://localhost:5173
 
 # 3. Mobile apps (same steps for admin-mobile)
 cd reporter-mobile
@@ -107,16 +105,15 @@ Each project has its own workflow in `.github/workflows/`. It runs on a push to 
 |---|---|---|
 | `reporter-mobile-apk.yml` – Reporter mobile – Android APK | `reporter-mobile/` | `jv-reporter-apk` (app-release.apk) |
 | `admin-mobile-apk.yml` – Desk (Editor/Admin) mobile – Android APK | `admin-mobile/` | `jv-desk-apk` (app-release.apk) |
-| `reporter-web.yml` – Reporter web – build | `reporter-web/` | `jv-reporter-web` (static site) |
-| `admin-web.yml` – Desk (Editor/Admin) web – build | `admin-web/` | `jv-desk-web` (static site) |
+| `web.yml` – Web app – build | `web/` | `jv-web` (static site) |
 
 API URL: a manual run can take one as input. Otherwise the workflows use the repository variable `API_URL` (Settings → Secrets and variables → Actions → Variables) if you set it, else the app's own default (`src/config.js` for mobile; the same site for web).
 
-## Hosting the web apps
+## Hosting the web app
 
-**Easiest: on the API server.** Build them once on the server (`cd server && npm run build:web`), or add it to the Render build command: `npm install && npm run build:web`. The API then serves them at `https://<your-api>/reporter/` and `https://<your-api>/desk/`. Same site, so no CORS setup, and the Desk's **Open layout studio** link opens the studio already signed in.
+**Easiest: on the API server.** Build it once on the server (`cd server && npm run build:web`), or add it to the Render build command: `npm install && npm run build:web`. The API then serves it at `https://<your-api>/app/`. Same site, so no CORS setup, and the **Open layout studio** link opens the studio already signed in.
 
-**Elsewhere** (Netlify, Cloudflare Pages, GitHub Pages, …): build with `VITE_API_BASE=https://<your-api> npm run build` (or set the `API_URL` variable and download the workflow artifact), upload `dist/`, and add the site's address to `CORS_ORIGINS` in the server's `.env`, e.g. `CORS_ORIGINS=https://reporter.example.com,https://desk.example.com`. The studio will ask editors to sign in once more, since it is on another site.
+**Elsewhere** (Netlify, Cloudflare Pages, GitHub Pages, …): build with `VITE_API_BASE=https://<your-api> npm run build` (or set the `API_URL` variable and download the workflow artifact), upload `dist/`, and add the site's address to `CORS_ORIGINS` in the server's `.env`, e.g. `CORS_ORIGINS=https://news.example.com`. The studio will ask editors to sign in once more, since it is on another site.
 
 ## Getting APKs for testing
 

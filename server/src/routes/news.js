@@ -43,8 +43,13 @@ router.get('/', wrap(async (req, res) => {
   if (district) filter.district = district;
   if (constituency) filter.constituency = constituency;
   if (q) filter.title = { $regex: String(q).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' };
+  // ?days=30&by=reviewedAt: only news whose upload (createdAt) or review (reviewedAt) date falls in
+  // the last N days, newest first by that date.
+  const by = req.query.by === 'reviewedAt' ? 'reviewedAt' : 'createdAt';
+  const days = Math.min(Number(req.query.days) || 0, 365);
+  if (days > 0) filter[by] = { $gte: new Date(Date.now() - days * 864e5) };
   const [items, total] = await Promise.all([
-    News.find(filter).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).populate('author', 'name'),
+    News.find(filter).sort({ [by]: -1, createdAt: -1 }).skip((page - 1) * limit).limit(limit).populate('author', 'name'),
     News.countDocuments(filter)
   ]);
   res.json({ items, total, page: Number(page) });

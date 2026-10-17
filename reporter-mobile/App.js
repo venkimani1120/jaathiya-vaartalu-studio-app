@@ -1,5 +1,5 @@
 import React from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, Image, Text, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
@@ -11,6 +11,13 @@ import HomeScreen from './src/screens/HomeScreen';
 import NewsEditorScreen from './src/screens/NewsEditorScreen';
 
 const Stack = createNativeStackNavigator();
+// Logo mark beside the title on the home screen.
+const BrandTitle = ({ title }) => (
+  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+    <Image source={require('./assets/mark.png')} style={{ width: 30, height: 30, marginRight: 8, backgroundColor: '#fff', borderRadius: 6 }} resizeMode="contain" />
+    <Text style={{ color: '#fff', fontWeight: '700', fontSize: 18 }}>{title}</Text>
+  </View>
+);
 const header = { headerStyle: { backgroundColor: C.red }, headerTintColor: '#fff', headerTitleStyle: { fontWeight: '700' } };
 
 function Routes() {
@@ -25,7 +32,7 @@ function Routes() {
         </>
       ) : (
         <>
-          <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'జాతియ వార్తలు' }} />
+          <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'జాతియ వార్తలు', headerTitle: () => <BrandTitle title={'జాతియ వార్తలు'} /> }} />
           <Stack.Screen name="NewsEditor" component={NewsEditorScreen} options={({ route }) => ({ title: route.params?.id ? 'Edit news' : 'New news card' })} />
         </>
       )}

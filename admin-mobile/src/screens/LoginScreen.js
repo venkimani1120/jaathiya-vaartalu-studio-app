@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
+import { Image, KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
 import { useAuth } from '../auth';
 import { errMsg } from '../api';
 import { Button, Field, C } from '../ui';
@@ -16,7 +16,8 @@ export default function LoginScreen() {
   };
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: '#fff' }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={{ padding: 24, paddingTop: 90 }}>
+      <ScrollView contentContainerStyle={{ padding: 24, paddingTop: 60 }}>
+        <Image source={require('../../assets/logo.png')} style={{ width: 180, height: 155, alignSelf: 'center', marginBottom: 8 }} resizeMode="contain" accessibilityLabel="Jaathiya Vaartalu News" />
         <Text style={{ fontSize: 44, fontWeight: '900', color: C.red, textAlign: 'center' }}>జాతియ వార్తలు</Text>
         <View style={{ backgroundColor: C.red, padding: 6, marginTop: 8, marginBottom: 32 }}>
           <Text style={{ color: '#fff', textAlign: 'center', fontWeight: '700' }}>Editor / Admin desk</Text>
