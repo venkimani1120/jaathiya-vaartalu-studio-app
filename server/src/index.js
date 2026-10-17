@@ -15,7 +15,7 @@ app.use(helmet({
     scriptSrc: ["'self'", "'unsafe-inline'"],
     styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
     fontSrc: ["'self'", 'https://fonts.gstatic.com'],
-    imgSrc: ["'self'", 'data:', 'https://res.cloudinary.com'],
+    imgSrc: ["'self'", 'data:', 'blob:', 'https://res.cloudinary.com'],
     connectSrc: ["'self'"]
   } }
 }));
@@ -37,6 +37,12 @@ app.get('/logo.png', (_req, res) => res.sendFile(path.join(__dirname, '../public
 const studioFile = path.join(__dirname, '../public/epaper-studio.html');
 const studio = () => fs.readFileSync(studioFile, 'utf8').replace('<!--JV_CONFIG-->', '<script>window.JV_CONFIG={apiBase:"/api"}</script>');
 app.get(['/studio', '/e/:slug'], (_req, res) => res.type('html').send(studio()));
+
+// Reporter and Desk web apps, when built (npm run build:web). Both use hash routes, so static files are enough.
+for (const [route, dir] of [['/reporter', 'reporter-web'], ['/desk', 'admin-web']]) {
+  const dist = path.join(__dirname, '../..', dir, 'dist');
+  if (fs.existsSync(dist)) app.use(route, express.static(dist));
+}
 app.get('/', (_req, res) => res.redirect('/studio'));
 
 app.use((req, res) => res.status(404).json({ message: `Not found: ${req.method} ${req.path}` }));

@@ -6,7 +6,6 @@ import { StatusBar } from 'expo-status-bar';
 import { AuthProvider, useAuth } from './src/auth';
 import { C } from './src/ui';
 import LoginScreen from './src/screens/LoginScreen';
-import SignupScreen from './src/screens/SignupScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import NewsEditorScreen from './src/screens/NewsEditorScreen';
 import ReviewScreen from './src/screens/ReviewScreen';
@@ -22,13 +21,10 @@ function Routes() {
   return (
     <Stack.Navigator screenOptions={header}>
       {!user ? (
-        <>
-          <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
-          <Stack.Screen name="Signup" component={SignupScreen} options={{ title: 'Create account' }} />
-        </>
+        <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
       ) : (
         <>
-          <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'జాతియ వార్తలు' }} />
+          <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'జాతియ వార్తలు Desk' }} />
           <Stack.Screen name="NewsEditor" component={NewsEditorScreen} options={({ route }) => ({ title: route.params?.id ? 'Edit news' : 'New news card' })} />
           <Stack.Screen name="Review" component={ReviewScreen} options={{ title: 'Review news' }} />
           <Stack.Screen name="Epaper" component={EpaperScreen} options={{ title: 'E-paper' }} />

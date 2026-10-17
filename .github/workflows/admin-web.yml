@@ -1,0 +1,44 @@
+# Builds the Desk (Editor/Admin) web app (admin-web/) on GitHub Actions.
+# Runs on every push to main or feature/* that changes admin-web/, or manually:
+# GitHub repo -> Actions -> "Desk (Editor/Admin) web – build" -> Run workflow (optionally enter an API URL).
+# API URL used: the manual input, else the repository variable API_URL, else the same site that hosts the page
+# (right when the API server serves it at /desk/).
+# Download it: open the finished run -> Artifacts -> jv-desk-web (the static site; upload it to any web host).
+name: Desk (Editor/Admin) web – build
+on:
+  push:
+    branches: ["feature/**", "main"]
+    paths: ["admin-web/**", ".github/workflows/admin-web.yml"]
+  pull_request:
+    paths: ["admin-web/**", ".github/workflows/admin-web.yml"]
+  workflow_dispatch:
+    inputs:
+      api_url:
+        description: "API server URL the site should call (leave empty when the API server hosts the site)"
+        required: false
+        default: ""
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: admin-web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: admin-web/package-lock.json
+      - run: npm ci
+      - name: Build
+        env:
+          VITE_API_BASE: ${{ github.event.inputs.api_url || vars.API_URL }}
+        run: |
+          echo "API: ${VITE_API_BASE:-same site}"
+          npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jv-desk-web
+          path: admin-web/dist
