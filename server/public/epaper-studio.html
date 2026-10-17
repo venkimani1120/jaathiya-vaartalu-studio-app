@@ -180,7 +180,7 @@ select{border:1px solid var(--line);background:var(--panel2);padding:7px 8px;bor
 .reader .deck{border-radius:6px;margin-bottom:10px;text-align:left}
 .linkbox{display:flex;gap:6px}.linkbox input{flex:1}
 
-.viewer .pool,.viewer .pagebar,.viewer #newEd,.viewer #edSel,.viewer #publishBtn,.viewer #settingsBtn,.viewer #previewBtn,.viewer #saveBtn,.viewer #saveState,.viewer #logoutBtn,.viewer .addpage,.viewer .thumb .handle,.viewer .fab{display:none!important}
+.viewer .pool,.viewer .pagebar,.viewer #newEd,.viewer #delEd,.viewer #edSel,.viewer #publishBtn,.viewer #settingsBtn,.viewer #previewBtn,.viewer #saveBtn,.viewer #saveState,.viewer #logoutBtn,.viewer .addpage,.viewer .thumb .handle,.viewer .fab{display:none!important}
 .viewer .main,.previewing .main{grid-template-columns:1fr}
 .previewing .pool,.previewing .pagebar,.previewing .fab{display:none!important}
 
@@ -215,6 +215,7 @@ select{border:1px solid var(--line);background:var(--panel2);padding:7px 8px;bor
     <div class="brand"><span class="logo" aria-hidden="true">జా</span><div><b>E-paper Studio</b><small id="modeTag"></small></div></div>
     <select id="edSel" aria-label="Edition"></select>
     <button class="btn" id="newEd">New edition</button>
+    <button class="btn danger" id="delEd" title="Delete this edition">Delete</button>
     <span class="chip" id="status"></span>
     <span class="savestate" id="saveState" role="status" aria-live="polite"></span>
     <div class="spacer"></div>
@@ -896,6 +897,36 @@ function openNewEdition() {
     };
   });
 }
+// Deletes the open edition after confirming. Its stories stay in the pool; the share link stops working.
+function openDeleteEdition() {
+  const e = ed(); if (!e) return;
+  const pub = e.status === 'published';
+  openModal(`<h2>Delete this edition?</h2>
+    <p><b>${esc(e.title)} – ${e.editionDate}</b></p>
+    <p style="color:var(--muted)">The layout is removed for good. Its news stories are kept and can be used in other editions.${pub ? ' This edition is published, so its share link will stop working.' : ''}</p>
+    <div class="acts"><button class="btn" data-close>Cancel</button><button class="btn danger" id="deGo">Delete edition</button></div>`, sh => {
+    sh.querySelector('#deGo').onclick = async () => {
+      const btn = sh.querySelector('#deGo'); btn.disabled = true;
+      try {
+        if (MODE === 'api') await API.req('/epapers/' + e.id, { method: 'DELETE' });
+        unsaved.delete(e.id);
+        S.editions = S.editions.filter(x => x.id !== e.id);
+        if (!S.editions.length) {
+          let n = makeEdition('state', 'ఆంధ్రప్రదేశ్', todayISO());
+          if (MODE === 'api') n = mapEd((await API.req('/epapers', { method: 'POST', body: JSON.stringify(stripEd(n)) })).epaper);
+          S.editions.push(n);
+        }
+        S.cur = S.editions[0].id; S.pageIdx = 0; S.sel = null; S.preview = false;
+        if (MODE === 'api') {
+          // stories from a deleted published edition return to the pool
+          const pool = await API.req('/news?status=approved&limit=300'); mergeNews(pool.items);
+          await loadEditionNews();
+        }
+        closeModal(); filterForEdition(ed()); persistNow(); renderAll(); toast('Edition deleted');
+      } catch (err) { btn.disabled = false; toast(err.message); }
+    };
+  });
+}
 function openSettings() {
   const e = ed();
   openModal(`<h2>Masthead and issue details</h2>
@@ -1105,6 +1136,7 @@ $('#poolClose').onclick = () => $('#pool').classList.remove('open');
 $('#pickCancel').onclick = () => { S.sel = null; renderAll(); };
 $('#edSel').onchange = async e => { await saveAll(); S.cur = e.target.value; S.pageIdx = 0; filterForEdition(ed()); try { await loadEditionNews(); } catch (err) { toast(err.message); } renderAll(); };
 $('#newEd').onclick = openNewEdition;
+$('#delEd').onclick = openDeleteEdition;
 $('#settingsBtn').onclick = openSettings;
 $('#previewBtn').onclick = () => { S.preview = !S.preview; S.sel = null; renderAll(); $('#canvas').scrollTop = 0; };
 $('#printBtn').onclick = printEdition;

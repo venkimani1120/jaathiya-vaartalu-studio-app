@@ -57,8 +57,13 @@ router.post('/:id/unpublish', authorize('admin'), wrap(async (req, res) => {
   res.json({ epaper });
 }));
 
-router.delete('/:id', authorize('admin'), wrap(async (req, res) => {
-  await Epaper.deleteOne({ _id: req.params.id });
+// Editors and admins can delete any edition, draft or published. Its stories are kept; a story
+// that is no longer in any published edition goes back to 'approved' so it can be placed again.
+router.delete('/:id', wrap(async (req, res) => {
+  const epaper = await Epaper.findByIdAndDelete(req.params.id);
+  if (!epaper) throw new HttpError(404, 'Edition not found.');
+  await News.updateMany({ publishedIn: epaper._id }, { $pull: { publishedIn: epaper._id } });
+  await News.updateMany({ _id: { $in: epaper.newsIds() }, status: 'published', publishedIn: { $size: 0 } }, { $set: { status: 'approved' } });
   res.json({ ok: true });
 }));
 
