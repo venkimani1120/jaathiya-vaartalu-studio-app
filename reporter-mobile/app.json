@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "JV Reporter",
+    "slug": "jaathiya-vaarthalu-reporter",
+    "version": "1.0.0",
+    "orientation": "default",
+    "userInterfaceStyle": "light",
+    "android": {
+      "package": "com.jaathiyavaarthalu.reporter",
+      "permissions": [
+        "CAMERA",
+        "READ_MEDIA_IMAGES"
+      ]
+    },
+    "ios": {
+      "bundleIdentifier": "com.jaathiyavaarthalu.reporter",
+      "supportsTablet": true
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Pick photos for news cards.",
+          "cameraPermission": "Take photos for news cards."
+        }
+      ],
+      "expo-secure-store",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ]
+    ]
+  }
+}

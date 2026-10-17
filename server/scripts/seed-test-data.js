@@ -128,7 +128,7 @@ const pickLoc = (stateIdx, i) => {
       const imgCount = (i + r) % 4; // 0–3 photos per card
       docs.push({
         ...s, ...loc, state: loc.district ? STATE_OF[loc.district] : Object.keys(STATES)[r === 2 ? 1 : 0],
-        dateline: `${loc.constituency || loc.district || 'అమరావతి'}, ${new Date().toLocaleDateString('te-IN', { day: 'numeric', month: 'long' })}`,
+        dateline: loc.constituency || loc.district || 'అమరావతి', // place only: the studio adds the date
         images: Array.from({ length: imgCount }, (_, k) => photos[(n + k) % photos.length]),
         status, author: rep._id,
         ...(status === 'approved' || status === 'rejected' ? { reviewedBy: editor._id, reviewedAt: new Date() } : {}),

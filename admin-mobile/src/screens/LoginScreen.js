@@ -4,7 +4,7 @@ import { useAuth } from '../auth';
 import { errMsg } from '../api';
 import { Button, Field, C } from '../ui';
 
-export default function LoginScreen({ navigation }) {
+export default function LoginScreen() {
   const { signIn } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -19,13 +19,13 @@ export default function LoginScreen({ navigation }) {
       <ScrollView contentContainerStyle={{ padding: 24, paddingTop: 90 }}>
         <Text style={{ fontSize: 44, fontWeight: '900', color: C.red, textAlign: 'center' }}>జాతియ వార్తలు</Text>
         <View style={{ backgroundColor: C.red, padding: 6, marginTop: 8, marginBottom: 32 }}>
-          <Text style={{ color: '#fff', textAlign: 'center', fontWeight: '700' }}>News desk</Text>
+          <Text style={{ color: '#fff', textAlign: 'center', fontWeight: '700' }}>Editor / Admin desk</Text>
         </View>
         <Field label="Email" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" autoComplete="email" />
         <Field label="Password" value={password} onChangeText={setPassword} secureTextEntry autoComplete="password" />
         {error ? <Text style={{ color: C.warn, marginBottom: 12 }}>{error}</Text> : null}
         <Button title={busy ? 'Signing in…' : 'Sign in'} onPress={go} disabled={busy || !email || !password} />
-        <Button title="Create a reporter account" kind="secondary" style={{ marginTop: 12 }} onPress={() => navigation.navigate('Signup')} />
+        <Text style={{ color: C.muted, marginTop: 16, textAlign: 'center' }}>New reporters sign up in the Reporter app. An admin can then make them an editor.</Text>
       </ScrollView>
     </KeyboardAvoidingView>
   );

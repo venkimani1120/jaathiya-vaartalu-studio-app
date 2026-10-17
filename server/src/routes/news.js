@@ -33,10 +33,10 @@ router.get('/quota/today', wrap(async (req, res) => {
 
 // Reporters see only their own cards. Editors/Admins see everything, filterable by constituency etc.
 router.get('/', wrap(async (req, res) => {
-  const { status, section, state, district, constituency, q, page = 1 } = req.query;
+  const { status, section, state, district, constituency, author, q, page = 1 } = req.query;
   const limit = Math.min(Number(req.query.limit) || 30, 300);
   const filter = {};
-  if (!isDesk(req.user)) filter.author = req.user.id;
+  if (!isDesk(req.user) || author === 'me') filter.author = req.user.id;
   if (status) filter.status = { $in: String(status).split(',') };
   if (section) filter.section = section;
   if (state) filter.state = state;

@@ -23,6 +23,7 @@ api.interceptors.request.use(async cfg => {
 });
 
 // On 401, try one silent refresh (shared across parallel requests), then retry.
+const NO_REFRESH = ['/auth/login', '/auth/signup', '/auth/refresh'];
 let refreshing = null;
 async function refresh() {
   const rt = await SecureStore.getItemAsync('refresh');
@@ -35,7 +36,7 @@ async function refresh() {
 }
 api.interceptors.response.use(r => r, async err => {
   const orig = err.config || {};
-  if (err.response?.status === 401 && !orig._retry && !String(orig.url).startsWith('/auth/')) {
+  if (err.response?.status === 401 && !orig._retry && !NO_REFRESH.includes(orig.url)) {
     orig._retry = true;
     refreshing = refreshing || refresh().finally(() => { refreshing = null; });
     if (await refreshing) return api(orig);
