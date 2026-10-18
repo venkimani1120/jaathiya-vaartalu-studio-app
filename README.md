@@ -6,14 +6,14 @@ Three apps, one backend:
 |---|---|---|---|
 | `reporter-mobile/` | Reporters | Sign up, log in, upload and edit own news cards (photos from gallery or camera), see review notes and daily quota | React Native (Expo) – APK `JV Reporter` |
 | `admin-mobile/` | Editors, Admins | Review queue, approve / send back, edit any card, upload news, e-paper studio, team accounts (admin) | React Native (Expo) – APK `JV Desk` |
-| `web/` | Everyone | One web app for every role. After sign-in it shows each person their own pages: reporters get My news, Approved (last 30 days) and the news card editor; editors and admins get the review queue, all news with filters and paging, e-paper editions and a link to the layout studio; admins also get Team accounts. Everyone gets My profile (photo, name, phone) and Change password | React + Vite, static site |
+| `jaathiya-vaartalu-web/` | Everyone | One web app for every role. After sign-in it shows each person their own pages: reporters get My news, Approved (last 30 days) and the news card editor; editors and admins get the review queue, all news with filters and paging, e-paper editions and a link to the layout studio; admins also get Team accounts. Everyone gets My profile (photo, name, phone) and Change password | React + Vite, static site |
 
 Shared by all of them:
 
 | Part | What it does | Tech |
 |---|---|---|
-| `server/` | REST API, JWT auth with roles, 50-cards-per-day limit, review workflow, e-paper storage and publishing. Also hosts the web app at `/app/` when it is built (the old `/reporter/` and `/desk/` addresses forward there) | Node.js, Express, MongoDB |
-| `server/public/epaper-studio.html` | Drag-and-drop page layout (matches the printed paper), merge pages, publish, share link, save as PDF. Also the public reader at `/e/<link>` | Plain HTML/JS, served by the API |
+| `jaathiya-vaartalu-backend/` | REST API, JWT auth with roles, 50-cards-per-day limit, review workflow, e-paper storage and publishing. Also hosts the web app at `/app/` when it is built (the old `/reporter/` and `/desk/` addresses forward there) | Node.js, Express, MongoDB |
+| `jaathiya-vaartalu-backend/public/epaper-studio.html` | Drag-and-drop page layout (matches the printed paper), merge pages, publish, share link, save as PDF. Also the public reader at `/e/<link>` | Plain HTML/JS, served by the API |
 | `shared/` | States, districts and constituencies, copied into every project | Python scripts |
 
 Each mobile app only lets in its own roles: a reporter signing in to the Desk app, or an editor signing in to the Reporter app, is told to use the other app. The web app lets everyone in and picks the pages from the signed-in person's role. The server still enforces every rule on its own.
@@ -79,14 +79,14 @@ The apps use a State → District → Constituency picker for sign-up, news card
 
 ```bash
 # 1. API
-cd server
+cd jaathiya-vaartalu-backend
 cp .env.example .env          # fill in MONGODB_URI, JWT secrets, CLOUDINARY_URL
 npm install
 npm run create-admin          # creates the first admin from ADMIN_EMAIL / ADMIN_PASSWORD
 npm run dev                   # http://localhost:4000/studio
 
 # 2. Web app (in its own terminal; it calls the local API through the Vite proxy)
-cd web && npm install && npm run dev    # http://localhost:5173
+cd jaathiya-vaartalu-web && npm install && npm run dev    # http://localhost:5173
 
 # 3. Mobile apps (same steps for admin-mobile)
 cd reporter-mobile
@@ -105,13 +105,13 @@ Each project has its own workflow in `.github/workflows/`. It runs on a push to 
 |---|---|---|
 | `reporter-mobile-apk.yml` – Reporter mobile – Android APK | `reporter-mobile/` | `jv-reporter-apk` (app-release.apk) |
 | `admin-mobile-apk.yml` – Desk (Editor/Admin) mobile – Android APK | `admin-mobile/` | `jv-desk-apk` (app-release.apk) |
-| `web.yml` – Web app – build | `web/` | `jv-web` (static site) |
+| `web.yml` – Web app – build | `jaathiya-vaartalu-web/` | `jv-web` (static site) |
 
 API URL: a manual run can take one as input. Otherwise the workflows use the repository variable `API_URL` (Settings → Secrets and variables → Actions → Variables) if you set it, else the app's own default (`src/config.js` for mobile; the same site for web).
 
 ## Hosting the web app
 
-**Easiest: on the API server.** Build it once on the server (`cd server && npm run build:web`), or add it to the Render build command: `npm install && npm run build:web`. The API then serves it at `https://<your-api>/app/`. Same site, so no CORS setup, and the **Open layout studio** link opens the studio already signed in.
+**Easiest: on the API server.** Build it once on the server (`cd jaathiya-vaartalu-backend && npm run build:web`), or add it to the Render build command: `npm install && npm run build:web`. The API then serves it at `https://<your-api>/app/`. Same site, so no CORS setup, and the **Open layout studio** link opens the studio already signed in.
 
 **Elsewhere** (Netlify, Cloudflare Pages, GitHub Pages, …): build with `VITE_API_BASE=https://<your-api> npm run build` (or set the `API_URL` variable and download the workflow artifact), upload `dist/`, and add the site's address to `CORS_ORIGINS` in the server's `.env`, e.g. `CORS_ORIGINS=https://news.example.com`. The studio will ask editors to sign in once more, since it is on another site.
 

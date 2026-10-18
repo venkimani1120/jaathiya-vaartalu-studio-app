@@ -40,7 +40,7 @@ app.get(['/studio', '/e/:slug'], (_req, res) => res.type('html').send(studio()))
 
 // The web app for every role, when built (npm run build:web). It uses hash routes, so static files are enough.
 // The old Reporter (/reporter) and Desk (/desk) addresses forward to it so saved links keep working.
-const webDist = path.join(__dirname, '../../web/dist');
+const webDist = path.join(__dirname, '../../jaathiya-vaartalu-web/dist');
 if (fs.existsSync(webDist)) app.use('/app', express.static(webDist));
 app.get(/^\/(reporter|desk)(\/.*)?$/, (_req, res) => res.redirect(301, '/app/'));
 app.get('/', (_req, res) => res.redirect('/studio'));

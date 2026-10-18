@@ -3,10 +3,10 @@
 import json, re, shutil, pathlib
 root = pathlib.Path(__file__).resolve().parent.parent
 src = root / "shared" / "locations.json"
-shutil.copy(src, root / "server/src/config/locations.json")
+shutil.copy(src, root / "jaathiya-vaartalu-backend/src/config/locations.json")
 for app in ["reporter-mobile", "admin-mobile", "reporter-web", "admin-web"]:
     shutil.copy(src, root / app / "src/locations.json")
-studio = root / "server/public/epaper-studio.html"
+studio = root / "jaathiya-vaartalu-backend/public/epaper-studio.html"
 data = json.dumps(json.load(open(src)), ensure_ascii=False, separators=(",", ":"))
 html = studio.read_text()
 html, n = re.subn(r"/\*LOCATIONS\*/.*?/\*END_LOCATIONS\*/", lambda m: f"/*LOCATIONS*/{data}/*END_LOCATIONS*/", html, flags=re.S)
