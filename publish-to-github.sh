@@ -33,7 +33,7 @@ git commit -m "Reporter and Desk apps (mobile + web), API, e-paper studio, APK b
 git push -u origin "$BRANCH"
 
 rm -rf apk
-for pair in "reporter-mobile-apk.yml:jv-reporter-apk:reporter" "admin-mobile-apk.yml:jv-desk-apk:desk"; do
+for pair in "jaathiya-vaartalu-reporter-mobile-apk.yml:jv-reporter-apk:reporter" "jaathiya-vaartalu-admin-mobile-apk.yml:jv-desk-apk:desk"; do
   IFS=: read -r WF ART DIR <<< "$pair"
   echo "Waiting for $WF to start..."
   RUN_ID=""

@@ -7,7 +7,7 @@ name: Reporter mobile – Android APK
 on:
   push:
     branches: ["feature/**", "main"]
-    paths: ["jaathiya-vaartalu-reporter-mobile/**", ".github/workflows/reporter-mobile-apk.yml"]
+    paths: ["jaathiya-vaartalu-reporter-mobile/**", ".github/workflows/jaathiya-vaartalu-reporter-mobile-apk.yml"]
   workflow_dispatch:
     inputs:
       api_url:

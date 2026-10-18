@@ -7,7 +7,7 @@ name: Desk (Editor/Admin) mobile – Android APK
 on:
   push:
     branches: ["feature/**", "main"]
-    paths: ["jaathiya-vaartalu-admin-mobile/**", ".github/workflows/admin-mobile-apk.yml"]
+    paths: ["jaathiya-vaartalu-admin-mobile/**", ".github/workflows/jaathiya-vaartalu-admin-mobile-apk.yml"]
   workflow_dispatch:
     inputs:
       api_url:
