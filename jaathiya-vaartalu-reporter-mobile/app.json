@@ -1,0 +1,48 @@
+{
+  "expo": {
+    "name": "JV Reporter",
+    "slug": "jaathiya-vaartalu-reporter",
+    "version": "1.0.0",
+    "orientation": "default",
+    "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FFFFFF"
+    },
+    "android": {
+      "package": "com.jaathiyavaartalu.reporter",
+      "permissions": [
+        "CAMERA",
+        "READ_MEDIA_IMAGES"
+      ],
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FFFFFF"
+      }
+    },
+    "ios": {
+      "bundleIdentifier": "com.jaathiyavaartalu.reporter",
+      "supportsTablet": true
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Pick photos for news cards.",
+          "cameraPermission": "Take photos for news cards."
+        }
+      ],
+      "expo-secure-store",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ]
+    ]
+  }
+}
