@@ -105,7 +105,7 @@ Each project has its own workflow in `.github/workflows/`. It runs on a push to 
 |---|---|---|
 | `jaathiya-vaartalu-reporter-mobile-apk.yml` – Reporter mobile – Android APK | `jaathiya-vaartalu-reporter-mobile/` | `jv-reporter-apk` (app-release.apk) |
 | `jaathiya-vaartalu-admin-mobile-apk.yml` – Desk (Editor/Admin) mobile – Android APK | `jaathiya-vaartalu-admin-mobile/` | `jv-desk-apk` (app-release.apk) |
-| `web.yml` – Web app – build | `jaathiya-vaartalu-web/` | `jv-web` (static site) |
+| `jaathiya-vaartalu-web.yml` – Web app – build | `jaathiya-vaartalu-web/` | `jv-web` (static site) |
 
 API URL: a manual run can take one as input. Otherwise the workflows use the repository variable `API_URL` (Settings → Secrets and variables → Actions → Variables) if you set it, else the app's own default (`src/config.js` for mobile; the same site for web).
 

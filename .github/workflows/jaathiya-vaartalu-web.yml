@@ -8,9 +8,9 @@ name: Web app – build
 on:
   push:
     branches: ["feature/**", "main"]
-    paths: ["jaathiya-vaartalu-web/**", ".github/workflows/web.yml"]
+    paths: ["jaathiya-vaartalu-web/**", ".github/workflows/jaathiya-vaartalu-web.yml"]
   pull_request:
-    paths: ["jaathiya-vaartalu-web/**", ".github/workflows/web.yml"]
+    paths: ["jaathiya-vaartalu-web/**", ".github/workflows/jaathiya-vaartalu-web.yml"]
   workflow_dispatch:
     inputs:
       api_url:
