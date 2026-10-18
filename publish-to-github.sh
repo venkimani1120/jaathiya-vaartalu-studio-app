@@ -16,7 +16,7 @@ command -v gh  >/dev/null || { echo "Install GitHub CLI first: https://cli.githu
 gh auth status >/dev/null 2>&1 || gh auth login
 
 if [ -n "$API_URL" ]; then
-  for app in reporter-mobile admin-mobile; do echo "export const API_BASE = '$API_URL';" > $app/src/config.js; done
+  for app in jaathiya-vaartalu-reporter-mobile jaathiya-vaartalu-admin-mobile; do echo "export const API_BASE = '$API_URL';" > $app/src/config.js; done
   echo "Apps will use API: $API_URL"
 fi
 

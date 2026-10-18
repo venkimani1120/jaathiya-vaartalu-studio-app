@@ -4,8 +4,8 @@ Three apps, one backend:
 
 | Project | Who uses it | What it does | Tech |
 |---|---|---|---|
-| `reporter-mobile/` | Reporters | Sign up, log in, upload and edit own news cards (photos from gallery or camera), see review notes and daily quota | React Native (Expo) – APK `JV Reporter` |
-| `admin-mobile/` | Editors, Admins | Review queue, approve / send back, edit any card, upload news, e-paper studio, team accounts (admin) | React Native (Expo) – APK `JV Desk` |
+| `jaathiya-vaartalu-reporter-mobile/` | Reporters | Sign up, log in, upload and edit own news cards (photos from gallery or camera), see review notes and daily quota | React Native (Expo) – APK `JV Reporter` |
+| `jaathiya-vaartalu-admin-mobile/` | Editors, Admins | Review queue, approve / send back, edit any card, upload news, e-paper studio, team accounts (admin) | React Native (Expo) – APK `JV Desk` |
 | `jaathiya-vaartalu-web/` | Everyone | One web app for every role. After sign-in it shows each person their own pages: reporters get My news, Approved (last 30 days) and the news card editor; editors and admins get the review queue, all news with filters and paging, e-paper editions and a link to the layout studio; admins also get Team accounts. Everyone gets My profile (photo, name, phone) and Change password | React + Vite, static site |
 
 Shared by all of them:
@@ -88,14 +88,14 @@ npm run dev                   # http://localhost:4000/studio
 # 2. Web app (in its own terminal; it calls the local API through the Vite proxy)
 cd jaathiya-vaartalu-web && npm install && npm run dev    # http://localhost:5173
 
-# 3. Mobile apps (same steps for admin-mobile)
-cd reporter-mobile
+# 3. Mobile apps (same steps for jaathiya-vaartalu-admin-mobile)
+cd jaathiya-vaartalu-reporter-mobile
 ./setup.sh                    # creates jv-mobile/ with matching Expo versions
 # edit jv-mobile/src/config.js -> API_BASE
 cd jv-mobile && npx expo start   # scan the QR with Expo Go on Android
 ```
 
-Edit the code in `reporter-mobile/src` (or `admin-mobile/src`), not in `jv-mobile/`; run `./setup.sh` again to copy your changes in.
+Edit the code in `jaathiya-vaartalu-reporter-mobile/src` (or `jaathiya-vaartalu-admin-mobile/src`), not in `jv-mobile/`; run `./setup.sh` again to copy your changes in.
 
 ## GitHub workflows
 
@@ -103,8 +103,8 @@ Each project has its own workflow in `.github/workflows/`. It runs on a push to 
 
 | Workflow | Builds | Download from the run's Artifacts |
 |---|---|---|
-| `reporter-mobile-apk.yml` – Reporter mobile – Android APK | `reporter-mobile/` | `jv-reporter-apk` (app-release.apk) |
-| `admin-mobile-apk.yml` – Desk (Editor/Admin) mobile – Android APK | `admin-mobile/` | `jv-desk-apk` (app-release.apk) |
+| `reporter-mobile-apk.yml` – Reporter mobile – Android APK | `jaathiya-vaartalu-reporter-mobile/` | `jv-reporter-apk` (app-release.apk) |
+| `admin-mobile-apk.yml` – Desk (Editor/Admin) mobile – Android APK | `jaathiya-vaartalu-admin-mobile/` | `jv-desk-apk` (app-release.apk) |
 | `web.yml` – Web app – build | `jaathiya-vaartalu-web/` | `jv-web` (static site) |
 
 API URL: a manual run can take one as input. Otherwise the workflows use the repository variable `API_URL` (Settings → Secrets and variables → Actions → Variables) if you set it, else the app's own default (`src/config.js` for mobile; the same site for web).
@@ -119,20 +119,20 @@ API URL: a manual run can take one as input. Otherwise the workflows use the rep
 
 **Fastest:** run `./publish-to-github.sh` (optionally with your API URL). It commits everything to `feature/news-desk-epaper`, pushes, waits for both free GitHub builds and saves the APKs to `apk/reporter/app-release.apk` and `apk/desk/app-release.apk`.
 
-Or pick one of these. All three are free. Examples use `reporter-mobile`; swap in `admin-mobile` for the Desk app.
+Or pick one of these. All three are free. Examples use `jaathiya-vaartalu-reporter-mobile`; swap in `jaathiya-vaartalu-admin-mobile` for the Desk app.
 
 **A. GitHub Actions (no tools on your PC).** Push this folder to a GitHub repo. Open **Actions → Reporter mobile – Android APK** (or **Desk (Editor/Admin) mobile – Android APK**) **→ Run workflow**, enter your API URL, and wait about 15–25 minutes. Download the artifact from the finished run, unzip it, and install `app-release.apk` on the phone (allow "Install unknown apps"). Public repos build free; private repos use the free monthly minutes.
 
 **B. Expo EAS cloud build.** Needs a free Expo account.
 ```bash
-cd reporter-mobile && ./setup.sh && cd jv-mobile
+cd jaathiya-vaartalu-reporter-mobile && ./setup.sh && cd jv-mobile
 npm install -g eas-cli && eas login
 eas build -p android --profile preview      # prints a download link / QR for the APK
 ```
 
 **C. Build on your own PC.** Needs Android Studio (SDK) and JDK 17.
 ```bash
-cd reporter-mobile && ./setup.sh && cd jv-mobile
+cd jaathiya-vaartalu-reporter-mobile && ./setup.sh && cd jv-mobile
 npx expo prebuild --platform android
 cd android && ./gradlew assembleRelease
 # APK: android/app/build/outputs/apk/release/app-release.apk
