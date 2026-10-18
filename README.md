@@ -1,4 +1,4 @@
-# Jaathiya Vaarthalu – News Desk apps + E-paper Studio
+# Jaathiya Vaartalu – News Desk apps + E-paper Studio
 
 Three apps, one backend:
 
@@ -18,7 +18,7 @@ Shared by all of them:
 
 Each mobile app only lets in its own roles: a reporter signing in to the Desk app, or an editor signing in to the Reporter app, is told to use the other app. The web app lets everyone in and picks the pages from the signed-in person's role. The server still enforces every rule on its own.
 
-The two mobile apps have different package ids (`com.jaathiyavaarthalu.reporter`, `com.jaathiyavaarthalu.desk`), so both can be installed on one phone. The old single app (`com.jaathiyavaarthalu.newsdesk`) is not updated by them; uninstall it once the team has moved over.
+The two mobile apps have different package ids (`com.jaathiyavaartalu.reporter`, `com.jaathiyavaartalu.desk`), so both can be installed on one phone. Builds made before the rename used `com.jaathiyavaarthalu.reporter`, `com.jaathiyavaarthalu.desk` and, for the old single app, `com.jaathiyavaarthalu.newsdesk`. The new builds do not update those apps; uninstall them once the team has moved over.
 
 ## Roles and rules (enforced on the server)
 

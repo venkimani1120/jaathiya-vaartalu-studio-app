@@ -7,7 +7,7 @@ export const useAuth = () => useContext(Ctx);
 
 // This app is for editors and admins. Reporters use the Reporter app.
 const ALLOWED_ROLES = ['editor', 'admin'];
-const WRONG_APP = 'This app is for editors and admins. Reporters, please use the Jaathiya Vaarthalu Reporter app.';
+const WRONG_APP = 'This app is for editors and admins. Reporters, please use the Jaathiya Vaartalu Reporter app.';
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);

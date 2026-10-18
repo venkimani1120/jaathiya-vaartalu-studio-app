@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "JV Desk",
-    "slug": "jaathiya-vaarthalu-desk",
+    "slug": "jaathiya-vaartalu-desk",
     "version": "1.0.0",
     "orientation": "default",
     "userInterfaceStyle": "light",
@@ -12,7 +12,7 @@
       "backgroundColor": "#FFFFFF"
     },
     "android": {
-      "package": "com.jaathiyavaarthalu.desk",
+      "package": "com.jaathiyavaartalu.desk",
       "permissions": [
         "CAMERA",
         "READ_MEDIA_IMAGES"
@@ -23,7 +23,7 @@
       }
     },
     "ios": {
-      "bundleIdentifier": "com.jaathiyavaarthalu.desk",
+      "bundleIdentifier": "com.jaathiyavaartalu.desk",
       "supportsTablet": true
     },
     "plugins": [

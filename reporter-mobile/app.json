@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "JV Reporter",
-    "slug": "jaathiya-vaarthalu-reporter",
+    "slug": "jaathiya-vaartalu-reporter",
     "version": "1.0.0",
     "orientation": "default",
     "userInterfaceStyle": "light",
@@ -12,7 +12,7 @@
       "backgroundColor": "#FFFFFF"
     },
     "android": {
-      "package": "com.jaathiyavaarthalu.reporter",
+      "package": "com.jaathiyavaartalu.reporter",
       "permissions": [
         "CAMERA",
         "READ_MEDIA_IMAGES"
@@ -23,7 +23,7 @@
       }
     },
     "ios": {
-      "bundleIdentifier": "com.jaathiyavaarthalu.reporter",
+      "bundleIdentifier": "com.jaathiyavaartalu.reporter",
       "supportsTablet": true
     },
     "plugins": [
