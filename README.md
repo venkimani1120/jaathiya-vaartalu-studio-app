@@ -148,7 +148,7 @@ Free tiers change often, so confirm the current limits on each provider's pricin
 |---|---|---|
 | Database | **MongoDB Atlas M0** | 512 MB shared cluster; plenty for text. Keep photos out of the DB. |
 | Photos | **Cloudinary free plan** | Auto-resizes and compresses; the API already uploads there when `CLOUDINARY_URL` is set. Alternatives: Supabase Storage, Cloudflare R2 free tier. |
-| API + studio + reader + web apps | **Render free web service** | Deploy from GitHub, root dir `server`, build `npm install && npm run build:web`, start `npm start`. Sleeps after ~15 min idle; first request then takes ~30–60 s. Alternatives: Google Cloud Run free tier (no sleep cost issues, needs billing card), Fly.io/Railway (paid now). |
+| API + studio + reader + web apps | **Render free web service** | Deploy from GitHub, root dir `jaathiya-vaartalu-backend`, build `npm install && npm run build:web`, start `npm start`. Sleeps after ~15 min idle; first request then takes ~30–60 s. Alternatives: Google Cloud Run free tier (no sleep cost issues, needs billing card), Fly.io/Railway (paid now). |
 | Android build | **Expo EAS Build free tier** | `npx eas build -p android --profile preview` (in each app's `jv-mobile/`) gives an APK you can share directly. Free builds are queued and limited per month; or build locally with `npx expo run:android`. |
 | Distribution | APK link / WhatsApp | Free. Google Play needs a one-time US$25 developer fee; Apple App Store needs US$99/year. |
 | Public e-paper site | Served by the API at `/e/<link>` | Optional: put a custom domain in front with Cloudflare (free). |
