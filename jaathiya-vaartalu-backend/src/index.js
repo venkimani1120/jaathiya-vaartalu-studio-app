@@ -5,6 +5,7 @@ const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
 const connectDB = require('./config/db');
+const backfillNewsSource = require('./utils/backfill');
 
 const app = express();
 app.set('trust proxy', 1); // behind Render/Koyeb proxy, needed for rate limiting
@@ -55,5 +56,8 @@ app.use((err, _req, res, _next) => {
 });
 
 const port = process.env.PORT || 4000;
-connectDB().then(() => app.listen(port, () => console.log(`API on :${port}`)))
+connectDB().then(() => {
+  app.listen(port, () => console.log(`API on :${port}`));
+  backfillNewsSource().catch(e => console.error('News source backfill failed:', e.message));
+})
   .catch(e => { console.error('Startup failed:', e.message); process.exit(1); });

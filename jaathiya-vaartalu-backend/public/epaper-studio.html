@@ -232,6 +232,7 @@ select{border:1px solid var(--line);background:var(--panel2);padding:7px 8px;bor
       <div class="pool-head"><b>Approved news</b><span id="poolCount"></span><button class="x" id="poolClose" aria-label="Close">✕</button></div>
       <input id="q" type="search" placeholder="Search headlines">
       <div class="chips" id="secChips"></div>
+      <div class="chips" id="srcChips" aria-label="Source"></div>
       <div class="prow"><select id="stateSel" aria-label="State"></select><select id="distSel" aria-label="District"></select></div>
       <div class="prow"><select id="conSel" aria-label="Constituency"></select></div>
       <div class="list" id="poolList" data-drop="pool"></div>
@@ -279,6 +280,7 @@ const STATE_OF = Object.fromEntries(Object.entries(STATES).flatMap(([st, ds]) =>
 const SECTIONS = { state:'రాష్ట్రం', district:'జిల్లా', constituency:'నియోజకవర్గం', sports:'క్రీడలు', business:'వాణిజ్యం' };
 const MONTHS = ['జనవరి','ఫిబ్రవరి','మార్చి','ఏప్రిల్','మే','జూన్','జూలై','ఆగస్టు','సెప్టెంబరు','అక్టోబరు','నవంబరు','డిసెంబరు'];
 const DAYS = ['ఆదివారం','సోమవారం','మంగళవారం','బుధవారం','గురువారం','శుక్రవారం','శనివారం'];
+const SOURCES = { reporter:'Reporter', editor:'Editor', admin:'Admin', epaper:'E-paper' };
 const KIND_LABEL = { lead:'Lead story', story:'Story', brief:'Brief' };
 const STYLES = ['red','blue','boxed'];
 
@@ -403,7 +405,7 @@ document.getElementById('brandLogo').src = MARK; document.getElementById('favico
 
 /* ---------- state ---------- */
 const S = { news: [], editions: [], cur: null, pageIdx: 0, sel: null, preview: false, viewer: false,
-  filter: { q: '', section: 'all', state: 'all', district: 'all', constituency: 'all' } };
+  filter: { q: '', section: 'all', source: 'all', state: 'all', district: 'all', constituency: 'all' } };
 const byId = id => S.news.find(n => n.id === id);
 const ed = () => S.editions.find(e => e.id === S.cur);
 const narrow = () => window.matchMedia('(max-width:860px)').matches;
@@ -447,7 +449,7 @@ const API = {
   }
 };
 const mapNews = n => ({ id: n._id || n.id, section: n.section, state: n.state || STATE_OF[n.district], district: n.district, constituency: n.constituency, dateline: n.dateline,
-  title: n.title, highlights: n.highlights || [], body: n.body, images: n.images || [], reporter: (n.author && n.author.name) || n.reporter || '' });
+  title: n.title, highlights: n.highlights || [], body: n.body, images: n.images || [], reporter: (n.author && n.author.name) || n.reporter || '', source: n.source || 'reporter' });
 const mapEd = e => ({ ...e, id: e._id || e.id, editionDate: String(e.editionDate).slice(0, 10), ad: e.ad || { ...BRAND.ad },
   pages: (e.pages || []).map(p => ({ ...p, slots: p.slots || {}, styles: p.styles || {} })) });
 function mergeNews(list) { list.map(mapNews).forEach(n => { if (!byId(n.id)) S.news.push(n); }); }
@@ -562,7 +564,8 @@ function autoFill(silent) {
 }
 function pageFilter() {
   const e = ed(); const p = e.pages[S.pageIdx];
-  if (silentFilterFromPage(p)) return silentFilterFromPage(p);
+  // Sports and business pages pick their own section, but keep the chosen source.
+  if (silentFilterFromPage(p)) return { ...silentFilterFromPage(p), source: S.filter.source };
   return S.filter;
 }
 function silentFilterFromPage(p) {
@@ -612,13 +615,14 @@ function filteredNews(f = S.filter) {
   const q = (f.q || '').trim().toLowerCase();
   return S.news.filter(n =>
     (!f.section || f.section === 'all' || n.section === f.section) &&
+    (!f.source || f.source === 'all' || n.source === f.source) &&
     (!f.state || f.state === 'all' || (n.state || STATE_OF[n.district]) === f.state) &&
     (!f.district || f.district === 'all' || n.district === f.district) &&
     (!f.constituency || f.constituency === 'all' || n.constituency === f.constituency) &&
     (!q || n.title.toLowerCase().includes(q) || (n.body || '').toLowerCase().includes(q)));
 }
 function filterForEdition(e) {
-  const f = { q: '', section: 'all', state: 'all', district: 'all', constituency: 'all' };
+  const f = { q: '', section: 'all', source: S.filter.source || 'all', state: 'all', district: 'all', constituency: 'all' };
   if (e.type === 'state' && STATES[e.key]) f.state = e.key;
   if (e.type === 'district') { f.district = e.key; f.state = STATE_OF[e.key] || 'all'; }
   if (e.type === 'constituency') { f.constituency = e.key; f.district = Object.keys(DISTRICTS).find(d => DISTRICTS[d].includes(e.key)) || 'all'; f.state = STATE_OF[f.district] || 'all'; }
@@ -777,6 +781,8 @@ function renderPool() {
   $('#poolCount').textContent = `${list.filter(n => !placed[n.id]).length} unplaced`;
   $('#poolFab').textContent = `News (${S.news.filter(n => !placed[n.id]).length})`;
   $('#secChips').innerHTML = [['all', 'అన్నీ'], ...Object.entries(SECTIONS)].map(([k, v]) => `<button data-sec="${k}" aria-pressed="${f.section === k}">${v}</button>`).join('');
+  const nSrc = k => S.news.filter(n => !placed[n.id] && (k === 'all' || n.source === k)).length;
+  $('#srcChips').innerHTML = [['all', 'All sources'], ...Object.entries(SOURCES)].map(([k, v]) => `<button data-src="${k}" aria-pressed="${f.source === k}">${v} ${nSrc(k)}</button>`).join('');
   const opt = (v, cur) => `<option${v === cur ? ' selected' : ''}>${esc(v)}</option>`;
   $('#stateSel').innerHTML = `<option value="all">Both states</option>` + Object.keys(STATES).map(st => opt(st, f.state)).join('');
   const dists = f.state !== 'all' ? { [f.state]: STATES[f.state] } : STATES;
@@ -790,7 +796,7 @@ function renderPool() {
     return `<article class="card${S.sel === n.id ? ' sel' : ''}${pl ? ' placed' : ''}" data-card="${esc(n.id)}" tabindex="0">
       <span class="handle" data-handle aria-hidden="true">⠿</span>
       ${n.images && n.images[0] ? `<img src="${esc(n.images[0])}" alt="">` : '<div class="noimg">✎</div>'}
-      <div><h4>${esc(n.title)}</h4><small>${esc([n.constituency, n.district].filter(Boolean).join(', ') || SECTIONS[n.section] || '')}, ${esc(n.reporter || '')}</small>${pl ? `<em>On page ${pl.page + 1}</em>` : ''}</div></article>`;
+      <div><h4>${esc(n.title)}</h4><small>${esc([n.constituency, n.district].filter(Boolean).join(', ') || SECTIONS[n.section] || '')}, ${esc(n.reporter || '')} · ${esc(SOURCES[n.source] || '')}</small>${pl ? `<em>On page ${pl.page + 1}</em>` : ''}</div></article>`;
   }).join('') : `<div class="empty-pool">No approved news matches these filters.</div>`;
 }
 function renderAll() { renderTop(); renderStrip(); if (!S.viewer) { renderPageBar(); renderPool(); } renderCanvas(); renderPick(); }
@@ -1130,6 +1136,7 @@ $('#pagebar').addEventListener('click', e => {
   if (e.target.id === 'delPageBtn') deletePage(S.pageIdx);
 });
 $('#secChips').addEventListener('click', e => { const b = e.target.closest('[data-sec]'); if (b) { S.filter.section = b.dataset.sec; renderPool(); } });
+$('#srcChips').addEventListener('click', e => { const b = e.target.closest('[data-src]'); if (b) { S.filter.source = b.dataset.src; renderPool(); } });
 $('#stateSel').onchange = e => { S.filter.state = e.target.value; S.filter.district = 'all'; S.filter.constituency = 'all'; renderPool(); };
 $('#distSel').onchange = e => { S.filter.district = e.target.value; S.filter.constituency = 'all'; if (e.target.value !== 'all') S.filter.state = STATE_OF[e.target.value]; renderPool(); };
 $('#conSel').onchange = e => {

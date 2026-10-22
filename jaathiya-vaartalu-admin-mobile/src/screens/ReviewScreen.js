@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Image, ScrollView, Text, View } from 'react-native';
 import { api, errMsg } from '../api';
-import { STATUS } from '../constants';
+import { SOURCES, STATUS } from '../constants';
 import { Badge, Button, Field, C } from '../ui';
 
 export default function ReviewScreen({ navigation, route }) {
@@ -20,7 +20,10 @@ export default function ReviewScreen({ navigation, route }) {
   if (!n) return <ActivityIndicator style={{ marginTop: 40 }} color={C.red} />;
   return (
     <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
-      <Badge text={STATUS[n.status].label} color={STATUS[n.status].color} />
+      <View style={{ flexDirection: 'row', gap: 6 }}>
+        <Badge text={STATUS[n.status].label} color={STATUS[n.status].color} />
+        <Badge text={SOURCES[n.source || 'reporter'].label} color={SOURCES[n.source || 'reporter'].color} />
+      </View>
       <Text style={{ fontSize: 24, fontWeight: '800', color: C.red, marginVertical: 10 }}>{n.title}</Text>
       {(n.highlights || []).length ? <View style={{ backgroundColor: C.pink, padding: 8, borderRadius: 6, marginBottom: 10 }}>
         {n.highlights.map((h, i) => <Text key={i} style={{ color: '#fff', fontWeight: '700' }}>- {h}</Text>)}</View> : null}

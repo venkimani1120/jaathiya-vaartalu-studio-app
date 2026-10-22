@@ -2,7 +2,7 @@ const router = require('express').Router();
 const News = require('../models/News');
 const DailyQuota = require('../models/DailyQuota');
 const { authenticate, authorize } = require('../middleware/auth');
-const { DAILY_NEWS_LIMIT, STATE_OF } = require('../config/constants');
+const { DAILY_NEWS_LIMIT, NEWS_SOURCES, STATE_OF } = require('../config/constants');
 const { HttpError, wrap, pick, today } = require('../utils/http');
 
 const FIELDS = ['title', 'highlights', 'body', 'images', 'section', 'state', 'district', 'constituency', 'dateline'];
@@ -31,13 +31,14 @@ router.get('/quota/today', wrap(async (req, res) => {
   res.json({ used, limit: DAILY_NEWS_LIMIT, remaining: Math.max(0, DAILY_NEWS_LIMIT - used) });
 }));
 
+// Builds the list filter shared by the list and the per-source counts.
 // Reporters see only their own cards. Editors/Admins see everything, filterable by constituency etc.
-router.get('/', wrap(async (req, res) => {
-  const { status, section, state, district, constituency, author, q, page = 1 } = req.query;
-  const limit = Math.min(Number(req.query.limit) || 30, 300);
+function listFilter(req, { withSource = true } = {}) {
+  const { status, source, section, state, district, constituency, author, q } = req.query;
   const filter = {};
   if (!isDesk(req.user) || author === 'me') filter.author = req.user.id;
   if (status) filter.status = { $in: String(status).split(',') };
+  if (withSource && source) filter.source = { $in: String(source).split(',') };
   if (section) filter.section = section;
   if (state) filter.state = state;
   if (district) filter.district = district;
@@ -48,11 +49,26 @@ router.get('/', wrap(async (req, res) => {
   const by = req.query.by === 'reviewedAt' ? 'reviewedAt' : 'createdAt';
   const days = Math.min(Number(req.query.days) || 0, 365);
   if (days > 0) filter[by] = { $gte: new Date(Date.now() - days * 864e5) };
+  return { filter, by };
+}
+
+router.get('/', wrap(async (req, res) => {
+  const page = Number(req.query.page) || 1;
+  const limit = Math.min(Number(req.query.limit) || 30, 300);
+  const { filter, by } = listFilter(req);
   const [items, total] = await Promise.all([
     News.find(filter).sort({ [by]: -1, createdAt: -1 }).skip((page - 1) * limit).limit(limit).populate('author', 'name'),
     News.countDocuments(filter)
   ]);
-  res.json({ items, total, page: Number(page) });
+  res.json({ items, total, page });
+}));
+
+// How many cards match the other filters, per source: { counts: { reporter, editor, admin, epaper }, total }.
+router.get('/counts', authorize('editor', 'admin'), wrap(async (req, res) => {
+  const { filter } = listFilter(req, { withSource: false });
+  const ns = await Promise.all(NEWS_SOURCES.map(source => News.countDocuments({ ...filter, source })));
+  const counts = Object.fromEntries(NEWS_SOURCES.map((s, i) => [s, ns[i]]));
+  res.json({ counts, total: ns.reduce((a, n) => a + n, 0) });
 }));
 
 router.get('/:id', wrap(async (req, res) => {
@@ -74,7 +90,7 @@ router.post('/', authorize('reporter', 'editor', 'admin'), wrap(async (req, res)
   // Desk staff skip review: their submitted news goes straight to the approved pool.
   const status = req.body.submit ? (isDesk(req.user) ? 'approved' : 'submitted') : 'draft';
   try {
-    const news = await News.create({ ...data, status, author: req.user.id });
+    const news = await News.create({ ...data, status, source: req.user.role, author: req.user.id });
     res.status(201).json({ news, quota: used === null ? null : { used, limit: DAILY_NEWS_LIMIT } });
   } catch (e) {
     if (used !== null) await releaseQuota(req.user.id);

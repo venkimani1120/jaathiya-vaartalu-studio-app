@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api, errMsg } from '../api';
 import { SECTIONS } from '../constants';
-import { Avatar, Badge, Button, Field, Icon, Spinner } from '../ui';
+import { Avatar, Badge, Button, SourceBadge, Field, Icon, Spinner } from '../ui';
 import { go } from '../router';
 
 export default function Review({ id }) {
@@ -27,6 +27,7 @@ export default function Review({ id }) {
       <article className="panel article">
         <div className="row" style={{ marginBottom: 12 }}>
           <Badge status={n.status} />
+          <SourceBadge source={n.source} />
           <span className="muted" style={{ fontSize: 13 }}>{SECTIONS[n.section] || n.section} · {[n.constituency, n.district, n.state].filter(Boolean).join(', ')}</span>
         </div>
         <h1>{n.title}</h1>

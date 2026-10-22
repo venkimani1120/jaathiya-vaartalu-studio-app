@@ -32,6 +32,8 @@ The two mobile apps have different package ids (`com.jaathiyavaartalu.reporter`,
 | Build, merge, publish e-paper | – | Yes | Yes |
 | Approve accounts, change roles | – | – | Yes |
 
+Every card has a **source**: `reporter`, `editor` or `admin` (the uploader's role when it was created) or `epaper` (imported from another paper). The server sets it and it never changes. Editors and admins filter by it in the news list, the Desk app and the studio.
+
 Flow: `draft → submitted → approved` (or `rejected` with a note → reporter fixes → resubmits) `→ published` when placed in a published edition.
 
 The limit uses an atomic per-day counter (`DailyQuota` with a unique index), so two uploads at the same moment can't sneak past 50.
@@ -42,7 +44,8 @@ JWT: 15-minute access token + 30-day refresh token. Changing a user's role or de
 
 ```
 POST /api/auth/signup | /login | /refresh | /logout     GET /api/auth/me
-GET  /api/news?status=&constituency=&district=&section=&author=me&q=   POST /api/news   PATCH|DELETE /api/news/:id
+GET  /api/news?status=&source=&constituency=&district=&section=&author=me&q=   POST /api/news   PATCH|DELETE /api/news/:id
+GET  /api/news/counts?<same filters>  -> { counts: { reporter, editor, admin, epaper }, total }   (editor, admin)
 POST /api/news/:id/review {action: approve|reject, note}      GET /api/news/quota/today
 POST /api/uploads  (multipart "images", up to 10)  -> { urls }
 GET|POST /api/epapers   GET|PUT /api/epapers/:id   POST /api/epapers/:id/publish   (editor, admin)

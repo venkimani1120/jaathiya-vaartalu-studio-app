@@ -12,5 +12,12 @@ export const STATUS = {
   rejected: { label: 'Sent back', color: '#B4231F' },
   published: { label: 'Published', color: '#17734A' },
 };
+// Where a card came from; the server sets it from the uploader's role ('epaper' = imported from another paper).
+export const SOURCES = {
+  reporter: { label: 'Reporter' },
+  editor: { label: 'Editor' },
+  admin: { label: 'Admin' },
+  epaper: { label: 'E-paper' },
+};
 export const MAX_IMAGES = 10;
 export const MAX_IMAGE_MB = 6;
