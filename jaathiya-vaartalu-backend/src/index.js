@@ -6,6 +6,7 @@ const helmet = require('helmet');
 const cors = require('cors');
 const connectDB = require('./config/db');
 const backfillNewsSource = require('./utils/backfill');
+const { recoverInterrupted } = require('./services/importer');
 
 const app = express();
 app.set('trust proxy', 1); // behind Render/Koyeb proxy, needed for rate limiting
@@ -30,6 +31,7 @@ app.use('/api/users', require('./routes/users'));
 app.use('/api/news', require('./routes/news'));
 app.use('/api/uploads', require('./routes/uploads'));
 app.use('/api/epapers', require('./routes/epapers'));
+app.use('/api/imports', require('./routes/imports'));
 app.use('/api/public', require('./routes/public'));
 app.use('/uploads', express.static(path.join(__dirname, '../uploads'), { maxAge: '7d' }));
 for (const f of ['logo.png', 'mark.png']) app.get('/' + f, (_req, res) => res.sendFile(path.join(__dirname, '../public', f), { maxAge: '7d' }));
@@ -59,5 +61,6 @@ const port = process.env.PORT || 4000;
 connectDB().then(() => {
   app.listen(port, () => console.log(`API on :${port}`));
   backfillNewsSource().catch(e => console.error('News source backfill failed:', e.message));
+  recoverInterrupted().catch(e => console.error('Import recovery failed:', e.message));
 })
   .catch(e => { console.error('Startup failed:', e.message); process.exit(1); });
