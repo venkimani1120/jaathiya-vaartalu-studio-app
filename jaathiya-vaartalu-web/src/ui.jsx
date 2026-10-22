@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { STATUS } from './constants';
+import { SOURCES, STATUS } from './constants';
 import { ROLE_LABEL } from './auth';
 
 export const LOGO = './logo.png';   // public/logo.png: full logo
@@ -31,6 +31,7 @@ export function Chips({ label, options, value, onChange, disabled }) {
   );
 }
 export const Badge = ({ status }) => <span className={`badge badge-${status}`}>{STATUS[status]?.label || status}</span>;
+export const SourceBadge = ({ source = 'reporter' }) => <span className={`src src-${source}`}>{SOURCES[source]?.label || source}</span>;
 export const Spinner = () => <div className="spinner" role="status" aria-label="Loading" />;
 
 export function Search({ value, onChange, placeholder = 'Search headlines' }) {

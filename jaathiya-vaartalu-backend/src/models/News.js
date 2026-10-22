@@ -1,5 +1,5 @@
 const { Schema, model } = require('mongoose');
-const { NEWS_STATUS, SECTIONS, MAX_IMAGES_PER_CARD } = require('../config/constants');
+const { NEWS_STATUS, NEWS_SOURCES, SECTIONS, MAX_IMAGES_PER_CARD } = require('../config/constants');
 
 // One "news card / tile": option 1 = multiple images, option 2 = related news text.
 const newsSchema = new Schema({
@@ -13,6 +13,7 @@ const newsSchema = new Schema({
   constituency: { type: String, trim: true },
   dateline: { type: String, trim: true },
   status: { type: String, enum: NEWS_STATUS, default: 'draft', index: true },
+  source: { type: String, enum: NEWS_SOURCES, default: 'reporter' },   // never taken from the request body
   author: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
   reviewedBy: { type: Schema.Types.ObjectId, ref: 'User' },
   reviewedAt: Date,
@@ -20,5 +21,6 @@ const newsSchema = new Schema({
   publishedIn: [{ type: Schema.Types.ObjectId, ref: 'Epaper' }]
 }, { timestamps: true });
 
+newsSchema.index({ source: 1, status: 1, createdAt: -1 });
 newsSchema.index({ status: 1, state: 1, district: 1, constituency: 1, createdAt: -1 });
 module.exports = model('News', newsSchema);
