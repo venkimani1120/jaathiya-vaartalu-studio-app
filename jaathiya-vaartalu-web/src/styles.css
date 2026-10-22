@@ -132,6 +132,12 @@ main { max-width: 1120px; margin: 0 auto; padding: 24px 16px 48px; }
 .badge-submitted { background: var(--amber-50); color: var(--amber); }
 .badge-approved { background: var(--navy-50); color: var(--navy-600); }
 .badge-rejected { background: var(--red-50); color: var(--red); }
+.src { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px; border: 1px solid currentColor; letter-spacing: .02em; }
+.src-reporter { color: var(--ink-2); }
+.src-editor { color: var(--navy-600); }
+.src-admin { color: var(--green); }
+.src-epaper { color: var(--red); }
+.chip .n { margin-left: 6px; font-size: 11px; opacity: .75; }
 .badge-published { background: var(--green-50); color: var(--green); }
 
 .search { position: relative; }
@@ -261,3 +267,24 @@ table.list select { border: 1px solid var(--line); background: var(--surface); b
   .auth-card { padding: 22px; }
 }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+/* ---------- desk: imported e-papers ---------- */
+.imp-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 14px; }
+.imp-form .imp-file { grid-column: span 3; }
+.imp-form input[type=file] { padding: 9px; }
+.error-text { color: var(--red); font-weight: 600; }
+.imp-day { margin-bottom: 22px; }
+.imp-day h3 { font-size: 16px; margin-bottom: 8px; }
+.imp-pages { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px; }
+.imp-page { margin: 0; }
+.imp-page button { display: block; width: 100%; padding: 0; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); cursor: zoom-in; overflow: hidden; box-shadow: var(--shadow-sm); }
+.imp-page img { display: block; width: 100%; height: auto; }
+.imp-ph { aspect-ratio: 3 / 5; display: flex; align-items: center; justify-content: center; padding: 10px; text-align: center; font-size: 12px; border: 1px dashed var(--line); border-radius: var(--radius-sm); background: var(--surface-2); }
+.imp-failed .imp-ph { color: var(--red); border-color: #F1C4C0; background: var(--red-50); }
+.imp-page figcaption { font-size: 13px; font-weight: 600; margin-top: 6px; }
+.imp-viewer { position: fixed; inset: 0; z-index: 50; display: flex; flex-direction: column; background: rgba(24, 32, 58, .92); }
+.imp-viewer-bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 10px 16px; background: var(--surface); }
+.imp-viewer-body { flex: 1; overflow: auto; padding: 16px; }
+.imp-viewer-body img { display: block; margin: 0 auto; max-width: 100%; height: auto; background: #fff; }
+@media (max-width: 860px) { .imp-form { grid-template-columns: 1fr 1fr; } .imp-form .imp-file { grid-column: span 2; } }
+@media (max-width: 480px) { .imp-form { grid-template-columns: 1fr; } .imp-form .imp-file { grid-column: auto; } .imp-pages { grid-template-columns: 1fr 1fr; } }

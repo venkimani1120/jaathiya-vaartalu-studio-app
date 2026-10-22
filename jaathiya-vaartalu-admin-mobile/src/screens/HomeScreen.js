@@ -3,7 +3,7 @@ import { FlatList, Image, Pressable, RefreshControl, Text, View } from 'react-na
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../auth';
 import { api, errMsg } from '../api';
-import { STATUS } from '../constants';
+import { SOURCES, STATUS } from '../constants';
 import PlacePicker from '../PlacePicker';
 import { Badge, Button, Chips, C } from '../ui';
 
@@ -11,6 +11,8 @@ export default function HomeScreen({ navigation }) {
   const { user, can, signOut } = useAuth();
   const tabs = [['review', 'Review'], ['approved', 'Ready to place'], ['mine', 'My news']];
   const [tab, setTab] = useState('review');
+  const [source, setSource] = useState('');
+  const [counts, setCounts] = useState(null);
   const [place, setPlace] = useState({ state: '', district: '', constituency: '' });
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -30,13 +32,19 @@ export default function HomeScreen({ navigation }) {
       if (place.state) params.state = place.state;
       if (place.district) params.district = place.district;
       if (place.constituency) params.constituency = place.constituency;
-      const { data } = await api.get('/news', { params });
+      const [{ data }, c] = await Promise.all([
+        api.get('/news', { params: source ? { ...params, source } : params }),
+        api.get('/news/counts', { params }).catch(() => null),
+      ]);
+      setCounts(c ? c.data : null);
       // "My news" for desk staff = their own uploads
       setItems(data.items);
     } catch (e) { setError(errMsg(e)); } finally { setLoading(false); }
-  }, [tab, place, user]);
+  }, [tab, source, place, user]);
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
+  const countOf = k => (counts ? ` ${k ? counts.counts[k] : counts.total}` : '');
+  const sourceChips = [['', `All${countOf('')}`], ...Object.entries(SOURCES).map(([k, s]) => [k, `${s.label}${countOf(k)}`])];
   const open = n => (tab === 'mine' ? navigation.navigate('NewsEditor', { id: n._id }) : navigation.navigate('Review', { id: n._id }));
 
   return (
@@ -48,6 +56,7 @@ export default function HomeScreen({ navigation }) {
           {can.users ? <Button title="Team accounts" kind="secondary" onPress={() => navigation.navigate('Users')} style={{ paddingVertical: 8 }} /> : null}
         </View>
         <View style={{ marginTop: 12 }}><Chips options={tabs} value={tab} onChange={setTab} /></View>
+        {tab !== 'mine' ? <Chips options={sourceChips} value={source} onChange={setSource} /> : null}
         {tab !== 'mine' ? <PlacePicker value={place} onChange={setPlace} allowAll labels={false} /> : null}
         {error ? <Text style={{ color: C.warn, marginBottom: 8 }}>{error}</Text> : null}
       </View>
@@ -63,7 +72,10 @@ export default function HomeScreen({ navigation }) {
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 15, fontWeight: '700', color: C.ink }} numberOfLines={2}>{n.title}</Text>
               <Text style={{ color: C.muted, fontSize: 12, marginVertical: 3 }}>{n.constituency || n.district || ''}{n.author?.name ? `, ${n.author.name}` : ''}</Text>
-              <Badge text={STATUS[n.status]?.label} color={STATUS[n.status]?.color} />
+              <View style={{ flexDirection: 'row', gap: 6 }}>
+                <Badge text={STATUS[n.status]?.label} color={STATUS[n.status]?.color} />
+                <Badge text={SOURCES[n.source || 'reporter']?.label} color={SOURCES[n.source || 'reporter']?.color} />
+              </View>
               {n.status === 'rejected' && n.reviewNote ? <Text style={{ color: C.warn, fontSize: 12, marginTop: 4 }}>Editor: {n.reviewNote}</Text> : null}
             </View>
           </Pressable>

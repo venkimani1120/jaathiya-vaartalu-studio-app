@@ -32,6 +32,8 @@ The two mobile apps have different package ids (`com.jaathiyavaartalu.reporter`,
 | Build, merge, publish e-paper | – | Yes | Yes |
 | Approve accounts, change roles | – | – | Yes |
 
+Every card has a **source**: `reporter`, `editor` or `admin` (the uploader's role when it was created) or `epaper` (imported from another paper). The server sets it and it never changes. Editors and admins filter by it in the news list, the Desk app and the studio.
+
 Flow: `draft → submitted → approved` (or `rejected` with a note → reporter fixes → resubmits) `→ published` when placed in a published edition.
 
 The limit uses an atomic per-day counter (`DailyQuota` with a unique index), so two uploads at the same moment can't sneak past 50.
@@ -42,10 +44,12 @@ JWT: 15-minute access token + 30-day refresh token. Changing a user's role or de
 
 ```
 POST /api/auth/signup | /login | /refresh | /logout     GET /api/auth/me
-GET  /api/news?status=&constituency=&district=&section=&author=me&q=   POST /api/news   PATCH|DELETE /api/news/:id
+GET  /api/news?status=&source=&constituency=&district=&section=&author=me&q=   POST /api/news   PATCH|DELETE /api/news/:id
+GET  /api/news/counts?<same filters>  -> { counts: { reporter, editor, admin, epaper }, total }   (editor, admin)
 POST /api/news/:id/review {action: approve|reject, note}      GET /api/news/quota/today
 POST /api/uploads  (multipart "images", up to 10)  -> { urls }
 GET|POST /api/epapers   GET|PUT /api/epapers/:id   POST /api/epapers/:id/publish   (editor, admin)
+GET|POST /api/imports   GET|DELETE /api/imports/:id   GET /api/imports/publishers   (editor, admin; POST is multipart "file" = one PDF, or "pages" = page images)
 GET  /api/users?pending=true   PATCH /api/users/:id {role, active}   (admin)
 GET  /api/public/epapers/:slug   GET /api/public/meta              (no login)
 GET  /studio  (layout studio)    GET /e/:slug  (public reader)
@@ -61,6 +65,14 @@ Edition types: **State, District, Constituency, Sports, Business**. Page layouts
 Editors can drag cards onto boxes (or tap a card, then tap a box on phones), drag stories between boxes to swap, drag page thumbnails to reorder, **Merge with next** to combine two pages, change a page's layout, and Auto-fill from the filtered news.
 
 To change masthead text, the "Published from" line or the imprint, edit `BRAND` near the top of the studio script.
+
+## Imported e-papers
+
+Editors and admins can upload other papers' e-papers on the web app's **Imports** tab. They upload one PDF of the whole edition, or its page images in page order, and tag it with the paper, edition, date and (optionally) district. Each paper, edition and date can be imported once, and the same file can't be uploaded twice.
+
+The server answers straight away and stores the pages in the background. Pages are never resized or recompressed, so later crops keep the original pixels. PDF pages are rendered to PNG by Cloudinary at `IMPORT_DPI` (default 200), so PDFs need `CLOUDINARY_URL`. Without it, only page images can be imported. On Cloudinary's free plan each file must be under 10 MB; for a PDF that limit applies to each page, as pages are uploaded one at a time. If the server restarts during an upload, the unfinished pages are marked failed: delete the import and upload it again.
+
+News extraction from these pages is the next step and is not built yet.
 
 ## States, districts and constituencies
 

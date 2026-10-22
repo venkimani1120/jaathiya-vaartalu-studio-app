@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { STATUS } from './constants';
+import { SOURCES, STATUS } from './constants';
 import { ROLE_LABEL } from './auth';
 
 export const LOGO = './logo.png';   // public/logo.png: full logo
@@ -31,6 +31,7 @@ export function Chips({ label, options, value, onChange, disabled }) {
   );
 }
 export const Badge = ({ status }) => <span className={`badge badge-${status}`}>{STATUS[status]?.label || status}</span>;
+export const SourceBadge = ({ source = 'reporter' }) => <span className={`src src-${source}`}>{SOURCES[source]?.label || source}</span>;
 export const Spinner = () => <div className="spinner" role="status" aria-label="Loading" />;
 
 export function Search({ value, onChange, placeholder = 'Search headlines' }) {
@@ -59,6 +60,7 @@ const PATHS = {
   chevron: 'M6 9l6 6 6-6',
   layout: 'M4 4h16v16H4zM4 9h16M10 9v11',
   users: 'M16 21v-1a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v1M9 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM22 21v-1a4 4 0 0 0-3-3.9M16 4.1a4 4 0 0 1 0 7.8',
+  upload: 'M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3',
   external: 'M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5',
 };
 export function Icon({ name, size = 18 }) {
