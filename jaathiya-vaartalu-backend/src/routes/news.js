@@ -1,5 +1,6 @@
 const router = require('express').Router();
 const News = require('../models/News');
+const Epaper = require('../models/Epaper');
 const DailyQuota = require('../models/DailyQuota');
 const { authenticate, authorize } = require('../middleware/auth');
 const { DAILY_NEWS_LIMIT, NEWS_SOURCES, STATE_OF } = require('../config/constants');
@@ -114,14 +115,41 @@ router.patch('/:id', wrap(async (req, res) => {
   res.json({ news });
 }));
 
+// Deletes news for good: takes it out of any draft edition it was placed in, then removes it from
+// the database. News in a published edition is never deleted, so a live e-paper keeps every story.
+const IN_PUBLISHED = 'It is in a published e-paper. Delete that edition first to free it.';
+async function removeNews(ids) {
+  if (!ids.length) return;
+  const gone = new Set(ids.map(String));
+  for (const e of await Epaper.find({ status: 'draft' })) {
+    let changed = false;
+    e.pages.forEach(p => p.slots.forEach((v, k) => { if (gone.has(String(v))) { p.slots.delete(k); p.styles.delete(k); changed = true; } }));
+    if (changed) await e.save();
+  }
+  await News.deleteMany({ _id: { $in: ids }, status: { $ne: 'published' } });
+}
+
+// Editors and admins delete any news that is not published; reporters their own drafts, submissions and sent-back news.
 router.delete('/:id', wrap(async (req, res) => {
   const news = await News.findById(req.params.id);
   if (!news) throw new HttpError(404, 'News not found.');
-  if (req.user.role !== 'admin') {
-    if (String(news.author) !== req.user.id || !REPORTER_EDITABLE.includes(news.status)) throw new HttpError(403, 'You cannot delete this news.');
-  }
-  await news.deleteOne();
+  if (!isDesk(req.user) && (String(news.author) !== req.user.id || !REPORTER_EDITABLE.includes(news.status)))
+    throw new HttpError(403, 'You cannot delete this news.');
+  if (news.status === 'published') throw new HttpError(409, IN_PUBLISHED);
+  await removeNews([news._id]);
   res.json({ ok: true });
+}));
+
+// Editors and admins: delete many at once ({ ids: [...] }, up to 200). Published news is skipped and counted.
+router.post('/bulk-delete', authorize('editor', 'admin'), wrap(async (req, res) => {
+  const ids = [...new Set((Array.isArray(req.body.ids) ? req.body.ids : []).map(String))];
+  if (!ids.length) throw new HttpError(400, 'Choose the news to delete.');
+  if (ids.length > 200) throw new HttpError(400, 'Delete up to 200 news at a time.');
+  if (ids.some(id => !/^[a-f0-9]{24}$/.test(id))) throw new HttpError(400, 'Invalid id.');
+  const found = await News.find({ _id: { $in: ids } }).select('status');
+  const free = found.filter(n => n.status !== 'published').map(n => n._id);
+  await removeNews(free);
+  res.json({ deleted: free.length, published: found.length - free.length, missing: ids.length - found.length });
 }));
 
 router.post('/:id/review', authorize('editor', 'admin'), wrap(async (req, res) => {

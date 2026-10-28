@@ -38,10 +38,10 @@ export default function NewsEditor({ id }) {
   useEffect(() => () => imagesRef.current.forEach(i => i.file && URL.revokeObjectURL(i.url)), []);
 
   // Editors and admins can change any card; reporters only their own before approval.
-  // Only admins can delete other people's cards. The server checks all of this too.
+  // Editors and admins can delete any card not in a published e-paper. The server checks all of this too.
   const own = ownerId === user.id && EDITABLE_BY_REPORTER.includes(status);
   const locked = !can.desk && !own;
-  const canDelete = can.deleteAny || own;
+  const canDelete = (can.deleteAny && status !== 'published') || own;
   const home = can.desk ? 'News' : 'My news';
   const set = k => e => setF(s => ({ ...s, [k]: e.target.value }));
 

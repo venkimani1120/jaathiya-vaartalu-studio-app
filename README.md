@@ -26,7 +26,7 @@ The two mobile apps have different package ids (`com.jaathiyavaartalu.reporter`,
 |---|---|---|---|
 | Sign up | Yes (starts inactive) | – | – |
 | Upload news card | Yes, max **50 per day** (resets at midnight IST) | Yes, no limit | Yes, no limit |
-| Edit / delete a card | **Only own cards**, only before approval | Any card | Any card |
+| Edit / delete a card | **Only own cards**, only before approval | Any card; delete any not in a published e-paper, one or many at once (tick boxes on News) | Same |
 | See news | Own cards only | All, filter by constituency / district / section | Same |
 | Approve / send back | – | Yes | Yes |
 | Build, merge, publish e-paper | – | Yes | Yes |
@@ -44,7 +44,7 @@ JWT: 15-minute access token + refresh token, both tied to one server-side sessio
 
 ```
 POST /api/auth/signup | /login | /refresh | /logout     GET /api/auth/me
-GET  /api/news?status=&source=&paper=&page=&constituency=&district=&section=&author=me&q=   POST /api/news   PATCH|DELETE /api/news/:id
+GET  /api/news?status=&source=&paper=&page=&constituency=&district=&section=&author=me&q=   POST /api/news   PATCH|DELETE /api/news/:id   POST /api/news/bulk-delete {ids} (editor, admin; up to 200, news in a published e-paper is kept)
 GET  /api/news/counts?<same filters>  -> { counts: { reporter, editor, admin, epaper }, total }   (editor, admin)
 POST /api/news/:id/review {action: approve|reject, note}      GET /api/news/quota/today
 POST /api/uploads  (multipart "images", up to 10)  -> { urls }
