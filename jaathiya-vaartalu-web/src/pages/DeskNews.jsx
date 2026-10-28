@@ -85,7 +85,7 @@ export default function DeskNews() {
           <div className="cards">
             {items.map(n => (
               <NewsCard key={n._id} n={n} href={href(n)}>
-                <div className="meta"><SourceBadge source={n.source} />{n.constituency || n.district || ''}{n.author?.name ? ` · ${n.author.name}` : ''} · {new Date(n.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+                <div className="meta"><SourceBadge source={n.source} />{n.constituency || n.district || ''}{n.sourceRef?.publisher ? ` · ${n.sourceRef.publisher} ${n.sourceRef.editionName}, p${n.sourceRef.page}` : n.author?.name ? ` · ${n.author.name}` : ''} · {new Date(n.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
               </NewsCard>
             ))}
           </div>

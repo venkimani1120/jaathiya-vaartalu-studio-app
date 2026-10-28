@@ -34,11 +34,12 @@ router.get('/quota/today', wrap(async (req, res) => {
 // Builds the list filter shared by the list and the per-source counts.
 // Reporters see only their own cards. Editors/Admins see everything, filterable by constituency etc.
 function listFilter(req, { withSource = true } = {}) {
-  const { status, source, section, state, district, constituency, author, q } = req.query;
+  const { status, source, section, state, district, constituency, author, q, paper, page } = req.query;
   const filter = {};
   if (!isDesk(req.user) || author === 'me') filter.author = req.user.id;
   if (status) filter.status = { $in: String(status).split(',') };
   if (withSource && source) filter.source = { $in: String(source).split(',') };
+  if (paper) { filter['sourceRef.paper'] = paper; if (page) filter['sourceRef.page'] = Number(page); }
   if (section) filter.section = section;
   if (state) filter.state = state;
   if (district) filter.district = district;
