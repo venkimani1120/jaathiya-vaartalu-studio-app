@@ -59,18 +59,20 @@ export default function DeskNews() {
   const toggleAll = () => setPicked(allPicked ? new Set() : new Set(deletable.map(n => n._id)));
   const removePicked = async () => {
     const ids = [...picked];
-    if (!window.confirm(`Delete ${ids.length} news card${ids.length > 1 ? 's' : ''}?\n\nThey are removed from the database and from any draft e-paper they are placed in. This cannot be undone.`)) return;
+    if (!window.confirm(`Delete ${ids.length} news card${ids.length > 1 ? 's' : ''}?\n\nThey are taken out of any draft e-paper they are placed in and deleted from the database. News read from an imported e-paper goes back to that import instead, where it can be added again or deleted.`)) return;
     setDeleting(true); setError(''); setNotice('');
     try {
-      let deleted = 0, published = 0;
+      let deleted = 0, returned = 0, published = 0;
       for (let i = 0; i < ids.length; i += 200) {
         const r = await api('/news/bulk-delete', { method: 'POST', body: { ids: ids.slice(i, i + 200) } });
-        deleted += r.deleted; published += r.published;
+        deleted += r.deleted; returned += r.returned; published += r.published;
       }
       const gone = new Set(ids);
       setItems(s => s.filter(n => !gone.has(n._id) || n.status === 'published'));
-      setTotal(t => t - deleted); setPicked(new Set());
-      setNotice(`Deleted ${deleted} news card${deleted === 1 ? '' : 's'}.${published ? ` ${published} kept: in a published e-paper.` : ''}`);
+      setTotal(t => t - deleted - returned); setPicked(new Set());
+      setNotice([deleted ? `Deleted ${deleted} news card${deleted === 1 ? '' : 's'}.` : '',
+        returned ? `${returned} sent back to ${returned === 1 ? 'its' : 'their'} imported e-paper.` : '',
+        published ? `${published} kept: in a published e-paper.` : ''].filter(Boolean).join(' '));
       api('/news/counts', { params: { ...TAB_PARAMS[tab], ...place, section, q } }).then(setCounts).catch(() => {});
     } catch (e) { setError(errMsg(e)); }
     setDeleting(false);

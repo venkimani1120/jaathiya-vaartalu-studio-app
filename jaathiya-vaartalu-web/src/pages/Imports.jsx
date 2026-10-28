@@ -70,7 +70,7 @@ export default function Imports() {
   return (
     <main>
       <div className="page-head">
-        <div><h2>Imported e-papers</h2><p>Upload other papers' e-papers by edition and date. Each page is read and its news is added to Review as E-paper news.</p></div>
+        <div><h2>Imported e-papers</h2><p>Upload other papers' e-papers by edition and date. Each page is read and its news is listed on the import, where you choose what to add to the news feed for review.</p></div>
       </div>
 
       <form className="panel" onSubmit={submit}>

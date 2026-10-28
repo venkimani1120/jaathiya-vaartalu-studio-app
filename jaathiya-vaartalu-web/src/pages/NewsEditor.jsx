@@ -3,6 +3,7 @@ import { useAuth } from '../auth';
 import { api, errMsg, uploadImages } from '../api';
 import { SECTIONS, MAX_IMAGES, MAX_IMAGE_MB, stateOf } from '../constants';
 import PlacePicker from '../PlacePicker';
+import Cropper, { cropPhoto } from '../Cropper';
 import { Badge, Button, Chips, Field, Icon, Spinner } from '../ui';
 import { go } from '../router';
 
@@ -16,6 +17,8 @@ export default function NewsEditor({ id }) {
   const [status, setStatus] = useState('draft');
   const [ownerId, setOwnerId] = useState(user.id);
   const [reviewNote, setReviewNote] = useState('');
+  const [fromImport, setFromImport] = useState(false);   // read from an imported e-paper
+  const [cropping, setCropping] = useState(null);        // index of the photo being cropped
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(!!id);
   const [error, setError] = useState('');
@@ -29,6 +32,7 @@ export default function NewsEditor({ id }) {
         state: n.state || stateOf(n.district) || 'ఆంధ్రప్రదేశ్', district: n.district || '', constituency: n.constituency || '', dateline: n.dateline || '' });
       setImages((n.images || []).map(url => ({ url })));
       setStatus(n.status); setOwnerId(n.author?._id); setReviewNote(n.reviewNote || '');
+      setFromImport(n.source === 'epaper' && !!n.sourceRef?.paper);
     } catch (e) { setError(errMsg(e)); } finally { setLoading(false); }
   })(); }, [id]);
 
@@ -55,6 +59,14 @@ export default function NewsEditor({ id }) {
     if (ok.length > room) setError(`A news card can have up to ${MAX_IMAGES} photos.`);
     setImages(s => [...s, ...ok.slice(0, room).map(file => ({ url: URL.createObjectURL(file), file }))]);
   };
+  // Swaps photo i for its cropped version (uploaded on save if it became a new file).
+  const applyCrop = async (rect, imgEl) => {
+    const i = cropping, old = images[i];
+    const next = await cropPhoto(old.url, rect, imgEl);
+    if (old.file) URL.revokeObjectURL(old.url);
+    setImages(s => s.map((im, j) => (j === i ? next : im)));
+    setCropping(null);
+  };
   const removeImage = i => setImages(s => {
     if (s[i].file) URL.revokeObjectURL(s[i].url);
     return s.filter((_, j) => j !== i);
@@ -77,7 +89,7 @@ export default function NewsEditor({ id }) {
   };
 
   const remove = async () => {
-    if (!window.confirm('Delete this news card? This cannot be undone.')) return;
+    if (!window.confirm(fromImport ? 'Take this news off the news feed? It goes back to its imported e-paper.' : 'Delete this news card? This cannot be undone.')) return;
     setBusy(true);
     try { await api(`/news/${id}`, { method: 'DELETE' }); go('/'); } catch (e) { setError(errMsg(e)); setBusy(false); }
   };
@@ -106,6 +118,7 @@ export default function NewsEditor({ id }) {
               <div className="photo" key={im.url}>
                 <img src={im.url} alt={`Photo ${i + 1}`} />
                 {!locked ? <button type="button" onClick={() => removeImage(i)} aria-label={`Remove photo ${i + 1}`}>✕</button> : null}
+                {!locked ? <button type="button" className="crop-btn" onClick={() => setCropping(i)} aria-label={`Crop photo ${i + 1}`}>Crop</button> : null}
               </div>
             ))}
             {!images.length ? <p className="muted" style={{ margin: 0 }}>{locked ? 'No photos.' : 'Drop photos here, or use the buttons below.'}</p> : null}
@@ -130,9 +143,10 @@ export default function NewsEditor({ id }) {
           <Button kind="accent" onClick={() => save(true)} disabled={busy}>{busy ? 'Saving…' : can.desk ? 'Save and approve' : 'Submit for review'}</Button>
           <Button kind="secondary" onClick={() => save(false)} disabled={busy}>Save as draft</Button>
           <div className="spacer" />
-          {id && canDelete ? <Button kind="danger" onClick={remove} disabled={busy}>Delete</Button> : null}
+          {id && canDelete ? <Button kind="danger" onClick={remove} disabled={busy}>{fromImport && can.desk ? 'Remove from feed' : 'Delete'}</Button> : null}
         </div> : null}
       </div>
+      {cropping !== null && images[cropping] ? <Cropper src={images[cropping].url} onCancel={() => setCropping(null)} onApply={applyCrop} /> : null}
     </main>
   );
 }

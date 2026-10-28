@@ -158,7 +158,7 @@ async function toNews(articles, paper, page, geometry = {}) {
       section: SECTIONS[f.a.section] ? f.a.section : SECTIONS[paper.editionType] ? paper.editionType : 'district',
       ...place(f.a, paper),
       dateline: clean(f.a.dateline, 80) || undefined,
-      status: 'submitted', source: 'epaper', author: paper.uploadedBy,
+      status: 'imported', source: 'epaper', author: paper.uploadedBy,   // stays on the import until the desk adds it to the feed
       sourceRef: {
         paper: paper._id, page: page.no, publisher: paper.publisher, editionName: paper.editionName, editionDate: paper.editionDate,
         bbox: f.bbox || undefined, clipUrl: (f.bbox && cropUrl(page.imageUrl, f.bbox)) || undefined, photos, titleKey: f.key

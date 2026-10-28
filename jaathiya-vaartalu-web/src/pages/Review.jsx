@@ -19,7 +19,19 @@ export default function Review({ id }) {
     try { await api(`/news/${id}/review`, { method: 'POST', body: { action, note } }); go('/'); }
     catch (e) { setError(errMsg(e)); setBusy(false); }
   };
-  const back = <a className="back" href="#/"><Icon name="back" size={16} />News</a>;
+  // News read from an imported e-paper and not added to the feed yet: add it, or delete it.
+  const fromImport = async action => {
+    if (action === 'delete' && !window.confirm('Delete this news read from the e-paper? This cannot be undone.')) return;
+    setBusy(true); setError('');
+    try {
+      await api(`/imports/${n.sourceRef.paper}/news`, { method: 'POST', body: { ids: [id], action } });
+      if (action === 'add') setN(x => ({ ...x, status: 'submitted' })); else go(`/imports/${n.sourceRef.paper}`);
+    } catch (e) { setError(errMsg(e)); }
+    setBusy(false);
+  };
+  const back = n?.status === 'imported'
+    ? <a className="back" href={`#/imports/${n.sourceRef?.paper}`}><Icon name="back" size={16} />Imported e-paper</a>
+    : <a className="back" href="#/"><Icon name="back" size={16} />News</a>;
   if (!n) return error ? <main className="narrow">{back}<p className="error">{error}</p></main> : <Spinner />;
   return (
     <main className="narrow">
@@ -48,7 +60,16 @@ export default function Review({ id }) {
             <div className="muted" style={{ fontSize: 12 }}>Uploaded {new Date(n.createdAt).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}</div></div>
         </div>
       </article>
-      {n.status !== 'published' ? <div className="panel">
+      {n.status === 'imported' ? <div className="panel">
+        <h3>Not in the news feed yet</h3>
+        <p className="sub">Add it to the news feed to review and edit it with the rest, or delete it if it isn't needed.</p>
+        {error ? <p className="error" role="alert">{error}</p> : null}
+        <div className="row">
+          <Button onClick={() => fromImport('add')} disabled={busy}><Icon name="plus" size={16} />Add to news feed</Button>
+          <div className="spacer" />
+          <Button kind="danger" onClick={() => fromImport('delete')} disabled={busy}>Delete</Button>
+        </div>
+      </div> : n.status !== 'published' ? <div className="panel">
         <h3>Decision</h3>
         <p className="sub">Approved news goes to the e-paper pool. Sent-back news returns to the reporter with your note.</p>
         <Field label="Note to reporter (needed when sending back)" multiline value={note} onChange={e => setNote(e.target.value)} style={{ minHeight: 80 }} />
