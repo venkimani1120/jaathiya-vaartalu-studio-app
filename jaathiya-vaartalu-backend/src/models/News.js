@@ -18,9 +18,21 @@ const newsSchema = new Schema({
   reviewedBy: { type: Schema.Types.ObjectId, ref: 'User' },
   reviewedAt: Date,
   reviewNote: String,
-  publishedIn: [{ type: Schema.Types.ObjectId, ref: 'Epaper' }]
+  publishedIn: [{ type: Schema.Types.ObjectId, ref: 'Epaper' }],
+  // Imported news only: where on which e-paper page it was found. Boxes are in that page's pixels.
+  sourceRef: {
+    paper: { type: Schema.Types.ObjectId, ref: 'SourcePaper' },
+    page: Number,
+    publisher: String, editionName: String, editionDate: Date,
+    bbox: { x: Number, y: Number, w: Number, h: Number },
+    clipUrl: String,                                   // the whole article as printed
+    photos: [{ _id: false, url: String, caption: String, bbox: { x: Number, y: Number, w: Number, h: Number } }],
+    titleKey: String                                   // normalised headline, to skip repeats on the same date
+  }
 }, { timestamps: true });
 
 newsSchema.index({ source: 1, status: 1, createdAt: -1 });
+newsSchema.index({ 'sourceRef.paper': 1, 'sourceRef.page': 1 }, { sparse: true });
+newsSchema.index({ 'sourceRef.editionDate': 1, 'sourceRef.titleKey': 1 }, { sparse: true });
 newsSchema.index({ status: 1, state: 1, district: 1, constituency: 1, createdAt: -1 });
 module.exports = model('News', newsSchema);

@@ -7,7 +7,18 @@ const pageSchema = new Schema({
   imageUrl: String,
   width: Number, height: Number,                     // pixels of imageUrl
   status: { type: String, enum: ['pending', 'ready', 'failed'], default: 'pending' },
-  error: String
+  error: String,
+  // News extraction, once the page is stored. Pages saved before extraction existed have no value: same as pending.
+  extract: { type: String, enum: ['pending', 'running', 'done', 'failed'], default: 'pending' },
+  extractError: String,
+  extractTries: { type: Number, default: 0 },
+  nextTryAt: Date,
+  // PDF pages: exact photo boxes read from the PDF (pixels of imageUrl). Unset = not looked yet;
+  // pdfChecked with no boxes = a scan or no photos, so photo edges are found from the pixels instead.
+  pdfPhotos: { type: [{ _id: false, x: Number, y: Number, w: Number, h: Number }], default: undefined },
+  pdfChecked: Boolean,
+  articles: Number,                                  // news cards made from this page
+  repeats: Number                                    // stories skipped as already imported for this date
 }, { _id: false });
 
 // Another paper's e-paper, uploaded by the desk for news extraction.

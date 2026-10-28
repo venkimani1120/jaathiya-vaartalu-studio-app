@@ -30,6 +30,14 @@ export default function Review({ id }) {
           <SourceBadge source={n.source} />
           <span className="muted" style={{ fontSize: 13 }}>{SECTIONS[n.section] || n.section} · {[n.constituency, n.district, n.state].filter(Boolean).join(', ')}</span>
         </div>
+        {n.sourceRef?.paper ? <div className="src-ref">
+          <div style={{ flex: '1 1 220px' }}>
+            Read from <b>{n.sourceRef.publisher} – {n.sourceRef.editionName}</b>, page {n.sourceRef.page}, {new Date(n.sourceRef.editionDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })}.
+            <div className="muted">Check the text against the printed article before approving.</div>
+            <a href={`#/imports/${n.sourceRef.paper}`}>Open the e-paper</a>
+          </div>
+          {n.sourceRef.clipUrl ? <a href={n.sourceRef.clipUrl} target="_blank" rel="noreferrer" title="Open at original size"><img className="clip" src={n.sourceRef.clipUrl} alt="The article as printed" /></a> : null}
+        </div> : null}
         <h1>{n.title}</h1>
         {(n.highlights || []).length ? <ul className="highlights">{n.highlights.map((h, i) => <li key={i}>{h}</li>)}</ul> : null}
         {(n.images || []).length ? <div className="review-photos">{n.images.map(u => <a key={u} href={u} target="_blank" rel="noreferrer"><img src={u} alt="" /></a>)}</div> : null}

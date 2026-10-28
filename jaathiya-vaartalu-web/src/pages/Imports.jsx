@@ -24,12 +24,18 @@ export default function Imports() {
   const [error, setError] = useState('');
   const [listError, setListError] = useState('');
   const [fileKey, setFileKey] = useState(0);   // remounts the file input to clear it
+  const [extracting, setExtracting] = useState(false);
 
   const load = () => api('/imports', { params: { limit: 200 } })
     .then(r => { setItems(r.items); setListError(''); }).catch(e => setListError(errMsg(e)));
-  useEffect(() => { load(); api('/imports/publishers').then(setNames).catch(() => {}); }, []);
-  // While any upload is still storing pages, refresh the list every few seconds.
-  const working = (items || []).some(p => p.status === 'processing');
+  useEffect(() => {
+    load();
+    api('/imports/publishers').then(setNames).catch(() => {});
+    api('/imports/status').then(r => setExtracting(r.extraction.enabled)).catch(() => {});
+  }, []);
+  // While pages are being stored or read, refresh the list every few seconds.
+  const reading = p => extracting && p.pages.some(x => x.status === 'ready' && x.extract !== 'done' && x.extract !== 'failed');
+  const working = (items || []).some(p => p.status === 'processing' || reading(p));
   useEffect(() => { if (!working) return; const t = setInterval(load, 4000); return () => clearInterval(t); }, [working]);
 
   const set = k => e => setForm(f => ({ ...f, [k]: e.target.value }));
@@ -64,7 +70,7 @@ export default function Imports() {
   return (
     <main>
       <div className="page-head">
-        <div><h2>Imported e-papers</h2><p>Upload other papers' e-papers by edition and date. Their news will be extracted for review.</p></div>
+        <div><h2>Imported e-papers</h2><p>Upload other papers' e-papers by edition and date. Each page is read and its news is added to Review as E-paper news.</p></div>
       </div>
 
       <form className="panel" onSubmit={submit}>
@@ -113,7 +119,7 @@ export default function Imports() {
           <h3>{showDate(day)} <span className="muted">· {papers.length} edition{papers.length === 1 ? '' : 's'}</span></h3>
           <div className="table-wrap">
             <table className="list">
-              <thead><tr><th>Paper</th><th>Edition</th><th>Pages</th><th>Status</th><th>Uploaded</th><th><span className="sr-only">Actions</span></th></tr></thead>
+              <thead><tr><th>Paper</th><th>Edition</th><th>Pages</th><th>Status</th><th>News</th><th>Uploaded</th><th><span className="sr-only">Actions</span></th></tr></thead>
               <tbody>
                 {papers.map(p => {
                   const ok = p.pages.filter(x => x.status === 'ready').length;
@@ -123,6 +129,8 @@ export default function Imports() {
                       <td>{p.editionName}<div className="muted" style={{ fontSize: 12 }}>{(EDITION_TYPES[p.editionType] || '').replace(' edition', '')}{p.district ? ` · ${p.district}` : ''}</div></td>
                       <td>{ok === p.pages.length ? ok : `${ok} / ${p.pages.length}`}</td>
                       <td><PaperBadge status={p.status} /></td>
+                      <td>{p.pages.reduce((a, x) => a + (x.articles || 0), 0)}
+                        {reading(p) ? <div className="muted" style={{ fontSize: 12 }}>reading {p.pages.filter(x => x.extract === 'done').length} / {ok}</div> : null}</td>
                       <td className="muted" style={{ fontSize: 13 }}>{p.uploadedBy?.name || ''}</td>
                       <td style={{ textAlign: 'right' }}><div className="row" style={{ flexWrap: 'nowrap', justifyContent: 'flex-end' }}>
                         <a className="btn btn-secondary" href={`#/imports/${p._id}`}>Open</a>

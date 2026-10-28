@@ -1,6 +1,8 @@
 const { PDFDocument } = require('pdf-lib');
 const SourcePaper = require('../models/SourcePaper');
-const { savePage } = require('./pageStore');
+const { savePage, DPI } = require('./pageStore');
+const { photoRects } = require('./pdfPhotos');
+const extractor = require('./extractor');
 
 // Opens an uploaded PDF and returns its page count plus a function that makes a one-page PDF,
 // so pages are split one at a time instead of all at once in memory.
@@ -36,10 +38,15 @@ async function processPaper(id, source) {
   for (let i = 0; i < count; i++) {
     const no = i + 1;
     try {
-      const page = source.pdf
-        ? await savePage(id, no, await source.pdf.pageAt(i), 'pdf')
-        : await savePage(id, no, source.images[i].buffer, 'image', source.images[i].ext);
+      let page;
+      if (source.pdf) {
+        const one = await source.pdf.pageAt(i);
+        page = await savePage(id, no, one, 'pdf');
+        try { const rects = await photoRects(one, DPI); page = { ...page, pdfPhotos: rects || [], pdfChecked: true }; }
+        catch (e) { console.error(`Import ${id} page ${no} photo boxes:`, e.message); }
+      } else page = await savePage(id, no, source.images[i].buffer, 'image', source.images[i].ext);
       await setPage(id, no, { ...page, status: 'ready' });
+      extractor.wake();
     } catch (e) {
       console.error(`Import ${id} page ${no}:`, e.message);
       await setPage(id, no, { status: 'failed', error: String(e.message || e).slice(0, 300) });

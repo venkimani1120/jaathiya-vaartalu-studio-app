@@ -7,6 +7,7 @@ const cors = require('cors');
 const connectDB = require('./config/db');
 const backfillNewsSource = require('./utils/backfill');
 const { recoverInterrupted } = require('./services/importer');
+const extractor = require('./services/extractor');
 
 const app = express();
 app.set('trust proxy', 1); // behind Render/Koyeb proxy, needed for rate limiting
@@ -61,6 +62,7 @@ const port = process.env.PORT || 4000;
 connectDB().then(() => {
   app.listen(port, () => console.log(`API on :${port}`));
   backfillNewsSource().catch(e => console.error('News source backfill failed:', e.message));
-  recoverInterrupted().catch(e => console.error('Import recovery failed:', e.message));
+  recoverInterrupted().catch(e => console.error('Import recovery failed:', e.message)).then(() => extractor.start())
+    .catch(e => console.error('Extractor start failed:', e.message));
 })
   .catch(e => { console.error('Startup failed:', e.message); process.exit(1); });

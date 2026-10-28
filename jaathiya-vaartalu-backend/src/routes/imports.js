@@ -9,6 +9,8 @@ const { HttpError, wrap } = require('../utils/http');
 const { DISTRICTS, EDITION_TYPES } = require('../config/constants');
 const { DPI, canRenderPdf, removePaper } = require('../services/pageStore');
 const { openPdf, processPaper } = require('../services/importer');
+const extractor = require('../services/extractor');
+const News = require('../models/News');
 
 // Other papers' e-papers, uploaded by the desk so their news can be extracted and reused.
 router.use(authenticate, authorize('editor', 'admin'));
@@ -51,6 +53,9 @@ router.get('/', wrap(async (req, res) => {
   ]);
   res.json({ items, total });
 }));
+
+// Whether news extraction is switched on (GEMINI_API_KEY), for the UI.
+router.get('/status', (_req, res) => res.json({ extraction: extractor.status() }));
 
 // Names already used, for the upload form's suggestions.
 router.get('/publishers', wrap(async (_req, res) => {
@@ -117,10 +122,41 @@ router.post('/', receive, wrap(async (req, res) => {
   res.status(202).json({ paper });
 }));
 
+// Reads the paper again (all pages, or ?page=N). News from those pages that is still waiting for
+// review or was sent back is replaced; approved and published news is kept.
+router.post('/:id/extract', wrap(async (req, res) => {
+  if (!extractor.status().enabled) throw new HttpError(400, 'News extraction is off. Set GEMINI_API_KEY on the server.');
+  const paper = await SourcePaper.findById(req.params.id);
+  if (!paper) throw new HttpError(404, 'Imported e-paper not found.');
+  const no = req.query.page ? Number(req.query.page) : null;
+  const pages = paper.pages.filter(p => p.status === 'ready' && (!no || p.no === no));
+  if (!pages.length) throw new HttpError(400, 'No stored page to read.');
+  if (pages.some(p => p.extract === 'running')) throw new HttpError(409, 'A page is being read right now. Try again in a minute.');
+  const nos = pages.map(p => p.no);
+  const removed = await News.deleteMany({ 'sourceRef.paper': paper._id, 'sourceRef.page': { $in: nos }, status: { $in: ['draft', 'submitted', 'rejected'] } });
+  pages.forEach(p => Object.assign(p, { extract: 'pending', extractTries: 0, nextTryAt: undefined, extractError: undefined, articles: undefined, repeats: undefined }));
+  await paper.save();
+  extractor.wake();
+  res.json({ paper, removed: removed.deletedCount });
+}));
+
+// Fits the photo crops of this paper's news to the photos' real edges again (no model call).
+router.post('/:id/recrop', wrap(async (req, res) => {
+  const paper = await SourcePaper.findById(req.params.id);
+  if (!paper) throw new HttpError(404, 'Imported e-paper not found.');
+  res.json({ updated: await extractor.recrop(paper) });
+}));
+
+// Deletes the import, its page images and its news that is not approved yet. Refused while any of
+// its news is approved or published, since their photos are cut from these page images.
 router.delete('/:id', wrap(async (req, res) => {
   const paper = await SourcePaper.findById(req.params.id);
   if (!paper) throw new HttpError(404, 'Imported e-paper not found.');
   if (paper.status === 'processing') throw new HttpError(409, 'Pages are still being stored. Delete it when that has finished.');
+  if (paper.pages.some(p => p.extract === 'running')) throw new HttpError(409, 'A page is being read right now. Try again in a minute.');
+  const used = await News.countDocuments({ 'sourceRef.paper': paper._id, status: { $in: ['approved', 'published'] } });
+  if (used) throw new HttpError(409, `${used} news card(s) from this e-paper are approved or published and use its photos, so it can't be deleted.`);
+  await News.deleteMany({ 'sourceRef.paper': paper._id });
   await removePaper(paper._id);
   await paper.deleteOne();
   res.json({ ok: true });
