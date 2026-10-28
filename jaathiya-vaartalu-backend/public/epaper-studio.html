@@ -457,7 +457,9 @@ const mapNews = n => ({ id: n._id || n.id, section: n.section, state: n.state ||
   title: n.title, highlights: n.highlights || [], body: n.body, images: n.images || [], reporter: (n.author && n.author.name) || n.reporter || '', source: n.source || 'reporter' });
 const mapEd = e => ({ ...e, id: e._id || e.id, editionDate: String(e.editionDate).slice(0, 10), ad: e.ad || { ...BRAND.ad },
   pages: (e.pages || []).map(p => ({ ...p, slots: p.slots || {}, styles: p.styles || {} })) });
-function mergeNews(list) { list.map(mapNews).forEach(n => { if (!byId(n.id)) S.news.push(n); }); }
+// Adds new stories and refreshes the ones already here, so edits made since (text, a cropped or
+// changed photo) show in the pool and on the pages.
+function mergeNews(list) { list.map(mapNews).forEach(n => { const had = byId(n.id); if (had) Object.assign(had, n); else S.news.push(n); }); }
 
 async function loadAll() {
   if (MODE === 'demo') {
@@ -1184,13 +1186,17 @@ function showUser() {
   if (MODE === 'api' && u) { $('#modeTag').textContent = `Connected · ${u.name}`; $('#logoutBtn').title = `Signed in as ${u.name} (${u.email})`; }
 }
 $('#publishBtn').onclick = publish;
-// The web app keeps this page loaded while the editor uses other tabs; when they come back it asks for
-// the latest approved news so stories approved meanwhile show up in the pool.
-window.addEventListener('message', e => {
-  if (e.origin !== location.origin || !e.data || e.data.type !== 'jv:refresh-pool') return;
-  if (MODE !== 'api' || S.viewer || !S.editions.length || !API.token()) return;
+// The web app keeps this page loaded while the editor uses other tabs; when they come back (or come
+// back to this browser tab) it fetches the latest approved news, so stories approved or edited
+// meanwhile (new text, cropped photos) show up in the pool and on the pages.
+function refreshPool() {
+  if (MODE !== 'api' || S.viewer || !S.editions.length || !API.token() || locked()) return;
   API.req('/news?status=approved&limit=300').then(p => { mergeNews(p.items); renderAll(); }).catch(() => {});
+}
+window.addEventListener('message', e => {
+  if (e.origin === location.origin && e.data && e.data.type === 'jv:refresh-pool') refreshPool();
 });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshPool(); });
 new ResizeObserver(fit).observe($('#canvas'));
 
 /* ---------- boot ---------- */
