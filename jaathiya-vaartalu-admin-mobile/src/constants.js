@@ -11,6 +11,7 @@ export const STATUS = {
   approved: { label: 'Approved', color: '#1F3C99' },
   rejected: { label: 'Sent back', color: '#B4231F' },
   published: { label: 'Published', color: '#17734A' },
+  imported: { label: 'Not in feed', color: '#6B7280' },   // read from an imported e-paper, not added to the feed yet
 };
 // Where a card came from; the server sets it from the uploader's role ('epaper' = imported from another paper).
 export const SOURCES = {

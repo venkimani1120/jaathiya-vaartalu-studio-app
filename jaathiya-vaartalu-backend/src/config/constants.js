@@ -5,7 +5,8 @@ const DISTRICTS = Object.assign({}, ...Object.values(STATES));
 const STATE_OF = Object.fromEntries(Object.entries(STATES).flatMap(([st, ds]) => Object.keys(ds).map(d => [d, st])));
 const SECTIONS = { state: 'రాష్ట్రం', district: 'జిల్లా', constituency: 'నియోజకవర్గం', sports: 'క్రీడలు', business: 'వాణిజ్యం' };
 const ROLES = ['admin', 'editor', 'reporter'];
-const NEWS_STATUS = ['draft', 'submitted', 'approved', 'rejected', 'published'];
+// 'imported': read from an imported e-paper, waiting on that import's page until the desk adds it to the news feed.
+const NEWS_STATUS = ['draft', 'submitted', 'approved', 'rejected', 'published', 'imported'];
 // Where a news card came from. Set by the server from the uploader's role (or 'epaper' for imports).
 const NEWS_SOURCES = ['reporter', 'editor', 'admin', 'epaper'];
 const EDITION_TYPES = ['state', 'district', 'constituency', 'sports', 'business'];

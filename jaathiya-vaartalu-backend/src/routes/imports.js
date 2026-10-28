@@ -122,8 +122,8 @@ router.post('/', receive, wrap(async (req, res) => {
   res.status(202).json({ paper });
 }));
 
-// Reads the paper again (all pages, or ?page=N). News from those pages that is still waiting for
-// review or was sent back is replaced; approved and published news is kept.
+// Reads the paper again (all pages, or ?page=N). News from those pages that is not in the feed yet,
+// waiting for review or sent back is replaced; approved and published news is kept.
 router.post('/:id/extract', wrap(async (req, res) => {
   if (!extractor.status().enabled) throw new HttpError(400, 'News extraction is off. Set GEMINI_API_KEY on the server.');
   const paper = await SourcePaper.findById(req.params.id);
@@ -133,11 +133,28 @@ router.post('/:id/extract', wrap(async (req, res) => {
   if (!pages.length) throw new HttpError(400, 'No stored page to read.');
   if (pages.some(p => p.extract === 'running')) throw new HttpError(409, 'A page is being read right now. Try again in a minute.');
   const nos = pages.map(p => p.no);
-  const removed = await News.deleteMany({ 'sourceRef.paper': paper._id, 'sourceRef.page': { $in: nos }, status: { $in: ['draft', 'submitted', 'rejected'] } });
+  const removed = await News.deleteMany({ 'sourceRef.paper': paper._id, 'sourceRef.page': { $in: nos }, status: { $in: ['imported', 'draft', 'submitted', 'rejected'] } });
   pages.forEach(p => Object.assign(p, { extract: 'pending', extractTries: 0, nextTryAt: undefined, extractError: undefined, articles: undefined, repeats: undefined }));
   await paper.save();
   extractor.wake();
   res.json({ paper, removed: removed.deletedCount });
+}));
+
+// The desk picks which news read from this paper goes to the news feed:
+// { ids: [...], action: 'add' } sends them for review; { ids, action: 'delete' } deletes them for good.
+// Only news still waiting on this import (status 'imported') is touched.
+router.post('/:id/news', wrap(async (req, res) => {
+  const { action } = req.body;
+  const ids = [...new Set((Array.isArray(req.body.ids) ? req.body.ids : []).map(String))];
+  if (!['add', 'delete'].includes(action)) throw new HttpError(400, 'Unknown action.');
+  if (!ids.length) throw new HttpError(400, 'Choose the news first.');
+  if (ids.length > 300 || ids.some(id => !/^[a-f0-9]{24}$/.test(id))) throw new HttpError(400, 'Invalid news list.');
+  if (!(await SourcePaper.exists({ _id: req.params.id }))) throw new HttpError(404, 'Imported e-paper not found.');
+  const filter = { _id: { $in: ids }, 'sourceRef.paper': req.params.id, status: 'imported' };
+  const done = action === 'add'
+    ? (await News.updateMany(filter, { $set: { status: 'submitted' } })).modifiedCount
+    : (await News.deleteMany(filter)).deletedCount;
+  res.json({ [action === 'add' ? 'added' : 'deleted']: done });
 }));
 
 // Fits the photo crops of this paper's news to the photos' real edges again (no model call).

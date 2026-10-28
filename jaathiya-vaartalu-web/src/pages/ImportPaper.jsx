@@ -22,6 +22,8 @@ export default function ImportPaper({ id }) {
   const [open, setOpen] = useState(null);      // page number shown large
   const [actual, setActual] = useState(false); // false = fit to width, true = 1 image pixel per screen pixel
   const [reload, setReload] = useState(0);
+  const [picked, setPicked] = useState(() => new Set());   // news ticked to add to the feed or delete
+  const [notice, setNotice] = useState('');
 
   useEffect(() => { api('/imports/status').then(r => setExtraction(r.extraction)).catch(() => {}); }, []);
   useEffect(() => {
@@ -42,10 +44,31 @@ export default function ImportPaper({ id }) {
   };
   const readAgain = async no => {
     const what = no ? `page ${no}` : 'every page';
-    if (!window.confirm(`Read ${what} again?\n\nNews from ${no ? 'this page' : 'these pages'} that is waiting for review or was sent back is replaced. Approved news is kept.`)) return;
+    if (!window.confirm(`Read ${what} again?\n\nNews from ${no ? 'this page' : 'these pages'} that is not in the feed, waiting for review or sent back is replaced. Approved news is kept.`)) return;
     setBusy(true); setError('');
     try { await api(`/imports/${id}/extract`, { method: 'POST', params: no ? { page: no } : undefined }); setReload(r => r + 1); }
     catch (e) { setError(errMsg(e)); } finally { setBusy(false); }
+  };
+
+  // News read from this paper waits here ('imported') until the desk adds it to the feed or deletes it.
+  const pickable = news.filter(n => n.status === 'imported');
+  const toggle = id => setPicked(s => { const t = new Set(s); t.has(id) ? t.delete(id) : t.add(id); return t; });
+  const toggleMany = list => setPicked(s => {
+    const all = list.every(n => s.has(n._id)), t = new Set(s);
+    list.forEach(n => (all ? t.delete(n._id) : t.add(n._id)));
+    return t;
+  });
+  const act = async action => {
+    const ids = [...picked].filter(x => pickable.some(n => n._id === x));
+    if (!ids.length) return;
+    const many = `${ids.length} news${ids.length > 1 ? ' items' : ''}`;
+    if (action === 'delete' && !window.confirm(`Delete ${many} read from this e-paper? This cannot be undone.`)) return;
+    setBusy(true); setError(''); setNotice('');
+    try {
+      const r = await api(`/imports/${id}/news`, { method: 'POST', body: { ids, action } });
+      setPicked(new Set()); setReload(x => x + 1);
+      setNotice(action === 'add' ? `Added ${r.added} to the news feed, waiting for review.` : `Deleted ${r.deleted}.`);
+    } catch (e) { setError(errMsg(e)); } finally { setBusy(false); }
   };
 
   const recrop = async () => {
@@ -62,6 +85,7 @@ export default function ImportPaper({ id }) {
   const step = d => { const i = ready.findIndex(p => p.no === open) + d; if (ready[i]) setOpen(ready[i].no); };
   const onPage = no => news.filter(n => n.sourceRef?.page === no);
   const waiting = news.filter(n => n.status === 'submitted').length;
+  const chosen = pickable.filter(n => picked.has(n._id)).length;
 
   return (
     <main>
@@ -87,6 +111,7 @@ export default function ImportPaper({ id }) {
         <span><b>{ready.length}</b> of {paper.pages.length} pages stored</span>
         {extraction?.enabled ? <span><b>{read}</b> of {ready.length} read</span> : null}
         <span><b>{news.length}</b> news found</span>
+        {pickable.length ? <span><b>{pickable.length}</b> not in the news feed</span> : null}
         {waiting ? <a href="#/" onClick={() => { try { sessionStorage.setItem('jv_desk_tab', 'review'); sessionStorage.setItem('jv_desk_source', 'epaper'); } catch {} }}><b>{waiting}</b> waiting for review</a> : null}
       </div>
 
@@ -107,13 +132,36 @@ export default function ImportPaper({ id }) {
 
       {news.length ? <section className="imp-news">
         <h3>News found</h3>
+        <p className="muted">Tick the news worth using and add it to the news feed for review and editing; delete what isn't needed. News taken off the feed comes back here.</p>
+        <div className="select-bar">
+          <label className="check"><input type="checkbox" checked={pickable.length > 0 && pickable.every(n => picked.has(n._id))}
+            onChange={() => toggleMany(pickable)} disabled={!pickable.length || busy} />Select all not in the feed</label>
+          {chosen ? <span className="count-line">{chosen} selected</span> : null}
+          <div className="spacer" />
+          {chosen ? <>
+            <Button kind="secondary" onClick={() => setPicked(new Set())} disabled={busy}>Clear</Button>
+            <Button kind="danger" onClick={() => act('delete')} disabled={busy}><Icon name="trash" size={16} />Delete {chosen}</Button>
+            <Button onClick={() => act('add')} disabled={busy}><Icon name="plus" size={16} />Add {chosen} to news feed</Button>
+          </> : null}
+        </div>
+        {notice ? <p className="notice" role="status">{notice}</p> : null}
         {ready.filter(p => onPage(p.no).length).map(p => (
           <div key={p.no} className="imp-news-page">
-            <div className="row"><b>Page {p.no}</b><div className="spacer" />
+            <div className="row">
+              {onPage(p.no).some(n => n.status === 'imported') ? <input type="checkbox" className="pick" aria-label={`Select page ${p.no} news not in the feed`}
+                checked={onPage(p.no).filter(n => n.status === 'imported').every(n => picked.has(n._id))}
+                onChange={() => toggleMany(onPage(p.no).filter(n => n.status === 'imported'))} disabled={busy} /> : null}
+              <b>Page {p.no}</b><div className="spacer" />
               <button type="button" className="link" onClick={() => { setOpen(p.no); setActual(false); }}>Show on page</button>
               {extraction?.enabled ? <button type="button" className="link" onClick={() => readAgain(p.no)} disabled={busy || p.extract === 'running'}>Read again</button> : null}
             </div>
-            <ul>{onPage(p.no).map(n => <li key={n._id}><a href={`#/review/${n._id}`}>{n.title}</a> <Badge status={n.status} /></li>)}</ul>
+            <ul className="imp-list">{onPage(p.no).map(n => (
+              <li key={n._id} className={picked.has(n._id) ? 'picked' : ''}>
+                {n.status === 'imported'
+                  ? <input type="checkbox" className="pick" checked={picked.has(n._id)} onChange={() => toggle(n._id)} disabled={busy} aria-label={`Select ${n.title}`} />
+                  : <span className="pick-gap" />}
+                <a href={`#/review/${n._id}`}>{n.title}</a> <Badge status={n.status} />
+              </li>))}</ul>
           </div>
         ))}
       </section> : null}

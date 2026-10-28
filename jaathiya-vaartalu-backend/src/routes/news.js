@@ -39,6 +39,7 @@ function listFilter(req, { withSource = true } = {}) {
   const filter = {};
   if (!isDesk(req.user) || author === 'me') filter.author = req.user.id;
   if (status) filter.status = { $in: String(status).split(',') };
+  else if (!paper) filter.status = { $ne: 'imported' };   // not in the news feed until added from its import
   if (withSource && source) filter.source = { $in: String(source).split(',') };
   if (paper) { filter['sourceRef.paper'] = paper; if (page) filter['sourceRef.page'] = Number(page); }
   if (section) filter.section = section;
@@ -115,18 +116,26 @@ router.patch('/:id', wrap(async (req, res) => {
   res.json({ news });
 }));
 
-// Deletes news for good: takes it out of any draft edition it was placed in, then removes it from
-// the database. News in a published edition is never deleted, so a live e-paper keeps every story.
+// Takes news off the news feed: out of any draft edition it was placed in, then deleted from the
+// database. News read from an imported e-paper goes back to that import instead (it can be added
+// again, or deleted there). News in a published edition is never touched, so a live e-paper keeps every story.
 const IN_PUBLISHED = 'It is in a published e-paper. Delete that edition first to free it.';
 async function removeNews(ids) {
-  if (!ids.length) return;
+  if (!ids.length) return { deleted: 0, returned: 0 };
+  await unplace(ids);
+  const back = await News.updateMany({ _id: { $in: ids }, source: 'epaper', 'sourceRef.paper': { $exists: true }, status: { $nin: ['published', 'imported'] } },
+    { $set: { status: 'imported' }, $unset: { reviewedBy: 1, reviewedAt: 1, reviewNote: 1 } });
+  const gone = await News.deleteMany({ _id: { $in: ids }, status: { $nin: ['published', 'imported'] } });
+  return { deleted: gone.deletedCount, returned: back.modifiedCount };
+}
+// Removes news from the slots of draft editions.
+async function unplace(ids) {
   const gone = new Set(ids.map(String));
   for (const e of await Epaper.find({ status: 'draft' })) {
     let changed = false;
     e.pages.forEach(p => p.slots.forEach((v, k) => { if (gone.has(String(v))) { p.slots.delete(k); p.styles.delete(k); changed = true; } }));
     if (changed) await e.save();
   }
-  await News.deleteMany({ _id: { $in: ids }, status: { $ne: 'published' } });
 }
 
 // Editors and admins delete any news that is not published; reporters their own drafts, submissions and sent-back news.
@@ -136,20 +145,20 @@ router.delete('/:id', wrap(async (req, res) => {
   if (!isDesk(req.user) && (String(news.author) !== req.user.id || !REPORTER_EDITABLE.includes(news.status)))
     throw new HttpError(403, 'You cannot delete this news.');
   if (news.status === 'published') throw new HttpError(409, IN_PUBLISHED);
-  await removeNews([news._id]);
-  res.json({ ok: true });
+  if (news.status === 'imported') throw new HttpError(409, 'This news is not in the news feed. Delete it from its imported e-paper.');
+  res.json({ ok: true, ...(await removeNews([news._id])) });
 }));
 
-// Editors and admins: delete many at once ({ ids: [...] }, up to 200). Published news is skipped and counted.
+// Editors and admins: take many off the feed at once ({ ids: [...] }, up to 200). Published news is skipped and counted.
 router.post('/bulk-delete', authorize('editor', 'admin'), wrap(async (req, res) => {
   const ids = [...new Set((Array.isArray(req.body.ids) ? req.body.ids : []).map(String))];
   if (!ids.length) throw new HttpError(400, 'Choose the news to delete.');
   if (ids.length > 200) throw new HttpError(400, 'Delete up to 200 news at a time.');
   if (ids.some(id => !/^[a-f0-9]{24}$/.test(id))) throw new HttpError(400, 'Invalid id.');
-  const found = await News.find({ _id: { $in: ids } }).select('status');
+  const found = await News.find({ _id: { $in: ids }, status: { $ne: 'imported' } }).select('status');
   const free = found.filter(n => n.status !== 'published').map(n => n._id);
-  await removeNews(free);
-  res.json({ deleted: free.length, published: found.length - free.length, missing: ids.length - found.length });
+  const r = await removeNews(free);
+  res.json({ ...r, published: found.length - free.length, missing: ids.length - found.length });
 }));
 
 router.post('/:id/review', authorize('editor', 'admin'), wrap(async (req, res) => {
