@@ -25,9 +25,12 @@ export default function DeskNews() {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [error, setError] = useState('');
+  const [picked, setPicked] = useState(() => new Set());   // ids ticked for deleting
+  const [deleting, setDeleting] = useState(false);
+  const [notice, setNotice] = useState('');
 
   useEffect(() => { try { sessionStorage.setItem('jv_desk_tab', tab); sessionStorage.setItem('jv_desk_source', source); } catch {} }, [tab, source]);
-  useEffect(() => { setPage(1); }, [tab, source, place, section, q]);
+  useEffect(() => { setPage(1); setPicked(new Set()); }, [tab, source, place, section, q]);
 
   // Per-source totals for the chips, under the same tab, place, section and search.
   useEffect(() => {
@@ -48,6 +51,30 @@ export default function DeskNews() {
     }, q ? 300 : 0);
     return () => { live = false; clearTimeout(t); };
   }, [tab, source, place, section, q, page]);
+
+  // News in a published e-paper can't be deleted, so it has no tick box.
+  const deletable = (items || []).filter(n => n.status !== 'published');
+  const allPicked = deletable.length > 0 && deletable.every(n => picked.has(n._id));
+  const toggle = id => setPicked(s => { const t = new Set(s); t.has(id) ? t.delete(id) : t.add(id); return t; });
+  const toggleAll = () => setPicked(allPicked ? new Set() : new Set(deletable.map(n => n._id)));
+  const removePicked = async () => {
+    const ids = [...picked];
+    if (!window.confirm(`Delete ${ids.length} news card${ids.length > 1 ? 's' : ''}?\n\nThey are removed from the database and from any draft e-paper they are placed in. This cannot be undone.`)) return;
+    setDeleting(true); setError(''); setNotice('');
+    try {
+      let deleted = 0, published = 0;
+      for (let i = 0; i < ids.length; i += 200) {
+        const r = await api('/news/bulk-delete', { method: 'POST', body: { ids: ids.slice(i, i + 200) } });
+        deleted += r.deleted; published += r.published;
+      }
+      const gone = new Set(ids);
+      setItems(s => s.filter(n => !gone.has(n._id) || n.status === 'published'));
+      setTotal(t => t - deleted); setPicked(new Set());
+      setNotice(`Deleted ${deleted} news card${deleted === 1 ? '' : 's'}.${published ? ` ${published} kept: in a published e-paper.` : ''}`);
+      api('/news/counts', { params: { ...TAB_PARAMS[tab], ...place, section, q } }).then(setCounts).catch(() => {});
+    } catch (e) { setError(errMsg(e)); }
+    setDeleting(false);
+  };
 
   const countOf = k => (counts ? <span className="n">{k ? counts.counts[k] : counts.total}</span> : null);
   const sourceChips = [['', <>All sources{countOf('')}</>], ...Object.entries(SOURCES).map(([k, s]) => [k, <>{s.label}{countOf(k)}</>])];
@@ -81,12 +108,26 @@ export default function DeskNews() {
       {error ? <p className="error" role="alert">{error}</p> : null}
       {!items ? (error ? null : <Spinner />) : !items.length ? <Empty title={emptyTitle}>{emptyText}</Empty> : (
         <>
-          <p className="count-line">Showing {items.length} of {total}</p>
+          <div className="select-bar">
+            <label className="check"><input type="checkbox" checked={allPicked} onChange={toggleAll} disabled={!deletable.length || deleting} />
+              Select all shown</label>
+            <span className="count-line">{picked.size ? `${picked.size} selected · ` : ''}Showing {items.length} of {total}</span>
+            <div className="spacer" />
+            {picked.size ? <>
+              <Button kind="secondary" onClick={() => setPicked(new Set())} disabled={deleting}>Clear</Button>
+              <Button kind="danger" onClick={removePicked} disabled={deleting}><Icon name="trash" size={16} />{deleting ? 'Deleting…' : `Delete ${picked.size}`}</Button>
+            </> : null}
+          </div>
+          {notice ? <p className="notice" role="status">{notice}</p> : null}
           <div className="cards">
             {items.map(n => (
-              <NewsCard key={n._id} n={n} href={href(n)}>
-                <div className="meta"><SourceBadge source={n.source} />{n.constituency || n.district || ''}{n.sourceRef?.publisher ? ` · ${n.sourceRef.publisher} ${n.sourceRef.editionName}, p${n.sourceRef.page}` : n.author?.name ? ` · ${n.author.name}` : ''} · {new Date(n.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
-              </NewsCard>
+              <div key={n._id} className={`pickable${picked.has(n._id) ? ' picked' : ''}`}>
+                {n.status !== 'published' ? <input type="checkbox" className="pick" checked={picked.has(n._id)} onChange={() => toggle(n._id)}
+                  disabled={deleting} aria-label={`Select ${n.title}`} /> : null}
+                <NewsCard n={n} href={href(n)}>
+                  <div className="meta"><SourceBadge source={n.source} />{n.constituency || n.district || ''}{n.sourceRef?.publisher ? ` · ${n.sourceRef.publisher} ${n.sourceRef.editionName}, p${n.sourceRef.page}` : n.author?.name ? ` · ${n.author.name}` : ''} · {new Date(n.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+                </NewsCard>
+              </div>
             ))}
           </div>
           {items.length < total ? <div className="row" style={{ justifyContent: 'center', marginTop: 20 }}>

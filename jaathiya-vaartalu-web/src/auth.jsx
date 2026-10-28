@@ -8,7 +8,7 @@ export const useAuth = () => useContext(Ctx);
 export const permissionsFor = role => ({
   desk: role === 'editor' || role === 'admin',   // review, edit any news, e-paper
   users: role === 'admin',                        // approve accounts, change roles
-  deleteAny: role === 'admin',                    // delete other people's news
+  deleteAny: role === 'editor' || role === 'admin', // delete any news not in a published e-paper
   deleteEdition: role === 'admin',                // delete editions from the E-paper list
 });
 export const ROLE_LABEL = { reporter: 'Reporter', editor: 'Editor', admin: 'Admin' };

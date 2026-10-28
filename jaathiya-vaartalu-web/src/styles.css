@@ -201,6 +201,15 @@ main { max-width: 1120px; margin: 0 auto; padding: 24px 16px 48px; }
 .filters .grid3 { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
 .filters .field { margin-bottom: 0; }
 .count-line { color: var(--muted); font-size: 13px; margin: 0 0 10px; }
+/* Desk news: tick cards to delete them together */
+.select-bar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+.select-bar .count-line { margin: 0; }
+.select-bar .check { display: inline-flex; gap: 8px; align-items: center; font-size: 14px; font-weight: 600; cursor: pointer; }
+.check input, .pickable .pick { width: 18px; height: 18px; accent-color: var(--red); cursor: pointer; }
+.pickable { position: relative; display: grid; }
+.pickable .pick { position: absolute; top: 10px; left: 10px; z-index: 1; margin: 0; background: var(--surface); }
+.pickable .card { padding-left: 38px; }
+.pickable.picked .card { border-color: var(--red); background: var(--red-50); }
 .table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow-sm); }
 table.list { width: 100%; border-collapse: collapse; font-size: 14px; }
 table.list th { text-align: left; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); background: var(--surface-2); padding: 11px 14px; border-bottom: 1px solid var(--line); white-space: nowrap; }
