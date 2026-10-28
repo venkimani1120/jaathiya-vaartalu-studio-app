@@ -53,11 +53,16 @@ function transform(url, t) {
   if (!isCloud(url)) return null;
   return /\/v\d+\//.test(url) ? url.replace(/\/(v\d+\/)/, `/${t}/$1`) : url.replace('/image/upload/', `/image/upload/${t}/`);
 }
-// A box of the page at its original pixels, as lossless PNG. Local files: null (no image library here).
-function cropUrl(imageUrl, { x, y, w, h }) {
-  const u = transform(imageUrl, `c_crop,x_${Math.round(x)},y_${Math.round(y)},w_${Math.round(w)},h_${Math.round(h)}`);
+// A box of the page at its original pixels, as lossless PNG; with maxWidth, scaled down to at most
+// that wide (never up). Local files: null (no image library here).
+function cropUrl(imageUrl, { x, y, w, h }, maxWidth) {
+  const crop = `c_crop,x_${Math.round(x)},y_${Math.round(y)},w_${Math.round(w)},h_${Math.round(h)}`;
+  const u = transform(imageUrl, maxWidth ? `${crop}/c_limit,w_${maxWidth}` : crop);
   return u && u.replace(/\.(jpe?g|webp|png)$/i, '.png');
 }
+// Photos cut from a page are capped at this width so they sit lightly in the e-paper layout.
+const PHOTO_WIDTH = Number(process.env.EXTRACT_PHOTO_WIDTH || 900);
+const photoUrl = (imageUrl, box) => cropUrl(imageUrl, box, PHOTO_WIDTH);
 
 // The page as sent to the extraction model: a JPEG no wider than MODEL_WIDTH, to stay well under
 // request limits. Boxes come back relative to the image, so they still map onto the original pixels.
@@ -101,4 +106,4 @@ async function removePaper(paperId) {
   fs.rmSync(path.join(LOCAL_DIR, String(paperId)), { recursive: true, force: true });
 }
 
-module.exports = { DPI, canRenderPdf, savePage, removePaper, cropUrl, modelImage, pageBuffer, pagePdf };
+module.exports = { DPI, canRenderPdf, savePage, removePaper, cropUrl, photoUrl, modelImage, pageBuffer, pagePdf };
