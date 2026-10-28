@@ -26,26 +26,30 @@ The two mobile apps have different package ids (`com.jaathiyavaartalu.reporter`,
 |---|---|---|---|
 | Sign up | Yes (starts inactive) | – | – |
 | Upload news card | Yes, max **50 per day** (resets at midnight IST) | Yes, no limit | Yes, no limit |
-| Edit / delete a card | **Only own cards**, only before approval | Any card | Any card |
+| Edit / delete a card | **Only own cards**, only before approval | Any card; delete any not in a published e-paper, one or many at once (tick boxes on News) | Same |
 | See news | Own cards only | All, filter by constituency / district / section | Same |
 | Approve / send back | – | Yes | Yes |
 | Build, merge, publish e-paper | – | Yes | Yes |
 | Approve accounts, change roles | – | – | Yes |
 
-Flow: `draft → submitted → approved` (or `rejected` with a note → reporter fixes → resubmits) `→ published` when placed in a published edition.
+Every card has a **source**: `reporter`, `editor` or `admin` (the uploader's role when it was created) or `epaper` (imported from another paper). The server sets it and it never changes. Editors and admins filter by it in the news list, the Desk app and the studio.
+
+Flow (e-paper news starts as `imported` and joins at `submitted` when added to the feed): `draft → submitted → approved` (or `rejected` with a note → reporter fixes → resubmits) `→ published` when placed in a published edition.
 
 The limit uses an atomic per-day counter (`DailyQuota` with a unique index), so two uploads at the same moment can't sneak past 50.
 
-JWT: 15-minute access token + 30-day refresh token. Changing a user's role or deactivating them bumps `tokenVersion`, which signs them out on every device.
+JWT: 15-minute access token + refresh token, both tied to one server-side session. One signed-in device per user: signing in again (anywhere) ends the earlier session. The session ends after `SESSION_IDLE_MINUTES` (default 15) without any request, and on sign-out, where its tokens stop working at once. Changing the password, a user's role or deactivating them also ends it.
 
 ## API summary
 
 ```
 POST /api/auth/signup | /login | /refresh | /logout     GET /api/auth/me
-GET  /api/news?status=&constituency=&district=&section=&author=me&q=   POST /api/news   PATCH|DELETE /api/news/:id
+GET  /api/news?status=&source=&paper=&page=&constituency=&district=&section=&author=me&q=   POST /api/news   PATCH|DELETE /api/news/:id   POST /api/news/bulk-delete {ids} (editor, admin; up to 200, news in a published e-paper is kept)
+GET  /api/news/counts?<same filters>  -> { counts: { reporter, editor, admin, epaper }, total }   (editor, admin)
 POST /api/news/:id/review {action: approve|reject, note}      GET /api/news/quota/today
 POST /api/uploads  (multipart "images", up to 10)  -> { urls }
 GET|POST /api/epapers   GET|PUT /api/epapers/:id   POST /api/epapers/:id/publish   (editor, admin)
+GET|POST /api/imports   GET|DELETE /api/imports/:id   POST /api/imports/:id/extract[?page=N]   POST /api/imports/:id/news {ids, action: add|delete}   GET /api/imports/publishers | /status   (editor, admin; POST is multipart "file" = one PDF, or "pages" = page images)
 GET  /api/users?pending=true   PATCH /api/users/:id {role, active}   (admin)
 GET  /api/public/epapers/:slug   GET /api/public/meta              (no login)
 GET  /studio  (layout studio)    GET /e/:slug  (public reader)
@@ -61,6 +65,16 @@ Edition types: **State, District, Constituency, Sports, Business**. Page layouts
 Editors can drag cards onto boxes (or tap a card, then tap a box on phones), drag stories between boxes to swap, drag page thumbnails to reorder, **Merge with next** to combine two pages, change a page's layout, and Auto-fill from the filtered news.
 
 To change masthead text, the "Published from" line or the imprint, edit `BRAND` near the top of the studio script.
+
+## Imported e-papers
+
+Editors and admins can upload other papers' e-papers on the web app's **Imports** tab. They upload one PDF of the whole edition, or its page images in page order, and tag it with the paper, edition, date and (optionally) district. Each paper, edition and date can be imported once, and the same file can't be uploaded twice.
+
+The server answers straight away and stores the pages in the background. Pages are never resized or recompressed, so later crops keep the original pixels. PDF pages are rendered to PNG by Cloudinary at `IMPORT_DPI` (default 200), so PDFs need `CLOUDINARY_URL`. Without it, only page images can be imported. On Cloudinary's free plan each file must be under 10 MB; for a PDF that limit applies to each page, as pages are uploaded one at a time. If the server restarts during an upload, the unfinished pages are marked failed: delete the import and upload it again.
+
+**News extraction.** With `GEMINI_API_KEY` set (a free key from Google AI Studio; no card needed), the server reads every stored page with Gemini (`GEMINI_MODEL`, default `gemini-3.8-flash`). Each article becomes a news card with source **E-paper**, waiting in Review: headline, highlights, body, dateline, section, district and constituency (matched to the lists in `shared/locations.json`), plus its photos. The model's photo boxes are only roughly placed, so the exact ones come from the PDF itself: every photo is an image placed on the page (some layout tools slice photos into thin strips, which are joined back), read with `pdfjs-dist` when the page is stored. Each PDF photo goes to the story whose model photo box it overlaps, else to the smallest story box that holds it; photos in no story (masthead, ads) are left out. For scanned PDFs and page images, the model's boxes are snapped to the photo edges in the page pixels (`sharp`) instead. The article box is widened to include its photos. Pages stored before this get their PDF photo boxes on first use, through Cloudinary's signed download (plain PDF links are blocked on the free plan). The photos are cropped from the stored page at its original pixels, as PNG, on Cloudinary only; local storage keeps the boxes but no crops. Each card remembers its page and its box on that page. The review page shows the article as printed next to the extracted text, and the e-paper's page viewer outlines every article found. A headline already imported for the same date (from any paper or edition) is skipped and counted as a repeat, since district editions reprint state pages.
+
+Pages are read one at a time, `EXTRACT_GAP_SECONDS` apart (default 8) to stay inside the free tier's per-minute limit. If the model is overloaded (503), out of free quota (429) or doesn't answer, the next model in `GEMINI_FALLBACK_MODELS` is tried (default `gemini-3.6-flash`, then `gemini-3.5-flash-lite`; a model Google no longer offers to your key is skipped); if all are busy, the page waits and is tried again later without counting as a failure. Other errors are tried 3 times before the page is marked failed. Progress is saved on each page, so reading carries on after a restart; on Render's free plan it pauses while the server sleeps. **Fix photo crops** re-fits the photo crops of news already read, without asking the model again; it only swaps photos the card still has from extraction. News read from a page waits on its import (status `imported`, **Not in feed**) and stays out of the news feed. On the import, tick the news worth using and **Add to news feed** (it then waits for review like any card), or **Delete** what isn't needed. Taking an e-paper card off the news feed sends it back to its import instead of deleting it. **Read again** (one page or the whole e-paper) replaces that page's news that is not in the feed, waiting for review or sent back, and keeps approved news. An import can't be deleted while any of its news is approved or published, because their photos are cut from its pages. On the free tier, Google may use what is sent to improve its products.
 
 ## States, districts and constituencies
 

@@ -20,7 +20,7 @@ router.patch('/:id', wrap(async (req, res) => {
   const { role, active, district, constituency } = req.body;
   if (req.params.id === req.user.id && (role && role !== 'admin' || active === false)) throw new HttpError(400, 'You cannot demote or deactivate yourself.');
   if (role && !ROLES.includes(role)) throw new HttpError(400, 'Unknown role.');
-  const update = { $inc: { tokenVersion: 1 } };
+  const update = { $unset: { sessionId: 1, sessionSeenAt: 1 } };
   const set = {};
   if (role) set.role = role;
   if (typeof active === 'boolean') set.active = active;

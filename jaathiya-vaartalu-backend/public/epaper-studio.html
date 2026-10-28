@@ -166,6 +166,9 @@ select{border:1px solid var(--line);background:var(--panel2);padding:7px 8px;bor
 .ghost-drag{position:fixed;z-index:80;pointer-events:none;background:var(--panel);color:var(--ink);border:2px solid var(--act);border-radius:10px;padding:6px 10px;font-size:13px;max-width:240px;box-shadow:0 10px 24px rgba(0,0,0,.25);transform:translate(-50%,-120%)}
 
 .modal{position:fixed;inset:0;z-index:50;background:rgba(10,14,22,.55);display:grid;place-items:center;padding:16px}
+/* Signed out: only the sign-in form shows; nothing of the studio (or its open work) is visible behind it. */
+.app.locked>:not(.modal){display:none!important}
+.app.locked .modal{background:var(--bg,#f4f5f7)}
 .sheet{background:var(--panel);color:var(--ink);border-radius:14px;padding:18px;width:min(560px,100%);max-height:88vh;overflow:auto}
 .sheet h2{margin:0 0 12px;font-size:19px}
 .sheet label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
@@ -232,6 +235,7 @@ select{border:1px solid var(--line);background:var(--panel2);padding:7px 8px;bor
       <div class="pool-head"><b>Approved news</b><span id="poolCount"></span><button class="x" id="poolClose" aria-label="Close">✕</button></div>
       <input id="q" type="search" placeholder="Search headlines">
       <div class="chips" id="secChips"></div>
+      <div class="chips" id="srcChips" aria-label="Source"></div>
       <div class="prow"><select id="stateSel" aria-label="State"></select><select id="distSel" aria-label="District"></select></div>
       <div class="prow"><select id="conSel" aria-label="Constituency"></select></div>
       <div class="list" id="poolList" data-drop="pool"></div>
@@ -279,6 +283,7 @@ const STATE_OF = Object.fromEntries(Object.entries(STATES).flatMap(([st, ds]) =>
 const SECTIONS = { state:'రాష్ట్రం', district:'జిల్లా', constituency:'నియోజకవర్గం', sports:'క్రీడలు', business:'వాణిజ్యం' };
 const MONTHS = ['జనవరి','ఫిబ్రవరి','మార్చి','ఏప్రిల్','మే','జూన్','జూలై','ఆగస్టు','సెప్టెంబరు','అక్టోబరు','నవంబరు','డిసెంబరు'];
 const DAYS = ['ఆదివారం','సోమవారం','మంగళవారం','బుధవారం','గురువారం','శుక్రవారం','శనివారం'];
+const SOURCES = { reporter:'Reporter', editor:'Editor', admin:'Admin', epaper:'E-paper' };
 const KIND_LABEL = { lead:'Lead story', story:'Story', brief:'Brief' };
 const STYLES = ['red','blue','boxed'];
 
@@ -403,7 +408,7 @@ document.getElementById('brandLogo').src = MARK; document.getElementById('favico
 
 /* ---------- state ---------- */
 const S = { news: [], editions: [], cur: null, pageIdx: 0, sel: null, preview: false, viewer: false,
-  filter: { q: '', section: 'all', state: 'all', district: 'all', constituency: 'all' } };
+  filter: { q: '', section: 'all', source: 'all', state: 'all', district: 'all', constituency: 'all' } };
 const byId = id => S.news.find(n => n.id === id);
 const ed = () => S.editions.find(e => e.id === S.cur);
 const narrow = () => window.matchMedia('(max-width:860px)').matches;
@@ -422,8 +427,9 @@ function placements() {
 }
 
 /* ---------- API (when served by the backend) ---------- */
-// The access token lasts 15 minutes; on a 401 the studio swaps its 30-day refresh token for a new
-// pair once and retries, so long editing sessions keep saving. (Inside the mobile app the app owns
+// The access token lasts 15 minutes; on a 401 the studio swaps its refresh token for a new pair once
+// and retries, so long editing sessions keep saving. The session ends after 15 minutes without any
+// request, or when the account signs in on another device. (Inside the mobile app the app owns
 // the session and passes window.__JV_TOKEN instead.)
 const setSession = d => { store.set('jv_token', d.accessToken); store.set('jv_refresh', d.refreshToken); if (d.user) store.set('jv_user', d.user); };
 const clearSession = () => ['jv_token', 'jv_refresh', 'jv_user'].forEach(k => store.del(k));
@@ -439,6 +445,7 @@ const API = {
     const r = await fetch(CFG.apiBase + path, { ...opt, headers: { 'Content-Type': 'application/json', ...(t ? { Authorization: 'Bearer ' + t } : {}) } });
     if (r.status === 401) {
       if (retry && await API.refresh()) return API.req(path, opt, false);
+      if (!window.__JV_TOKEN) clearSession();   // the session is over: don't keep its dead tokens
       showLogin(); throw new Error('Sign in to continue.');
     }
     const d = await r.json().catch(() => ({}));
@@ -447,10 +454,12 @@ const API = {
   }
 };
 const mapNews = n => ({ id: n._id || n.id, section: n.section, state: n.state || STATE_OF[n.district], district: n.district, constituency: n.constituency, dateline: n.dateline,
-  title: n.title, highlights: n.highlights || [], body: n.body, images: n.images || [], reporter: (n.author && n.author.name) || n.reporter || '' });
+  title: n.title, highlights: n.highlights || [], body: n.body, images: n.images || [], reporter: (n.author && n.author.name) || n.reporter || '', source: n.source || 'reporter' });
 const mapEd = e => ({ ...e, id: e._id || e.id, editionDate: String(e.editionDate).slice(0, 10), ad: e.ad || { ...BRAND.ad },
   pages: (e.pages || []).map(p => ({ ...p, slots: p.slots || {}, styles: p.styles || {} })) });
-function mergeNews(list) { list.map(mapNews).forEach(n => { if (!byId(n.id)) S.news.push(n); }); }
+// Adds new stories and refreshes the ones already here, so edits made since (text, a cropped or
+// changed photo) show in the pool and on the pages.
+function mergeNews(list) { list.map(mapNews).forEach(n => { const had = byId(n.id); if (had) Object.assign(had, n); else S.news.push(n); }); }
 
 async function loadAll() {
   if (MODE === 'demo') {
@@ -522,11 +531,22 @@ async function saveClick() {
 }
 async function logout() {
   if (!(await saveAll()) && !confirm('Your latest changes could not be saved. Log out anyway and lose them?')) return;
-  clearSession(); unsaved.clear(); saveErr = null;
+  // End the session on the server too, so its tokens stop working at once.
+  const t = store.get('jv_token', null), rt = store.get('jv_refresh', null);
+  await fetch(CFG.apiBase + '/auth/logout', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(t ? { Authorization: 'Bearer ' + t } : {}) }, body: JSON.stringify({ refreshToken: rt }) }).catch(() => {});
+  clearSession(); resetToLogin();
+}
+function resetToLogin() {
+  unsaved.clear(); saveErr = null;
   S.editions = []; S.news = []; S.cur = null; S.sel = null; S.preview = false;
   $('#canvas').innerHTML = ''; $('#logoutBtn').hidden = true; $('#modeTag').textContent = '';
-  showLogin();
+  closeModal(); showLogin();
 }
+// Signed out in another tab or in the web app (they share this site's storage): go to sign-in here too.
+window.addEventListener('storage', e => {
+  if (MODE !== 'api' || S.viewer || window.__JV_TOKEN) return;
+  if ((e.key === 'jv_refresh' || e.key === null) && !store.get('jv_refresh', null)) resetToLogin();
+});
 function commit() { const e = ed(); if (e.status === 'published') e.dirty = true; persist(); renderAll(); }
 
 /* ---------- layout operations ---------- */
@@ -562,7 +582,8 @@ function autoFill(silent) {
 }
 function pageFilter() {
   const e = ed(); const p = e.pages[S.pageIdx];
-  if (silentFilterFromPage(p)) return silentFilterFromPage(p);
+  // Sports and business pages pick their own section, but keep the chosen source.
+  if (silentFilterFromPage(p)) return { ...silentFilterFromPage(p), source: S.filter.source };
   return S.filter;
 }
 function silentFilterFromPage(p) {
@@ -612,13 +633,14 @@ function filteredNews(f = S.filter) {
   const q = (f.q || '').trim().toLowerCase();
   return S.news.filter(n =>
     (!f.section || f.section === 'all' || n.section === f.section) &&
+    (!f.source || f.source === 'all' || n.source === f.source) &&
     (!f.state || f.state === 'all' || (n.state || STATE_OF[n.district]) === f.state) &&
     (!f.district || f.district === 'all' || n.district === f.district) &&
     (!f.constituency || f.constituency === 'all' || n.constituency === f.constituency) &&
     (!q || n.title.toLowerCase().includes(q) || (n.body || '').toLowerCase().includes(q)));
 }
 function filterForEdition(e) {
-  const f = { q: '', section: 'all', state: 'all', district: 'all', constituency: 'all' };
+  const f = { q: '', section: 'all', source: S.filter.source || 'all', state: 'all', district: 'all', constituency: 'all' };
   if (e.type === 'state' && STATES[e.key]) f.state = e.key;
   if (e.type === 'district') { f.district = e.key; f.state = STATE_OF[e.key] || 'all'; }
   if (e.type === 'constituency') { f.constituency = e.key; f.district = Object.keys(DISTRICTS).find(d => DISTRICTS[d].includes(e.key)) || 'all'; f.state = STATE_OF[f.district] || 'all'; }
@@ -777,6 +799,8 @@ function renderPool() {
   $('#poolCount').textContent = `${list.filter(n => !placed[n.id]).length} unplaced`;
   $('#poolFab').textContent = `News (${S.news.filter(n => !placed[n.id]).length})`;
   $('#secChips').innerHTML = [['all', 'అన్నీ'], ...Object.entries(SECTIONS)].map(([k, v]) => `<button data-sec="${k}" aria-pressed="${f.section === k}">${v}</button>`).join('');
+  const nSrc = k => S.news.filter(n => !placed[n.id] && (k === 'all' || n.source === k)).length;
+  $('#srcChips').innerHTML = [['all', 'All sources'], ...Object.entries(SOURCES)].map(([k, v]) => `<button data-src="${k}" aria-pressed="${f.source === k}">${v} ${nSrc(k)}</button>`).join('');
   const opt = (v, cur) => `<option${v === cur ? ' selected' : ''}>${esc(v)}</option>`;
   $('#stateSel').innerHTML = `<option value="all">Both states</option>` + Object.keys(STATES).map(st => opt(st, f.state)).join('');
   const dists = f.state !== 'all' ? { [f.state]: STATES[f.state] } : STATES;
@@ -790,7 +814,7 @@ function renderPool() {
     return `<article class="card${S.sel === n.id ? ' sel' : ''}${pl ? ' placed' : ''}" data-card="${esc(n.id)}" tabindex="0">
       <span class="handle" data-handle aria-hidden="true">⠿</span>
       ${n.images && n.images[0] ? `<img src="${esc(n.images[0])}" alt="">` : '<div class="noimg">✎</div>'}
-      <div><h4>${esc(n.title)}</h4><small>${esc([n.constituency, n.district].filter(Boolean).join(', ') || SECTIONS[n.section] || '')}, ${esc(n.reporter || '')}</small>${pl ? `<em>On page ${pl.page + 1}</em>` : ''}</div></article>`;
+      <div><h4>${esc(n.title)}</h4><small>${esc([n.constituency, n.district].filter(Boolean).join(', ') || SECTIONS[n.section] || '')}, ${esc(n.reporter || '')} · ${esc(SOURCES[n.source] || '')}</small>${pl ? `<em>On page ${pl.page + 1}</em>` : ''}</div></article>`;
   }).join('') : `<div class="empty-pool">No approved news matches these filters.</div>`;
 }
 function renderAll() { renderTop(); renderStrip(); if (!S.viewer) { renderPageBar(); renderPool(); } renderCanvas(); renderPick(); }
@@ -866,8 +890,9 @@ function toast(msg, actLabel, act) {
 }
 function openModal(html, onMount) { $('#sheet').innerHTML = html; $('#modal').hidden = false; onMount && onMount($('#sheet')); }
 function closeModal() { $('#modal').hidden = true; $('#sheet').innerHTML = ''; }
-$('#modal').addEventListener('click', e => { if (e.target.id === 'modal' || e.target.closest('[data-close]')) closeModal(); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { if (!$('#modal').hidden) closeModal(); else if (S.sel) { S.sel = null; renderAll(); } } });
+const locked = () => $('#app').classList.contains('locked');   // the sign-in form can't be closed
+$('#modal').addEventListener('click', e => { if (!locked() && (e.target.id === 'modal' || e.target.closest('[data-close]'))) closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { if (locked()) return; if (!$('#modal').hidden) closeModal(); else if (S.sel) { S.sel = null; renderAll(); } } });
 
 function openReader(id) {
   const n = byId(id); if (!n) return;
@@ -1016,7 +1041,11 @@ async function printEdition() {
   window.addEventListener('afterprint', restore);
   try { window.print(); } catch (_) { restore(); toast('Printing is blocked here. Open the published link in a browser to save the PDF.'); }
 }
+// Every studio page needs a signed-in editor or admin; until then only this form shows.
+// Inside the web app, the app itself goes back to its sign-in page.
 function showLogin() {
+  $('#app').classList.add('locked');
+  if (EMBEDDED) try { window.parent.postMessage({ type: 'jv:signed-out' }, location.origin); } catch (_) {}
   if (!$('#modal').hidden && $('#lgEmail')) return;
   openModal(`<h2>Sign in</h2><p style="color:var(--muted);margin:0">Editors and admins only.</p>
     <label>Email</label><input id="lgEmail" type="email" autocomplete="username">
@@ -1028,7 +1057,7 @@ function showLogin() {
           body: JSON.stringify({ email: sh.querySelector('#lgEmail').value, password: sh.querySelector('#lgPass').value }) });
         const d = await r.json(); if (!r.ok) throw new Error(d.message || 'Sign-in failed');
         if (!['admin', 'editor'].includes(d.user.role)) throw new Error('Only editors and admins can build the e-paper.');
-        setSession(d); closeModal();
+        setSession(d); $('#app').classList.remove('locked'); closeModal();
         // Signed out mid-edit (session expired): keep the open work and save it, don't reload over it.
         if (S.editions.length && unsaved.size) { $('#logoutBtn').hidden = !!window.__JV_TOKEN; showUser(); await saveAll(); renderAll(); }
         else boot();
@@ -1130,6 +1159,7 @@ $('#pagebar').addEventListener('click', e => {
   if (e.target.id === 'delPageBtn') deletePage(S.pageIdx);
 });
 $('#secChips').addEventListener('click', e => { const b = e.target.closest('[data-sec]'); if (b) { S.filter.section = b.dataset.sec; renderPool(); } });
+$('#srcChips').addEventListener('click', e => { const b = e.target.closest('[data-src]'); if (b) { S.filter.source = b.dataset.src; renderPool(); } });
 $('#stateSel').onchange = e => { S.filter.state = e.target.value; S.filter.district = 'all'; S.filter.constituency = 'all'; renderPool(); };
 $('#distSel').onchange = e => { S.filter.district = e.target.value; S.filter.constituency = 'all'; if (e.target.value !== 'all') S.filter.state = STATE_OF[e.target.value]; renderPool(); };
 $('#conSel').onchange = e => {
@@ -1156,13 +1186,17 @@ function showUser() {
   if (MODE === 'api' && u) { $('#modeTag').textContent = `Connected · ${u.name}`; $('#logoutBtn').title = `Signed in as ${u.name} (${u.email})`; }
 }
 $('#publishBtn').onclick = publish;
-// The web app keeps this page loaded while the editor uses other tabs; when they come back it asks for
-// the latest approved news so stories approved meanwhile show up in the pool.
-window.addEventListener('message', e => {
-  if (e.origin !== location.origin || !e.data || e.data.type !== 'jv:refresh-pool') return;
-  if (MODE !== 'api' || S.viewer || !S.editions.length || !API.token()) return;
+// The web app keeps this page loaded while the editor uses other tabs; when they come back (or come
+// back to this browser tab) it fetches the latest approved news, so stories approved or edited
+// meanwhile (new text, cropped photos) show up in the pool and on the pages.
+function refreshPool() {
+  if (MODE !== 'api' || S.viewer || !S.editions.length || !API.token() || locked()) return;
   API.req('/news?status=approved&limit=300').then(p => { mergeNews(p.items); renderAll(); }).catch(() => {});
+}
+window.addEventListener('message', e => {
+  if (e.origin === location.origin && e.data && e.data.type === 'jv:refresh-pool') refreshPool();
 });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshPool(); });
 new ResizeObserver(fit).observe($('#canvas'));
 
 /* ---------- boot ---------- */
