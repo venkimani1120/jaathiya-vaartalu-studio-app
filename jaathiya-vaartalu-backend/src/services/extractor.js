@@ -1,7 +1,7 @@
 const SourcePaper = require('../models/SourcePaper');
 const News = require('../models/News');
 const { DISTRICTS, STATE_OF, SECTIONS } = require('../config/constants');
-const { cropUrl, modelImage, pageBuffer, pagePdf, DPI } = require('./pageStore');
+const { cropUrl, photoUrl, modelImage, pageBuffer, pagePdf, DPI } = require('./pageStore');
 const { photoRects } = require('./pdfPhotos');
 const { loadPixels, snapPhoto } = require('./snap');
 const gemini = require('./gemini');
@@ -151,7 +151,7 @@ async function toNews(articles, paper, page, geometry = {}) {
   const docs = [];
   for (const f of found) {
     if (earlier.some(e => e.key === f.key || likeness(e.shingles, f.shingles) >= SAME_STORY)) { repeats++; continue; }
-    const photos = f.photos.map(p => ({ ...p, url: cropUrl(page.imageUrl, p.bbox) || undefined }));
+    const photos = f.photos.map(p => ({ ...p, url: photoUrl(page.imageUrl, p.bbox) || undefined }));
     docs.push({
       title: f.title, highlights: f.highlights, body: f.body,
       images: photos.map(p => p.url).filter(Boolean).slice(0, 10),
@@ -244,7 +244,7 @@ async function recrop(paper) {
     placePhotos(items, geometry);
     for (const [i, n] of news.entries()) {
       const oldAuto = (n.sourceRef.photos || []).map(p => p.url).filter(Boolean);
-      const photos = items[i].photos.map(p => ({ ...p, url: cropUrl(page.imageUrl, p.bbox) || undefined }));
+      const photos = items[i].photos.map(p => ({ ...p, url: photoUrl(page.imageUrl, p.bbox) || undefined }));
       n.images = [...photos.map(p => p.url).filter(Boolean), ...n.images.filter(u => !oldAuto.includes(u))].slice(0, 10);
       n.sourceRef.photos = photos;
       if (items[i].bbox) { n.sourceRef.bbox = items[i].bbox; n.sourceRef.clipUrl = cropUrl(page.imageUrl, items[i].bbox) || n.sourceRef.clipUrl; }
