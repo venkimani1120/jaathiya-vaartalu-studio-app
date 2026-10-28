@@ -38,7 +38,7 @@ Flow: `draft → submitted → approved` (or `rejected` with a note → reporter
 
 The limit uses an atomic per-day counter (`DailyQuota` with a unique index), so two uploads at the same moment can't sneak past 50.
 
-JWT: 15-minute access token + 30-day refresh token. Changing a user's role or deactivating them bumps `tokenVersion`, which signs them out on every device.
+JWT: 15-minute access token + refresh token, both tied to one server-side session. One signed-in device per user: signing in again (anywhere) ends the earlier session. The session ends after `SESSION_IDLE_MINUTES` (default 15) without any request, and on sign-out, where its tokens stop working at once. Changing the password, a user's role or deactivating them also ends it.
 
 ## API summary
 

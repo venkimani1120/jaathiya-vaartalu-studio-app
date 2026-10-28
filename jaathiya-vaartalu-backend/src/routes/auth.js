@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 const rateLimit = require('express-rate-limit');
 const User = require('../models/User');
 const { STATE_OF } = require('../config/constants');
-const { issue, verifyRefresh } = require('../utils/tokens');
+const { issue, verifyAccess, verifyRefresh, newSessionId, sessionProblem } = require('../utils/tokens');
 const { authenticate } = require('../middleware/auth');
 const { HttpError, wrap } = require('../utils/http');
 
@@ -31,19 +31,43 @@ router.post('/login', limiter, wrap(async (req, res) => {
   const user = await User.findOne({ email: String(email || '').toLowerCase() }).select('+passwordHash');
   if (!user || !(await bcrypt.compare(String(password || ''), user.passwordHash))) throw new HttpError(401, 'Wrong email or password.');
   if (!user.active) throw new HttpError(403, user.approvedAt ? 'Your account has been turned off. Contact an Admin.' : 'Your account is waiting for Admin approval.');
-  res.json(issue(user));
+  res.json(issue(await startSession(user)));
 }));
+
+// Opens a new session for the user, which ends any other one: one signed-in device at a time.
+async function startSession(user) {
+  user.sessionId = newSessionId();
+  user.sessionSeenAt = new Date();
+  await User.updateOne({ _id: user._id }, { $set: { sessionId: user.sessionId, sessionSeenAt: user.sessionSeenAt } });
+  return user;
+}
 
 router.post('/refresh', wrap(async (req, res) => {
   let p;
   try { p = verifyRefresh(req.body.refreshToken); } catch { throw new HttpError(401, 'Session expired. Sign in again.'); }
-  const user = await User.findById(p.sub);
-  if (!user || !user.active || user.tokenVersion !== p.tv) throw new HttpError(401, 'Session expired. Sign in again.');
+  const user = await User.findById(p.sub).select('+sessionId +sessionSeenAt');
+  const problem = sessionProblem(user, p.sid);
+  if (problem) {
+    if (user && user.sessionId === p.sid) await User.updateOne({ _id: user._id, sessionId: p.sid }, { $unset: { sessionId: 1, sessionSeenAt: 1 } });
+    throw new HttpError(401, problem);
+  }
+  user.sessionSeenAt = new Date();
+  await User.updateOne({ _id: user._id, sessionId: p.sid }, { $set: { sessionSeenAt: user.sessionSeenAt } });
   res.json(issue(user));
 }));
 
-router.post('/logout', authenticate, wrap(async (req, res) => {
-  await User.updateOne({ _id: req.user.id }, { $inc: { tokenVersion: 1 } });
+// Ends the session on the server, so its tokens stop working at once. Takes the refresh token
+// too, so a client whose access token has already expired can still sign out cleanly.
+router.post('/logout', wrap(async (req, res) => {
+  const h = req.headers.authorization || '';
+  const tokens = [[h.startsWith('Bearer ') ? h.slice(7) : null, verifyAccess], [req.body?.refreshToken, verifyRefresh]];
+  for (const [t, verify] of tokens) {
+    if (!t) continue;
+    try {
+      const p = verify(t, { ignoreExpiration: true });
+      await User.updateOne({ _id: p.sub, sessionId: p.sid }, { $unset: { sessionId: 1, sessionSeenAt: 1 } });
+    } catch {}
+  }
   res.json({ ok: true });
 }));
 
@@ -71,7 +95,7 @@ router.patch('/me', authenticate, wrap(async (req, res) => {
   res.json({ user: user.toPublic() });
 }));
 
-// Changing the password signs every other device out; this device gets fresh tokens.
+// Changing the password starts a new session: any other device is signed out, this one gets fresh tokens.
 router.post('/password', limiter, authenticate, wrap(async (req, res) => {
   const { currentPassword, newPassword } = req.body;
   if (String(newPassword || '').length < 8) throw new HttpError(400, 'New password must be at least 8 characters.');
@@ -80,9 +104,8 @@ router.post('/password', limiter, authenticate, wrap(async (req, res) => {
   if (!(await bcrypt.compare(String(currentPassword || ''), user.passwordHash))) throw new HttpError(400, 'Current password is wrong.');
   if (await bcrypt.compare(String(newPassword), user.passwordHash)) throw new HttpError(400, 'New password must be different from the current one.');
   user.passwordHash = await bcrypt.hash(String(newPassword), 12);
-  user.tokenVersion += 1;
   await user.save();
-  res.json(issue(user));
+  res.json(issue(await startSession(user)));
 }));
 
 module.exports = router;

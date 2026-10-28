@@ -166,6 +166,9 @@ select{border:1px solid var(--line);background:var(--panel2);padding:7px 8px;bor
 .ghost-drag{position:fixed;z-index:80;pointer-events:none;background:var(--panel);color:var(--ink);border:2px solid var(--act);border-radius:10px;padding:6px 10px;font-size:13px;max-width:240px;box-shadow:0 10px 24px rgba(0,0,0,.25);transform:translate(-50%,-120%)}
 
 .modal{position:fixed;inset:0;z-index:50;background:rgba(10,14,22,.55);display:grid;place-items:center;padding:16px}
+/* Signed out: only the sign-in form shows; nothing of the studio (or its open work) is visible behind it. */
+.app.locked>:not(.modal){display:none!important}
+.app.locked .modal{background:var(--bg,#f4f5f7)}
 .sheet{background:var(--panel);color:var(--ink);border-radius:14px;padding:18px;width:min(560px,100%);max-height:88vh;overflow:auto}
 .sheet h2{margin:0 0 12px;font-size:19px}
 .sheet label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
@@ -424,8 +427,9 @@ function placements() {
 }
 
 /* ---------- API (when served by the backend) ---------- */
-// The access token lasts 15 minutes; on a 401 the studio swaps its 30-day refresh token for a new
-// pair once and retries, so long editing sessions keep saving. (Inside the mobile app the app owns
+// The access token lasts 15 minutes; on a 401 the studio swaps its refresh token for a new pair once
+// and retries, so long editing sessions keep saving. The session ends after 15 minutes without any
+// request, or when the account signs in on another device. (Inside the mobile app the app owns
 // the session and passes window.__JV_TOKEN instead.)
 const setSession = d => { store.set('jv_token', d.accessToken); store.set('jv_refresh', d.refreshToken); if (d.user) store.set('jv_user', d.user); };
 const clearSession = () => ['jv_token', 'jv_refresh', 'jv_user'].forEach(k => store.del(k));
@@ -441,6 +445,7 @@ const API = {
     const r = await fetch(CFG.apiBase + path, { ...opt, headers: { 'Content-Type': 'application/json', ...(t ? { Authorization: 'Bearer ' + t } : {}) } });
     if (r.status === 401) {
       if (retry && await API.refresh()) return API.req(path, opt, false);
+      if (!window.__JV_TOKEN) clearSession();   // the session is over: don't keep its dead tokens
       showLogin(); throw new Error('Sign in to continue.');
     }
     const d = await r.json().catch(() => ({}));
@@ -524,11 +529,22 @@ async function saveClick() {
 }
 async function logout() {
   if (!(await saveAll()) && !confirm('Your latest changes could not be saved. Log out anyway and lose them?')) return;
-  clearSession(); unsaved.clear(); saveErr = null;
+  // End the session on the server too, so its tokens stop working at once.
+  const t = store.get('jv_token', null), rt = store.get('jv_refresh', null);
+  await fetch(CFG.apiBase + '/auth/logout', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(t ? { Authorization: 'Bearer ' + t } : {}) }, body: JSON.stringify({ refreshToken: rt }) }).catch(() => {});
+  clearSession(); resetToLogin();
+}
+function resetToLogin() {
+  unsaved.clear(); saveErr = null;
   S.editions = []; S.news = []; S.cur = null; S.sel = null; S.preview = false;
   $('#canvas').innerHTML = ''; $('#logoutBtn').hidden = true; $('#modeTag').textContent = '';
-  showLogin();
+  closeModal(); showLogin();
 }
+// Signed out in another tab or in the web app (they share this site's storage): go to sign-in here too.
+window.addEventListener('storage', e => {
+  if (MODE !== 'api' || S.viewer || window.__JV_TOKEN) return;
+  if ((e.key === 'jv_refresh' || e.key === null) && !store.get('jv_refresh', null)) resetToLogin();
+});
 function commit() { const e = ed(); if (e.status === 'published') e.dirty = true; persist(); renderAll(); }
 
 /* ---------- layout operations ---------- */
@@ -872,8 +888,9 @@ function toast(msg, actLabel, act) {
 }
 function openModal(html, onMount) { $('#sheet').innerHTML = html; $('#modal').hidden = false; onMount && onMount($('#sheet')); }
 function closeModal() { $('#modal').hidden = true; $('#sheet').innerHTML = ''; }
-$('#modal').addEventListener('click', e => { if (e.target.id === 'modal' || e.target.closest('[data-close]')) closeModal(); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { if (!$('#modal').hidden) closeModal(); else if (S.sel) { S.sel = null; renderAll(); } } });
+const locked = () => $('#app').classList.contains('locked');   // the sign-in form can't be closed
+$('#modal').addEventListener('click', e => { if (!locked() && (e.target.id === 'modal' || e.target.closest('[data-close]'))) closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { if (locked()) return; if (!$('#modal').hidden) closeModal(); else if (S.sel) { S.sel = null; renderAll(); } } });
 
 function openReader(id) {
   const n = byId(id); if (!n) return;
@@ -1022,7 +1039,11 @@ async function printEdition() {
   window.addEventListener('afterprint', restore);
   try { window.print(); } catch (_) { restore(); toast('Printing is blocked here. Open the published link in a browser to save the PDF.'); }
 }
+// Every studio page needs a signed-in editor or admin; until then only this form shows.
+// Inside the web app, the app itself goes back to its sign-in page.
 function showLogin() {
+  $('#app').classList.add('locked');
+  if (EMBEDDED) try { window.parent.postMessage({ type: 'jv:signed-out' }, location.origin); } catch (_) {}
   if (!$('#modal').hidden && $('#lgEmail')) return;
   openModal(`<h2>Sign in</h2><p style="color:var(--muted);margin:0">Editors and admins only.</p>
     <label>Email</label><input id="lgEmail" type="email" autocomplete="username">
@@ -1034,7 +1055,7 @@ function showLogin() {
           body: JSON.stringify({ email: sh.querySelector('#lgEmail').value, password: sh.querySelector('#lgPass').value }) });
         const d = await r.json(); if (!r.ok) throw new Error(d.message || 'Sign-in failed');
         if (!['admin', 'editor'].includes(d.user.role)) throw new Error('Only editors and admins can build the e-paper.');
-        setSession(d); closeModal();
+        setSession(d); $('#app').classList.remove('locked'); closeModal();
         // Signed out mid-edit (session expired): keep the open work and save it, don't reload over it.
         if (S.editions.length && unsaved.size) { $('#logoutBtn').hidden = !!window.__JV_TOKEN; showUser(); await saveAll(); renderAll(); }
         else boot();

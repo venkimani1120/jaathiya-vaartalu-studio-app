@@ -13,7 +13,8 @@ const userSchema = new Schema({
   district: String,
   constituency: String,
   avatar: { type: String, maxlength: 500 },  // profile photo URL
-  tokenVersion: { type: Number, default: 0 }    // bump to sign the user out everywhere
+  sessionId: { type: String, select: false },   // the one live sign-in; a new sign-in replaces it, sign-out clears it
+  sessionSeenAt: { type: Date, select: false }  // last request in that session, for the idle timeout
 }, { timestamps: true });
 
 userSchema.methods.toPublic = function () {
