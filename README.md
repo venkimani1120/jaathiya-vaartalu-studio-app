@@ -51,7 +51,8 @@ POST /api/uploads  (multipart "images", up to 10)  -> { urls }
 GET|POST /api/epapers   GET|PUT /api/epapers/:id   POST /api/epapers/:id/publish   (editor, admin)
 GET|POST /api/imports   GET|DELETE /api/imports/:id   POST /api/imports/:id/extract[?page=N]   POST /api/imports/:id/news {ids, action: add|delete}   GET /api/imports/publishers | /status   (editor, admin; POST is multipart "file" = one PDF, or "pages" = page images)
 GET  /api/users?pending=true   PATCH /api/users/:id {role, active}   (admin)
-GET  /api/public/epapers/:slug   GET /api/public/meta              (no login)
+GET  /api/public/epapers/:slug   GET /api/public/epapers   GET /api/public/meta   (no login)
+GET  /api/public/news?days=30&page=1  -> { items, more }   approved + published news, 200 per page, for the public website (no login)
 GET  /studio  (layout studio)    GET /e/:slug  (public reader)
 GET  /app/  (web app, when built)
 ```
@@ -60,7 +61,7 @@ GET  /app/  (web app, when built)
 
 The studio reproduces the sample: red masthead with photo box and "విలేఖరులు కావలెను" box, red "Published from…" band, సంపుటి / సంచిక / date / ఎడిటర్ / ప్రచురణ / పేజీలు / వెల strip, inner-page header with the red page number and blue date bar, and the printer's imprint on the last page.
 
-Edition types: **State, District, Constituency, Sports, Business**. Page layouts: Front page, Constituency/local, District, Sports, Business, Merged. Each story can use the red, blue-banner or boxed headline style (tap **Aa**). Highlights show as the pink deck.
+Edition types: **State, District, Constituency, Sports, Business**. Page layouts: Front page, Constituency/local, District, Sports, Business, Merged. Each story can use the red, blue-banner or boxed headline style (tap **Aa**). Highlights show as the pink deck. Tap **✎** on a placed story to set its role on the page (**Lead story**, which swaps it into the lead box; **Story**; **Brief**; or automatic), choose which photos show (up to 2, from this card or any other card), and change its headline, highlights and text, or add text from another card. These apply to that edition only; the news card is not changed. Tap **Adjust layout** on the page bar to size the boxes: the page shows every box outlined with its role and size, pink handles on each line between boxes and on each box's corner (its width and height together), and a row of **Arrangements** for this many stories (the auto choice is marked **Best fit**). Pick an arrangement, drag the handles to fine-tune (each change can be undone), then tap **Done adjusting**. Drag a story onto another box to swap them. This changes row heights and box widths (**Auto layout** on the page bar goes back to automatic sizes), drag the pink bar under a photo to make it taller or shorter, or its corner square to resize it both ways: a photo narrower than the box sits on the left or right with the text beside it. ✎ also sets the photo position (top, left or right), the headline size and alignment, a fixed text size and the number of text columns. The same sizes are on quick buttons that show when you hover over or tap a story: **H− / H+** (headline), **A− / A+** (text), the photo position (▀ top, ◧ left, ◨ right) and **‖** (text columns). Photos are never hidden automatically: when a box is too small the photo shrinks to its minimum and the text is cut, marked **Text cut**.
 
 Editors can drag cards onto boxes (or tap a card, then tap a box on phones), drag stories between boxes to swap, drag page thumbnails to reorder, **Merge with next** to combine two pages, change a page's layout, and Auto-fill from the filtered news.
 
