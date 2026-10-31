@@ -127,7 +127,7 @@ select{border:1px solid var(--line);background:var(--panel2);padding:7px 8px;bor
 .pick .empty{border-color:var(--np-pink);color:var(--np-pink)}
 .story{height:100%;display:flex;flex-direction:column;gap:7px;overflow:hidden}
 .story h3{margin:0;font-family:Ramabhadra,sans-serif;font-weight:400;color:var(--np-red);line-height:1.18}
-.k-lead h3{font-size:calc(44px*var(--fs,1))}.k-story h3{font-size:calc(26px*var(--fs,1))}.k-brief h3{font-size:calc(19px*var(--fs,1));color:var(--np-deep)}
+.k-lead h3{font-size:calc(44px*var(--fs,1)*var(--hs,1))}.k-story h3{font-size:calc(26px*var(--fs,1)*var(--hs,1))}.k-brief h3{font-size:calc(19px*var(--fs,1)*var(--hs,1));color:var(--np-deep)}
 .s-blue h3{background:var(--np-blue);color:#fff;padding:5px 10px}
 .s-boxed{border:3px solid var(--np-red);padding:7px}
 .s-boxed h3{color:var(--np-blue);text-align:center}
@@ -140,7 +140,65 @@ select{border:1px solid var(--line);background:var(--panel2);padding:7px 8px;bor
 .story.cut .body{flex:1 1 0;min-height:0;overflow:hidden;-webkit-mask-image:linear-gradient(#000 88%,transparent);mask-image:linear-gradient(#000 88%,transparent)}
 .story.cut .pics{flex:0 0 var(--ph)}
 .story.nophoto .pics{display:none}
+.story.fixedph .pics{flex:0 0 var(--ph);max-height:var(--ph)}
+/* photo beside the text (narrower than the box): it floats inside the text, which wraps beside it and
+   continues below it at full width. One text column unless 2 or 3 are chosen (then it sits in the first). */
+.pics.side{float:left;height:var(--ph,160px);max-height:none;margin:2px 12px 6px 0}
+.pics.side-right{float:right;margin:2px 0 6px 12px}
+.story.sidepic .body{column-count:auto}
+.story.cols1 .body{column-count:1}.story.cols2 .body{column-count:2;column-gap:14px}.story.cols3 .body{column-count:3;column-gap:12px}
+.story.sidepic.cols1 .body{column-count:auto}
+.ph-rzc{position:absolute;bottom:-6px;width:16px;height:16px;z-index:3;touch-action:none;background:#fff;border:3px solid var(--np-pink);border-radius:4px;opacity:0;transition:opacity .15s}
+.ph-rzc-r{right:-6px;cursor:nwse-resize}.ph-rzc-l{left:-6px;cursor:nesw-resize}
+.slot.editable:hover .ph-rzc,.ph-rzc.on{opacity:1}
+.pics{position:relative}
+.ph-rz{position:absolute;left:0;right:0;bottom:-5px;height:10px;cursor:ns-resize;z-index:2;touch-action:none}
+.ph-rz::after{content:"";position:absolute;left:50%;top:3px;width:46px;height:5px;margin-left:-23px;border-radius:3px;background:var(--np-pink);box-shadow:0 0 0 1px #fff;opacity:0;transition:opacity .15s}
+.slot.editable:hover .ph-rz::after,.ph-rz.on::after{opacity:1}
+/* lines between boxes, dragged to resize them (edit mode) */
+.grid{position:relative}
+.rz{position:absolute;z-index:4;touch-action:none}
+.rz-h{left:0;right:0;height:14px;margin-top:-7px;cursor:row-resize}
+.rz-v{width:14px;margin-left:-7px;cursor:col-resize}
+.rz::after{content:"";position:absolute;background:var(--np-pink);border-radius:2px;opacity:0;transition:opacity .15s}
+.rz-h::after{left:0;right:0;top:5px;height:4px}.rz-v::after{top:0;bottom:0;left:5px;width:4px}
+.grid:hover .rz::after{opacity:.35}.rz:hover::after,.rz.on::after{opacity:1}
+.rz-c{z-index:5;cursor:nwse-resize;background:#fff;border:calc(3px*var(--inv)) solid var(--np-pink);border-radius:calc(5px*var(--inv));box-sizing:border-box;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.rz-c::after{display:none}
+/* Layout mode (Adjust layout): only box sizes are edited. Handles are always shown and keep the same
+   size on screen however small the page is drawn; the stories fade behind outlined, labelled boxes. */
+.paper:not(.layoutmode) .rz{display:none}
+.layoutmode .rz-h{height:calc(24px*var(--inv));margin-top:calc(-12px*var(--inv))}
+.layoutmode .rz-v{width:calc(24px*var(--inv));margin-left:calc(-12px*var(--inv))}
+.layoutmode .rz::after{opacity:.85}
+.layoutmode .rz-h::after{top:calc(9px*var(--inv));height:calc(6px*var(--inv))}
+.layoutmode .rz-v::after{left:calc(9px*var(--inv));width:calc(6px*var(--inv))}
+.layoutmode .rz:hover::after,.layoutmode .rz.on::after{opacity:1;background:var(--np-blue)}
+.layoutmode .rz-c{width:calc(26px*var(--inv));height:calc(26px*var(--inv));margin:calc(-13px*var(--inv)) 0 0 calc(-13px*var(--inv))}
+.layoutmode .rz-c:hover,.layoutmode .rz-c.on{background:var(--np-pink)}
+.layoutmode .slot.filled{outline:calc(2px*var(--inv)) dashed var(--np-blue);outline-offset:-2px}
+.layoutmode .story{opacity:.35;pointer-events:none}
+.layoutmode .tools,.layoutmode .tools2,.layoutmode .ph-rz,.layoutmode .ph-rzc,.layoutmode .cutflag{display:none}
+.boxtag{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:3;background:var(--np-blue);color:#fff;font:700 calc(13px*var(--inv)) system-ui,sans-serif;
+  padding:calc(4px*var(--inv)) calc(10px*var(--inv));border-radius:99px;white-space:nowrap;pointer-events:none}
+.paper:not(.layoutmode) .boxtag{display:none}
+/* arrangement picker in the page bar */
+.arrangements{flex-basis:100%;display:flex;gap:8px;align-items:center;overflow-x:auto;padding:4px 0 2px}
+.arrangements>span{font-size:13px;color:var(--muted);white-space:nowrap}
+.arr{flex:none;position:relative;width:64px;height:84px;padding:5px;border:2px solid var(--line);border-radius:8px;background:#fff;cursor:pointer}
+.arr.on{border-color:var(--np-pink);box-shadow:0 0 0 2px var(--np-pink)}
+.arr-g{display:grid;width:100%;height:100%;gap:2px}
+.arr-g i{background:#C9D3E3;border-radius:2px}.arr-g i.lead{background:var(--np-red)}.arr-g i.brief{background:#E8ECF3}
+.arr b{position:absolute;left:50%;bottom:3px;transform:translateX(-50%);background:var(--np-pink);color:#fff;font:700 9px system-ui;padding:1px 5px;border-radius:99px;white-space:nowrap}
 .k-story .pics img:nth-child(n+2),.k-brief .pics img:nth-child(n+2),.k-brief .deck{display:none}
+.story.two .pics img:nth-child(2){display:block}
+.ct-imgs{display:flex;flex-wrap:wrap;gap:8px;max-height:220px;overflow:auto;padding:2px}
+.ct-img{position:relative;width:92px;height:70px;padding:0;border:2px solid var(--line);border-radius:6px;overflow:hidden;background:var(--panel2);cursor:pointer}
+.ct-img img{width:100%;height:100%;object-fit:cover;display:block}
+.ct-img.on{border-color:var(--np-pink);box-shadow:0 0 0 2px var(--np-pink)}
+.ct-img b{position:absolute;top:3px;left:3px;background:var(--np-pink);color:#fff;border-radius:99px;font:700 12px system-ui;padding:1px 7px}
+.ct-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:4px 0}
+.sheet textarea.ct-body{width:100%;min-height:180px;font:15px/1.6 "Noto Serif Telugu",serif}
 .grid.measure .pics{flex:0 0 70px!important;min-height:0!important;max-height:none!important}
 .slot.addslot{position:absolute;left:50%;bottom:calc(10px*var(--inv));transform:translateX(-50%);z-index:3;overflow:visible;white-space:nowrap;cursor:pointer;
   background:var(--panel);color:var(--np-pink);border:2px dashed var(--np-pink);border-radius:99px;font:700 calc(13px*var(--inv)) system-ui,sans-serif;padding:calc(6px*var(--inv)) calc(14px*var(--inv));box-shadow:0 4px 14px rgba(0,0,0,.18)}
@@ -154,6 +212,10 @@ select{border:1px solid var(--line);background:var(--panel2);padding:7px 8px;bor
 .by{font:600 11.5px "Noto Sans Telugu",sans-serif;color:#555}
 .imprint{border-top:2px solid var(--np-blue);margin-top:10px;padding-top:6px;font:600 10.5px/1.4 system-ui,sans-serif;text-align:center;color:#222}
 .tools{position:absolute;top:4px;right:4px;display:flex;gap:calc(4px*var(--inv));z-index:2}
+.tools2{position:absolute;top:calc(4px + 34px*var(--inv));right:4px;display:none;flex-wrap:wrap;justify-content:flex-end;max-width:calc(100% - 8px);gap:calc(4px*var(--inv));z-index:3}
+.slot.editable:hover .tools2,.slot.active .tools2,.slot:focus-within .tools2{display:flex}
+.slot.active{outline:2px solid var(--np-pink);outline-offset:-2px}
+.tbtn.qb{width:auto;min-width:calc(30px*var(--inv));padding:0 calc(6px*var(--inv));border-radius:calc(15px*var(--inv));font-weight:700;font-size:calc(12px*var(--inv));background:var(--np-pink)}
 .tbtn{width:calc(30px*var(--inv));height:calc(30px*var(--inv));border:0;border-radius:50%;background:rgba(20,26,40,.82);color:#fff;font-size:calc(14px*var(--inv));display:grid;place-items:center;touch-action:none}
 .viewer .story,.previewing .story{cursor:zoom-in}
 
@@ -173,6 +235,14 @@ select{border:1px solid var(--line);background:var(--panel2);padding:7px 8px;bor
 .sheet h2{margin:0 0 12px;font-size:19px}
 .sheet label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
 .sheet input,.sheet textarea,.sheet select{width:100%;max-width:none;border:1px solid var(--line);background:var(--panel2);padding:8px 10px;border-radius:8px}
+/* ✎ story dialog: role choices and the highlights tick sit on one line */
+.ct-roles{display:flex;gap:6px;flex-wrap:wrap}
+.sheet .ct-roles label,.sheet label.ct-check{display:inline-flex;gap:6px;align-items:center;margin:0;font-size:14px;color:var(--ink);cursor:pointer}
+.sheet .ct-roles label{border:1px solid var(--line);border-radius:99px;padding:5px 12px}
+.sheet .ct-roles label:has(input:checked){border-color:var(--np-pink);background:color-mix(in srgb,var(--np-pink) 10%,transparent)}
+.sheet .ct-roles input,.sheet .ct-check input{width:auto;margin:0;padding:0;accent-color:var(--np-pink)}
+.sheet label.ct-check{margin:10px 0 2px}
+.sheet .ct-row select{flex:1;min-width:200px}
 .sheet .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
 .sheet .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .sheet .err{color:var(--warn);font-size:13px;min-height:1em}
@@ -340,13 +410,33 @@ function genLayouts(n) {
 }
 const layoutCache = new Map(); // story set -> chosen arrangement, so editing stays fast
 const pageIds = p => SLOT_ORDER.filter(id => p.slots[id] && byId(p.slots[id]));
+// How a story shows on this page only, set with the ✎ tool: { kind, images, title, body, deck }.
+const contentOf = (p, newsId) => (p && p.content && p.content[newsId]) || {};
+function shown(p, n) {
+  const c = contentOf(p, n.id), pick = Array.isArray(c.images);
+  return { title: c.title || n.title, body: c.body || n.body, images: pick ? c.images : (n.images || []), twoPics: pick && c.images.length > 1,
+    highlights: c.deck === false ? [] : (n.highlights || []) };
+}
 function autoInfo(p, i) {
-  const ids = pageIds(p); if (!ids.length) return null;
+  let ids = pageIds(p); if (!ids.length) return null;
+  // Stories set to Story or Brief: put the stories before the rest and the briefs last (the lead stays
+  // first), keep only arrangements that give each its role, and show it in that role either way.
+  const pins = {};
+  ids.forEach(id => { const k = contentOf(p, p.slots[id]).kind; if (k === 'story' || k === 'brief') pins[id] = k; });
+  if (Object.keys(pins).length) {
+    const rank = id => id === ids[0] ? -1 : pins[id] === 'story' ? 0 : pins[id] === 'brief' ? 2 : 1;
+    ids = ids.map((id, k) => [id, k]).sort((a, b) => rank(a[0]) - rank(b[0]) || a[1] - b[1]).map(x => x[0]);
+  }
+  let variants = genLayouts(ids.length).map(L => ({ rows: L.rows.map(r => r.map(ix => ids[ix])), w: L.w,
+    kinds: Object.fromEntries(ids.map((id, k) => [id, L.kinds[k]])) }));
+  const fits = variants.filter(v => Object.entries(pins).every(([id, k]) => v.kinds[id] === k));
+  variants = (fits.length ? fits : variants).map(v => ({ ...v, kinds: { ...v.kinds, ...pins } }));
+  // Box sizes set by hand (dragging the lines between boxes) are kept while the same boxes are filled.
+  const custom = p.layout && p.layout.ids === ids.join(',') && Array.isArray(p.layout.rows) ? { rows: p.layout.rows, w: p.layout.w, kinds: { ...p.layout.kinds, ...pins } } : null;
   return {
-    ids, cap: capFor(i), free: ids.length < capFor(i) ? SLOT_ORDER.find(id => !p.slots[id] || !byId(p.slots[id])) : null,
-    variants: genLayouts(ids.length).map(L => ({ rows: L.rows.map(r => r.map(ix => ids[ix])), w: L.w,
-      kinds: Object.fromEntries(ids.map((id, k) => [id, L.kinds[k]])) })),
-    key: ids.map(id => p.slots[id] + ':' + ((p.styles || {})[id] || '')).join('|')
+    ids, cap: capFor(i), free: ids.length < capFor(i) ? SLOT_ORDER.find(id => !p.slots[id] || !byId(p.slots[id])) : null, variants, custom, pins,
+    key: ids.map(id => { const c = contentOf(p, p.slots[id]);
+      return [id, p.slots[id], (p.styles || {})[id] || '', c.kind || '', c.images ? c.images.join(',') : '-', (c.title || '').length, (c.body || '').length, c.deck === false ? 0 : 1, c.hs || '', c.fs || ''].join(':'); }).join('|')
   };
 }
 const EDITION_TYPES = {
@@ -456,7 +546,7 @@ const API = {
 const mapNews = n => ({ id: n._id || n.id, section: n.section, state: n.state || STATE_OF[n.district], district: n.district, constituency: n.constituency, dateline: n.dateline,
   title: n.title, highlights: n.highlights || [], body: n.body, images: n.images || [], reporter: (n.author && n.author.name) || n.reporter || '', source: n.source || 'reporter' });
 const mapEd = e => ({ ...e, id: e._id || e.id, editionDate: String(e.editionDate).slice(0, 10), ad: e.ad || { ...BRAND.ad },
-  pages: (e.pages || []).map(p => ({ ...p, slots: p.slots || {}, styles: p.styles || {} })) });
+  pages: (e.pages || []).map(p => ({ ...p, slots: p.slots || {}, styles: p.styles || {}, content: p.content || {} })) });
 // Adds new stories and refreshes the ones already here, so edits made since (text, a cropped or
 // changed photo) show in the pool and on the pages.
 function mergeNews(list) { list.map(mapNews).forEach(n => { const had = byId(n.id); if (had) Object.assign(had, n); else S.news.push(n); }); }
@@ -494,7 +584,9 @@ async function loadEditionNews() {
   if (i >= 0) S.editions[i] = mapEd(d.epaper);
 }
 const stripEd = e => ({ title: e.title, type: e.type, key: e.key, editionDate: e.editionDate, volume: e.volume, issue: e.issue,
-  price: e.price, ad: e.ad, tribute: e.tribute, pages: e.pages });
+  price: e.price, ad: e.ad, tribute: e.tribute,
+  pages: e.pages.map(p => { const on = new Set(Object.values(p.slots || {}));
+    return { ...p, content: Object.fromEntries(Object.entries(p.content || {}).filter(([nid]) => on.has(nid))) }; }) });
 
 // Saving: every change marks its edition unsaved and autosaves after a short pause; Save / Ctrl+S
 // save at once. Unsaved editions are tracked by id so switching editions never loses a change.
@@ -666,28 +758,73 @@ function innerHead(e, i, p) {
   return `<div class="ihead"><span class="pno">${i + 1}</span><img class="ilogo" src="${BRAND.logo}" alt=""><span class="minimast">${esc(BRAND.masthead)}</span>
     <span class="seclabel">${esc(p.label || '')}</span><span class="datebar">${teDate(e.editionDate)}</span></div>`;
 }
-function storyHTML(e, n, kind, style) {
+function storyHTML(e, n, kind, style, p, edit) {
   // Same markup for every box size (CSS hides the 2nd photo and, in briefs, the deck), so the
-  // auto layout can try arrangements without re-rendering.
-  const imgs = (n.images || []).slice(0, 2);
-  const hl = (n.highlights || []).length ? `<ul class="deck">${n.highlights.map(h => `<li>${esc(String(h).replace(/^[-–]\s*/, ''))}</li>`).join('')}</ul>` : '';
-  const pics = imgs.length ? `<div class="pics">${imgs.map(u => `<img src="${esc(u)}" alt="">`).join('')}</div>` : '';
+  // auto layout can try arrangements without re-rendering. Photos and text come from the card,
+  // or from what was chosen for this page with the ✎ tool.
+  // Set by hand with the photo's corner handle or ✎: a photo narrower than the box sits on the left
+  // or right with the text beside it; the text can have a fixed number of columns.
+  const v = shown(p, n), c = contentOf(p, n.id);
+  const imgs = v.images.slice(0, 2);
+  const side = imgs.length && c.photoW && c.photoW < 0.95, pos = c.photoPos === 'right' ? 'right' : 'left';
+  const hl = v.highlights.length ? `<ul class="deck">${v.highlights.map(h => `<li>${esc(String(h).replace(/^[-–]\s*/, ''))}</li>`).join('')}</ul>` : '';
+  const grips = edit ? `<span class="ph-rz" title="Drag to make the photo taller or shorter"></span><span class="ph-rzc ph-rzc-${side && pos === 'right' ? 'l' : 'r'}" title="Drag to resize the photo: wider, narrower, taller or shorter"></span>` : '';
+  const pics = imgs.length ? `<div class="pics${side ? ` side side-${pos}` : ''}"${side ? ` style="width:${(c.photoW * 100).toFixed(1)}%"` : ''}>${imgs.map(u => `<img src="${esc(u)}" alt="">`).join('')}${grips}</div>` : '';
   const place = n.dateline || n.constituency || n.district || 'అమరావతి';
-  return `<article class="story s-${style}${imgs.length ? '' : ' nopic'}" data-read="${esc(n.id)}"><h3>${esc(n.title)}</h3>${hl}${pics}
-    <div class="body"><b>${esc(place)}, ${datelineDate(e.editionDate)} (${esc(BRAND.masthead)}) :</b> ${esc(n.body)}</div></article>`;
+  // A side photo goes inside the text block, so the text runs beside it and then on below it at full width.
+  const body = `<div class="body">${side ? pics : ''}<b>${esc(place)}, ${datelineDate(e.editionDate)} (${esc(BRAND.masthead)}) :</b> ${esc(v.body)}</div>`;
+  return `<article${c.hs ? ` style="--hs:${c.hs}"` : ''} class="story s-${style}${imgs.length ? '' : ' nopic'}${v.twoPics ? ' two' : ''}${side ? ' sidepic' : ''}${c.cols ? ' cols' + c.cols : ''}" data-read="${esc(n.id)}"><h3${c.ha ? ` style="text-align:${c.ha}"` : ''}>${esc(v.title)}</h3>${hl}${side ? '' : pics}${body}</article>`;
+}
+// Quick size controls on a placed story (edit mode; shown on hover, or after tapping the story):
+// headline size, text size, photo position and text columns. ✎ has the same settings and more.
+const HS_STEPS = [0.6, 0.7, 0.8, 0.9, 1, 1.15, 1.3, 1.5, 1.75];
+const TS_STEPS = [0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.35];
+const pct = v => Math.round((v || 1) * 100) + '%';
+function quickTools(p, n, slotId) {
+  const c = contentOf(p, n.id), hasPic = shown(p, n).images.length > 0;
+  const pos = c.photoW ? c.photoPos || 'left' : 'top';
+  const b = (act, label, title) => `<button class="tbtn qb" data-act="${act}" data-slot="${slotId}" title="${title}">${label}</button>`;
+  return `<div class="tools2">${b('hdec', 'H−', `Smaller headline (now ${pct(c.hs)})`)}${b('hinc', 'H+', `Bigger headline (now ${pct(c.hs)})`)}` +
+    `${b('tdec', 'A−', `Smaller text (now ${c.fs ? pct(c.fs) : 'automatic'})`)}${b('tinc', 'A+', `Bigger text (now ${c.fs ? pct(c.fs) : 'automatic'})`)}` +
+    (hasPic ? b('ppos', { top: '▀', left: '◧', right: '◨' }[pos], `Photo position: ${pos === 'top' ? 'top, full width' : pos + ', text beside'} (tap to change)`) : '') +
+    `${b('cols', c.cols ? '‖' + c.cols : '‖', `Text columns: ${c.cols || 'automatic'} (tap to change)`)}</div>`;
+}
+// Steps a size along its list ('' = automatic, treated as 100%).
+const stepIn = (list, v, d) => { const cur = v || 1; const k = d > 0 ? list.findIndex(x => x > cur + 1e-6) : list.map(x => x < cur - 1e-6).lastIndexOf(true); return k < 0 ? cur : list[k]; };
+function quickAct(p, slotId, act, slotEl) {
+  const id = p.slots[slotId], n = byId(id); if (!n) return;
+  const c = { ...contentOf(p, id) };
+  if (act === 'hdec' || act === 'hinc') c.hs = stepIn(HS_STEPS, c.hs, act === 'hinc' ? 1 : -1);
+  // Automatic text size: step from the size the auto-fit chose, so A− never makes the text bigger.
+  const shownFs = parseFloat(slotEl?.querySelector('.story')?.style.getPropertyValue('--fs')) || 1;
+  if (act === 'tdec' || act === 'tinc') c.fs = stepIn(TS_STEPS, c.fs || shownFs, act === 'tinc' ? 1 : -1);
+  if (act === 'ppos') {
+    const pos = c.photoW ? c.photoPos || 'left' : 'top';
+    if (pos === 'top') { c.photoW = 0.45; c.photoPos = 'left'; }
+    else if (pos === 'left') c.photoPos = 'right';
+    else { delete c.photoW; delete c.photoPos; }
+  }
+  if (act === 'cols') { const k = [undefined, 1, 2, 3]; c.cols = k[(k.indexOf(c.cols) + 1) % k.length]; if (!c.cols) delete c.cols; }
+  if (c.hs === 1) delete c.hs;
+  p.content = p.content || {};
+  if (Object.keys(c).length) p.content[id] = c; else delete p.content[id];
+  S.active = slotId; commit();
+  const msg = { hdec: `Headline ${pct(c.hs)}`, hinc: `Headline ${pct(c.hs)}`, tdec: `Text ${pct(c.fs)}`, tinc: `Text ${pct(c.fs)}`,
+    ppos: `Photo: ${c.photoW ? (c.photoPos || 'left') + ', text beside' : 'top, full width'}`, cols: `Text columns: ${c.cols || 'automatic'}` }[act];
+  toast(msg);
 }
 function pageHTML(e, p, i, edit) {
   const tpl = TEMPLATES[p.template] || TEMPLATES.merged;
   const head = i === 0 ? mastHTML(e) : innerHead(e, i, p);
   const auto = autoInfo(p, i);
-  const lay = auto && auto.variants[layoutCache.get(auto.key) || 0];
+  const lay = auto && (auto.custom || auto.variants[layoutCache.get(auto.key) || 0]);
   const slots = auto ? auto.ids.map(id => ({ id, kind: lay.kinds[id] })) : tpl.slots;
   const cells = slots.map(s => {
     const id = p.slots[s.id]; const n = id && byId(id); const style = (p.styles || {})[s.id] || 'red';
     if (!n && !edit) return ''; // its space was given to a neighbour (collapseEmpty)
-    const inner = n ? storyHTML(e, n, s.kind, style) : (edit ? `<div class="empty">${S.sel ? 'Tap to place here' : KIND_LABEL[s.kind]}</div>` : '');
-    const tools = edit && n ? `<div class="tools"><span class="tbtn" data-shandle title="Drag to move">⠿</span><button class="tbtn" data-act="style" data-slot="${s.id}" title="Headline style">Aa</button><button class="tbtn" data-act="remove" data-slot="${s.id}" title="Remove from page">✕</button></div>` : '';
-    return `<div class="slot k-${s.kind}${n ? ' filled' : ''}${edit ? ' editable' : ''}" style="grid-area:${s.id}" data-drop="slot" data-page="${i}" data-slot="${s.id}"${n ? ` data-news="${esc(n.id)}"` : ''}${edit && !n ? ' tabindex="0"' : ''}>${inner}${tools}</div>`;
+    const inner = n ? storyHTML(e, n, s.kind, style, p, edit) : (edit ? `<div class="empty">${S.sel ? 'Tap to place here' : KIND_LABEL[s.kind]}</div>` : '');
+    const tools = edit && n ? `<div class="tools"><span class="tbtn" data-shandle title="Drag to move">⠿</span><button class="tbtn" data-act="content" data-slot="${s.id}" title="Role, photos and text on this page">✎</button><button class="tbtn" data-act="style" data-slot="${s.id}" title="Headline style">Aa</button><button class="tbtn" data-act="remove" data-slot="${s.id}" title="Remove from page">✕</button></div>${quickTools(p, n, s.id)}` : '';
+    return `<div class="slot k-${s.kind}${n ? ' filled' : ''}${edit ? ' editable' : ''}${edit && n && S.active === s.id ? ' active' : ''}" style="grid-area:${s.id}" data-drop="slot" data-page="${i}" data-slot="${s.id}"${n ? ` data-news="${esc(n.id)}"` : ''}${edit && !n ? ' tabindex="0"' : ''}>${inner}${tools}</div>`;
   }).join('');
   const foot = i === e.pages.length - 1 ? `<footer class="imprint">${esc(BRAND.imprint)}</footer>` : '';
   const layout = auto ? lay : { rows: edit ? tpl.areas.map(r => r.split(/\s+/)) : collapseEmpty(tpl.areas, s => !!(p.slots[s] && byId(p.slots[s]))) };
@@ -695,7 +832,7 @@ function pageHTML(e, p, i, edit) {
   const add = !auto || !edit ? ''
     : extra > 0 ? `<div class="addslot over" role="alert">Page ${i + 1} holds up to ${auto.cap} stories: remove ${extra}</div>`
     : auto.free ? `<div class="slot addslot" data-drop="slot" data-page="${i}" data-slot="${auto.free}" tabindex="0">${S.sel ? `Tap here to add it to page ${i + 1}` : `+ Add a story (${auto.ids.length}/${auto.cap}): drop or tap here`}</div>` : '';
-  return `<div class="pg-outer" id="pg-${i}"><div class="paper${edit && S.sel ? ' pick' : ''}"${auto ? ` data-auto="${i}"` : ''}>${head}<div class="grid" style="${areasStyle(layout)}">${cells}</div>${add}${foot}</div></div>`;
+  return `<div class="pg-outer" id="pg-${i}"><div class="paper${edit && S.sel ? ' pick' : ''}${edit && S.layoutMode && auto ? ' layoutmode' : ''}"${auto ? ` data-auto="${i}"` : ''}>${head}<div class="grid" style="${areasStyle(layout)}">${cells}</div>${add}${foot}</div></div>`;
 }
 const areasStyle = L => `grid-template-columns:repeat(${L.rows[0].length},minmax(0,1fr));grid-template-areas:${L.rows.map(r => `'${r.join(' ')}'`).join(' ')};` +
   `grid-template-rows:${(L.w || L.rows.map(() => 1)).map(x => `minmax(0,${+x.toFixed(3)}fr)`).join(' ')}`;
@@ -718,6 +855,7 @@ function layoutScore(paper) {
 function autoLayout() {
   document.querySelectorAll('#canvas .paper[data-auto]').forEach(paper => {
     const i = +paper.dataset.auto; const info = autoInfo(ed().pages[i], i); if (!info) return;
+    if (info.custom) { applyLayout(paper, info.custom); return; }
     let best = layoutCache.get(info.key);
     if (best === undefined || !info.variants[best]) {
       const grid = paper.querySelector('.grid');
@@ -731,7 +869,7 @@ function autoLayout() {
     applyLayout(paper, info.variants[best]);
   });
 }
-function relayout() { autoLayout(); fitStories(); }
+function relayout() { autoLayout(); fitStories(); addHandles(); }
 // Readers should not see blank boxes: give each empty box's cells to a filled neighbour that
 // shares its whole edge (so every area stays a rectangle), and drop rows left fully empty.
 function collapseEmpty(areas, isFilled) {
@@ -784,6 +922,9 @@ function renderPageBar() {
     <input id="pageLabel" value="${esc(p.label)}" aria-label="Page name">
     <select id="tplSel" aria-label="Layout">${Object.entries(TEMPLATES).map(([k, t]) => `<option value="${k}"${k === p.template ? ' selected' : ''}>${t.name}</option>`).join('')}</select>
     <button class="btn" id="autoBtn">Auto-fill</button>
+    <button class="btn${S.layoutMode ? ' primary' : ''}" id="layoutModeBtn" aria-pressed="${!!S.layoutMode}" title="Resize boxes and choose an arrangement for this page">${S.layoutMode ? 'Done adjusting' : 'Adjust layout'}</button>
+    ${p.layout ? '<button class="btn" id="resetLayoutBtn" title="Forget the box sizes set by hand">Auto layout</button>' : ''}
+    ${S.layoutMode ? arrangementsHTML(p, S.pageIdx) : ''}
     <button class="btn" id="clearPageBtn"${pageIds(p).length ? '' : ' disabled'} title="Send every story on this page back to the news pool">Clear page</button>
     <button class="btn" id="mergeBtn">Merge with next</button>
     <button class="btn danger" id="delPageBtn">Delete page</button>`;
@@ -817,7 +958,10 @@ function renderPool() {
       <div><h4>${esc(n.title)}</h4><small>${esc([n.constituency, n.district].filter(Boolean).join(', ') || SECTIONS[n.section] || '')}, ${esc(n.reporter || '')} · ${esc(SOURCES[n.source] || '')}</small>${pl ? `<em>On page ${pl.page + 1}</em>` : ''}</div></article>`;
   }).join('') : `<div class="empty-pool">No approved news matches these filters.</div>`;
 }
-function renderAll() { renderTop(); renderStrip(); if (!S.viewer) { renderPageBar(); renderPool(); } renderCanvas(); renderPick(); }
+function renderAll() {
+  renderTop(); renderStrip(); if (!S.viewer) { renderPageBar(); renderPool(); } renderCanvas(); renderPick();
+  if (S.layoutMode && !S.viewer && !S.preview) renderPageBar();   // the arrangement picker marks the best fit, known once the page is laid out
+}
 function renderPick() {
   const n = S.sel && byId(S.sel);
   $('#pickbar').hidden = !n || S.preview;
@@ -847,11 +991,29 @@ function fitStories(root = document.getElementById('canvas')) {
   let score = 0; // lower is better: cut text and hidden photos cost most, smaller type a little
   root.querySelectorAll('.story').forEach(st => {
     const slot = st.parentElement;
-    st.classList.remove('cut', 'nophoto'); st.style.removeProperty('--ph'); st.style.removeProperty('--pmax');
+    st.classList.remove('cut', 'nophoto', 'fixedph'); st.style.removeProperty('--ph'); st.style.removeProperty('--pmax');
     const H = st.clientHeight; if (!H) return;
     const prev = slot.querySelector('.cutflag'); if (prev) prev.remove();
     const fits = () => st.scrollHeight <= H + 1;
     const pics = st.querySelector('.pics');
+    // Set by hand on this page: photo height (share of the box) and text size.
+    const pg = ed() && ed().pages[+slot.dataset.page], c = contentOf(pg, slot.dataset.news);
+    if (c.photo || c.fs || c.photoW || c.cols) {
+      const side = pics && pics.classList.contains('side');
+      // A side photo always has a height: the one set by hand, else about 3:4 of its width.
+      const ph = pics && c.photo ? Math.round(H * c.photo) : side ? Math.round(Math.min(H * 0.6, pics.clientWidth * 0.75)) : null;
+      if (ph) { st.classList.add('fixedph'); st.style.setProperty('--ph', ph + 'px'); st.style.setProperty('--pmax', ph + 'px'); }
+      const sizes = c.fs ? [c.fs] : FS_STEPS;
+      const photos = !pics || ph ? [null] : (() => { const pref = Math.min(Math.max(60, st.clientWidth * 0.8), H * 0.45), pmin = Math.min(pref, Math.max(56, H * 0.18));
+        return [1, 0.6, 0.3, 0].map(t => pmin + (pref - pmin) * t); })();
+      let ok = false;
+      for (const k of sizes) { for (const h of photos) {
+        st.style.setProperty('--fs', k); if (h) st.style.setProperty('--ph', h + 'px');
+        if (fits()) { ok = true; break; }
+      } if (ok) break; }
+      if (!ok) { st.classList.add('cut'); note(slot, 'Text cut'); score += 100; }
+      return;
+    }
     // Options are ordered from roomiest to most compact, so the first that fits is found by halving.
     const use = ([k, ph]) => { st.style.setProperty('--fs', k); if (ph) st.style.setProperty('--ph', ph + 'px'); };
     const tryAll = list => {
@@ -862,21 +1024,186 @@ function fitStories(root = document.getElementById('canvas')) {
     let ok;
     if (pics) {
       // Order of preference: full-size type with a big photo, then a smaller photo, then smaller type.
-      const shown = [...pics.children].filter(im => getComputedStyle(im).display !== 'none').length || 1;
+      const shown = [...pics.querySelectorAll('img')].filter(im => getComputedStyle(im).display !== 'none').length || 1;
       const pmax = Math.max(60, st.clientWidth / shown * 0.8);
       const pref = Math.min(pmax, H * 0.45), pmin = Math.min(pref, Math.max(56, H * 0.18));
       st.style.setProperty('--pmax', pmax + 'px');
       ok = tryAll([...FS_STEPS.filter(k => k >= 1).map(k => [k, pref]),
                    ...[0.8, 0.6, 0.4, 0.2, 0].map(t => [1, pmin + (pref - pmin) * t]),
                    ...FS_STEPS.filter(k => k < 1 && k >= 0.88).map(k => [k, pmin])]);
-      // Box too small for photo + readable text: drop the photo rather than print tiny type.
-      if (ok === undefined) { st.classList.add('nophoto'); ok = tryAll(FS_STEPS.filter(k => k <= 1).map(k => [k])); if (ok !== undefined) note(slot, 'Photo hidden: box too small'); }
+      // Box too small for photo + readable text: keep the photo at its smallest and cut the text
+      // (the photo is only left out when "No photo" is chosen with ✎).
+      if (ok === undefined) use([FS_STEPS[FS_STEPS.length - 1], pmin]);
     } else ok = tryAll(FS_STEPS.map(k => [k]));
     if (ok === undefined) { st.classList.add('cut'); note(slot, 'Text cut'); score += 100; }
     else score += (st.classList.contains('nophoto') ? 8 : 0) + Math.max(0, 1 - ok[0]) * 20;
   });
   return score;
 }
+/* ---------- resizing boxes and photos by hand ---------- */
+// Lines between boxes on the page being edited: drag a horizontal line to change row heights, a
+// vertical one to change box widths (in 1/24 steps). The result is saved as the page's layout.
+const RZ_COLS = 24, MIN_COLS = 4, MIN_ROW = 70;
+const scale = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--s')) || 1;
+function currentLayout(i) {
+  const p = ed().pages[i], info = autoInfo(p, i); if (!info) return null;
+  const L = info.custom || info.variants[layoutCache.get(info.key) || 0];
+  const k = RZ_COLS / L.rows[0].length;
+  return { ids: info.ids.join(','), rows: L.rows.map(r => r.flatMap(v => Array(k).fill(v))), w: [...(L.w || L.rows.map(() => 1))],
+    kinds: Object.fromEntries(Object.entries(L.kinds).filter(([id]) => !info.pins[id])) };
+}
+// Layout mode: small diagrams of the arrangements that suit this many stories (the one auto layout
+// picks is marked); clicking one applies it, ready to fine-tune with the handles.
+function arrangementsHTML(p, i) {
+  const info = autoInfo(p, i); if (!info) return '';
+  const best = layoutCache.get(info.key) || 0, cur = info.custom ? JSON.stringify(currentLayout(i).rows) : null;
+  const items = info.variants.slice(0, 12).map((L, k) => {
+    const rows24 = L.rows.map(r => r.flatMap(v => Array(RZ_COLS / r.length).fill(v)));
+    const on = cur ? cur === JSON.stringify(rows24) : k === best;
+    const cells = [...new Set(L.rows.flat())].map(id => `<i class="${L.kinds[id] || 'story'}" style="grid-area:${id}"></i>`).join('');
+    return `<button type="button" class="arr${on ? ' on' : ''}" data-arr="${k}" title="${k === best ? 'Best fit for these stories' : 'Arrangement ' + (k + 1)}">
+      <span class="arr-g" style="${areasStyle(L)}">${cells}</span>${k === best ? '<b>Best fit</b>' : ''}</button>`;
+  }).join('');
+  return `<div class="arrangements" role="group" aria-label="Arrangements"><span>Arrangements:</span>${items}</div>`;
+}
+function useArrangement(i, k) {
+  const p = ed().pages[i], info = autoInfo(p, i); if (!info || !info.variants[k]) return;
+  const prev = p.layout, L = info.variants[k];
+  p.layout = { ids: info.ids.join(','), rows: L.rows.map(r => r.flatMap(v => Array(RZ_COLS / r.length).fill(v))), w: [...(L.w || L.rows.map(() => 1))],
+    kinds: Object.fromEntries(Object.entries(L.kinds).filter(([id]) => !info.pins[id])) };
+  commit(); toast('Arrangement applied', 'Undo', () => { if (prev) p.layout = prev; else delete p.layout; commit(); });
+}
+// Layout mode labels on each box: its role and share of the page width / height.
+function labelBoxes(paper, L) {
+  if (!paper.classList.contains('layoutmode')) return;
+  const tot = L.w.reduce((a, b) => a + b, 0), C = L.rows[0].length;
+  paper.querySelectorAll('.grid > .slot.filled').forEach(sl => {
+    const id = sl.dataset.slot, rs = L.rows.map((r, k) => r.includes(id) ? k : -1).filter(k => k >= 0); if (!rs.length) return;
+    const w = Math.round(Math.max(...rs.map(k => L.rows[k].filter(v => v === id).length)) / C * 100), h = Math.round(rs.reduce((a, k) => a + L.w[k], 0) / tot * 100);
+    const kind = (sl.className.match(/\bk-(\w+)/) || [])[1];
+    let tag = sl.querySelector('.boxtag'); if (!tag) { tag = document.createElement('span'); tag.className = 'boxtag'; sl.appendChild(tag); }
+    tag.textContent = `${KIND_LABEL[kind] || ''} · ${w}% × ${h}%`;
+  });
+}
+function addHandles() {
+  if (S.preview || S.viewer) return;
+  const paper = document.querySelector('#canvas .paper[data-auto]'); if (!paper) return;
+  const grid = paper.querySelector('.grid'); grid.querySelectorAll('.rz').forEach(h => h.remove());
+  const L = currentLayout(+paper.dataset.auto); if (!L) return;
+  const cs = getComputedStyle(grid), gap = parseFloat(cs.rowGap) || 0, cgap = parseFloat(cs.columnGap) || 0;
+  const hs = cs.gridTemplateRows.split(' ').map(parseFloat), colW = (grid.clientWidth - cgap * (L.rows[0].length - 1)) / L.rows[0].length;
+  let y = 0; const tops = hs.map(h => { const t = y; y += h + gap; return t; });
+  let html = '';
+  for (let r = 0; r + 1 < L.rows.length; r++) html += `<span class="rz rz-h" data-row="${r}" style="top:${tops[r + 1] - gap / 2}px"></span>`;
+  L.rows.forEach((row, r) => {
+    for (let c = 1; c < row.length; c++) if (row[c] !== row[c - 1])
+      html += `<span class="rz rz-v" data-row="${r}" data-col="${c}" style="left:${c * (colW + cgap) - cgap / 2}px;top:${tops[r]}px;height:${hs[r]}px"></span>`;
+  });
+  // A corner square on each box: drag it to move the box's right and bottom edges together.
+  const R = L.rows.length, C = L.rows[0].length;
+  [...new Set(L.rows.flat())].forEach(id => {
+    let r0 = R, r1 = -1, c1 = -1;
+    L.rows.forEach((row, r) => row.forEach((v, c) => { if (v === id) { r0 = Math.min(r0, r); r1 = Math.max(r1, r); c1 = Math.max(c1, c); } }));
+    const br = r1 < R - 1 ? r1 : -1, bc = c1 + 1 < C ? c1 + 1 : -1;
+    if (br < 0 && bc < 0) return;   // the bottom-right box: its corner is the page's
+    html += `<span class="rz rz-c" data-br="${br}" data-bc="${bc}" data-bcr="${r0}" title="Drag to resize this box" ` +
+      `style="left:${(c1 + 1) * (colW + cgap) - cgap / 2}px;top:${tops[r1] + hs[r1] + gap / 2}px"></span>`;
+  });
+  grid.insertAdjacentHTML('beforeend', html);
+  labelBoxes(paper, L);
+}
+// Rows that must move together when the line at column c in row r moves: every row of the boxes on
+// either side of it, and of their neighbours, so each box stays a rectangle.
+function linkedRows(rows, r, c) {
+  const set = new Set([r]); let grew = true;
+  while (grew) {
+    grew = false;
+    for (const rr of [...set]) for (const id of [rows[rr][c - 1], rows[rr][c]])
+      rows.forEach((row, k) => { if (!set.has(k) && row[c - 1] === id || !set.has(k) && row[c] === id) { set.add(k); grew = true; } });
+  }
+  return [...set].every(k => rows[k][c - 1] !== rows[k][c]) ? [...set] : null;
+}
+const widthAt = (row, id) => row.filter(v => v === id).length;
+let rz = null;
+function startResize(e) {
+  if (e.button > 0) return;
+  e.preventDefault(); e.stopPropagation();
+  const h = e.target.closest('.rz, .ph-rz, .ph-rzc'); h.classList.add('on'); try { h.setPointerCapture(e.pointerId); } catch (_) {}
+  const paper = h.closest('.paper'), i = +paper.dataset.auto, page = ed().pages[i];
+  if (h.classList.contains('ph-rz') || h.classList.contains('ph-rzc')) {
+    const st = h.closest('.story'), pics = st.querySelector('.pics'), id = st.closest('.slot').dataset.news, r = pics.getBoundingClientRect();
+    rz = { kind: h.classList.contains('ph-rzc') ? 'photo2' : 'photo', h, st, id, page, x: e.clientX, y: e.clientY,
+      start: r.height / scale(), startW: r.width / scale(), W: st.clientWidth, H: st.clientHeight, right: pics.classList.contains('side-right'),
+      orig: { ...contentOf(page, id) } };
+    return;
+  }
+  const L = currentLayout(i), grid = paper.querySelector('.grid');
+  const hs = getComputedStyle(grid).gridTemplateRows.split(' ').map(parseFloat);
+  // A line moves one edge; a box's corner square moves its bottom edge (row line br) and right edge
+  // (the column line bc, as seen in the box's first row bcr) together.
+  const corner = h.classList.contains('rz-c');
+  rz = { kind: 'layout', h, page, grid, L, base: JSON.stringify(L.rows), hs, x: e.clientX, y: e.clientY, colW: grid.clientWidth / RZ_COLS, prev: page.layout, baseW: JSON.stringify(L.w),
+    row: corner ? +h.dataset.br : h.classList.contains('rz-h') ? +h.dataset.row : -1,
+    colRow: corner ? +h.dataset.bcr : +h.dataset.row, col: corner ? +h.dataset.bc : h.classList.contains('rz-v') ? +h.dataset.col : -1 };
+}
+function moveResize(e) {
+  if (!rz) return;
+  const s = scale();
+  if (rz.kind === 'photo2') {
+    // width: dragging toward the text narrows the photo; full width puts it back above the text
+    const dx = (e.clientX - rz.x) / s * (rz.right ? -1 : 1);
+    const w = Math.min(1, Math.max(0.2, (rz.startW + dx) / rz.W)), h = Math.min(0.85, Math.max(0.1, (rz.start + (e.clientY - rz.y) / s) / rz.H));
+    const next = { ...rz.orig, photo: +h.toFixed(3) };
+    if (w < 0.95) { next.photoW = +w.toFixed(3); next.photoPos = rz.orig.photoPos || 'left'; } else { delete next.photoW; delete next.photoPos; }
+    rz.page.content = rz.page.content || {}; rz.page.content[rz.id] = next; rz.moved = true;
+    if (!rz.frame) rz.frame = requestAnimationFrame(() => { if (rz) rz.frame = 0; renderCanvas(); });
+    return;
+  }
+  if (rz.kind === 'photo') {
+    rz.frac = Math.min(0.85, Math.max(0.1, (rz.start + (e.clientY - rz.y) / s) / rz.H));
+    rz.st.classList.add('fixedph'); rz.st.style.setProperty('--ph', Math.round(rz.H * rz.frac) + 'px'); rz.st.style.setProperty('--pmax', Math.round(rz.H * rz.frac) + 'px');
+    return;
+  }
+  const { L } = rz;
+  if (rz.row >= 0) {   // row line: the rows on either side share their height
+    const r = rz.row, a = rz.hs[r], b = rz.hs[r + 1], d = Math.max(MIN_ROW - a, Math.min(b - MIN_ROW, (e.clientY - rz.y) / s));
+    const tot = L.w[r] + L.w[r + 1];
+    L.w[r] = tot * (a + d) / (a + b); L.w[r + 1] = tot - L.w[r];
+  }
+  if (rz.col >= 0) {   // column line: moves in every linked row, each box keeping at least MIN_COLS columns
+    const rows = JSON.parse(rz.base), c0 = rz.col, rs = linkedRows(rows, rz.colRow, c0);
+    if (rs) {
+      let to = c0 + Math.round((e.clientX - rz.x) / s / rz.colW);
+      rs.forEach(k => {
+        const left = rows[k][c0 - 1], right = rows[k][c0];
+        to = Math.max(to, c0 - widthAt(rows[k], left) + MIN_COLS); to = Math.min(to, c0 + widthAt(rows[k], right) - MIN_COLS);
+      });
+      rs.forEach(k => { const left = rows[k][c0 - 1], right = rows[k][c0];
+        for (let c = Math.min(to, c0); c < Math.max(to, c0); c++) rows[k][c] = to < c0 ? right : left; });
+      L.rows = rows;
+    }
+  }
+  rz.grid.style.cssText = areasStyle(L);
+  labelBoxes(rz.grid.closest('.paper'), L);
+}
+function endResize() {
+  if (!rz) return; const d = rz; rz = null; d.h.classList.remove('on');
+  suppressClick = true; setTimeout(() => { suppressClick = false; }, 0);
+  if (d.kind === 'photo2') { if (d.frame) cancelAnimationFrame(d.frame); if (d.moved) commit(); return; }
+  if (d.kind === 'photo') {
+    if (!d.frac) return;
+    d.page.content = d.page.content || {};
+    d.page.content[d.id] = { ...contentOf(d.page, d.id), photo: +d.frac.toFixed(3) };
+    commit();
+  } else {
+    if (JSON.stringify(d.L.rows) === d.base && JSON.stringify(d.L.w) === d.baseW) return;   // a click, not a drag
+    d.page.layout = d.L; commit();
+    toast('Box resized', 'Undo', () => { if (d.prev) d.page.layout = d.prev; else delete d.page.layout; commit(); });
+  }
+}
+window.addEventListener('pointermove', moveResize);
+window.addEventListener('pointerup', endResize);
+window.addEventListener('pointercancel', endResize);
 function note(slot, msg) { if (slot.classList.contains('editable')) slot.insertAdjacentHTML('beforeend', `<span class="cutflag">${msg}</span>`); }
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { layoutCache.clear(); fitText(); relayout(); });
 
@@ -896,11 +1223,109 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') { if (locked
 
 function openReader(id) {
   const n = byId(id); if (!n) return;
-  openModal(`<div class="reader">${(n.images || []).map(u => `<img src="${esc(u)}" alt="">`).join('')}
-    <h2>${esc(n.title)}</h2>${(n.highlights || []).length ? `<ul class="deck">${n.highlights.map(h => `<li>${esc(h)}</li>`).join('')}</ul>` : ''}
-    <p><b>${esc(n.dateline || n.constituency || '')}, ${datelineDate(ed().editionDate)} :</b> ${esc(n.body)}</p>
+  const at = placements()[id], v = shown(at && ed().pages[at.page], n);
+  openModal(`<div class="reader">${v.images.map(u => `<img src="${esc(u)}" alt="">`).join('')}
+    <h2>${esc(v.title)}</h2>${v.highlights.length ? `<ul class="deck">${v.highlights.map(h => `<li>${esc(h)}</li>`).join('')}</ul>` : ''}
+    <p><b>${esc(n.dateline || n.constituency || '')}, ${datelineDate(ed().editionDate)} :</b> ${esc(v.body)}</p>
     <p class="by">${esc(n.reporter || '')} (${esc(BRAND.masthead)} ప్రతినిధి)</p>
     <div class="acts"><button class="btn" data-close>Close</button></div></div>`);
+}
+// ✎ on a placed story: its role on the page (lead / story / brief), which photos show (its own or
+// another card's), and its headline, highlights and text for this edition only. The card is not changed.
+const MAX_SHOWN = 2;
+function openContent(pageIdx, slotId) {
+  const p = ed().pages[pageIdx], id = p.slots[slotId], n = byId(id); if (!n) return;
+  const c = contentOf(p, id);
+  const role = slotId === 'lead' && !c.kind ? 'lead' : c.kind || 'auto';
+  let sel = (Array.isArray(c.images) ? c.images : (n.images || [])).slice(0, MAX_SHOWN);
+  const others = S.news.filter(o => o.id !== id && (o.images || []).length);
+  const tile = u => `<button type="button" class="ct-img" data-img="${esc(u)}"><img src="${esc(u)}" alt="" loading="lazy"></button>`;
+  openModal(`<h2>Story on this page</h2>
+    <p style="color:var(--muted);margin:0">Changes here apply to this edition only. The news card stays as it is.</p>
+    <label>Role on the page</label>
+    <div class="ct-roles">${[['auto', 'Automatic'], ['lead', 'Lead story'], ['story', 'Story'], ['brief', 'Brief']].map(([k, t]) =>
+      `<label><input type="radio" name="ctRole" value="${k}"${k === role ? ' checked' : ''}>${t}</label>`).join('')}</div>
+    <label>Photos shown <span style="color:var(--muted);font-weight:400">(tap to choose, up to ${MAX_SHOWN}, in order)</span></label>
+    <div class="ct-imgs" id="ctOwn">${(n.images || []).map(tile).join('') || '<span style="color:var(--muted)">This card has no photos.</span>'}</div>
+    ${others.length ? `<details><summary>Photos from other cards (${others.length})</summary>
+      <div class="ct-imgs" id="ctOther">${others.map(o => o.images.map(tile).join('')).join('')}</div></details>` : ''}
+    <div class="ct-row"><button class="btn" type="button" id="ctNoPic">No photo</button><button class="btn" type="button" id="ctCardPics">Card's photos</button></div>
+    <label>Headline</label><input id="ctTitle" maxlength="200" value="${esc(c.title || n.title)}">
+    ${(n.highlights || []).length ? `<label class="ct-check"><input type="checkbox" id="ctDeck"${c.deck === false ? '' : ' checked'}> Show the highlights</label>` : ''}
+    <div class="ct-row"><span style="font-size:13px;color:var(--muted)">Headline alignment</span>
+      <div class="ct-roles">${[['', 'Automatic'], ['left', 'Left'], ['center', 'Centre'], ['right', 'Right']].map(([k, t]) =>
+        `<label><input type="radio" name="ctHa" value="${k}"${(c.ha || '') === k ? ' checked' : ''}>${t}</label>`).join('')}</div></div>
+    <div class="ct-row"><label for="ctHs" style="margin:0">Headline size</label>
+      <select id="ctHs" style="width:auto">${HS_STEPS.map(v => `<option value="${v}"${(c.hs || 1) === v ? ' selected' : ''}>${pct(v)}</option>`).join('')}</select>
+      <label for="ctFs" style="margin:0">Text size</label>
+      <select id="ctFs" style="width:auto">${[['', 'Automatic'], ...TS_STEPS.map(v => [String(v), pct(v)])].map(([v, t]) =>
+        `<option value="${v}"${String(c.fs || '') === v ? ' selected' : ''}>${t}</option>`).join('')}</select>
+      <label for="ctCols" style="margin:0">Text columns</label>
+      <select id="ctCols" style="width:auto">${[['', 'Automatic'], ['1', '1'], ['2', '2'], ['3', '3']].map(([v, t]) =>
+        `<option value="${v}"${String(c.cols || '') === v ? ' selected' : ''}>${t}</option>`).join('')}</select></div>
+    <div class="ct-row"><span style="font-size:13px;color:var(--muted)">Photo position</span>
+      <div class="ct-roles">${[['top', 'Top, full width'], ['left', 'Left, text beside'], ['right', 'Right, text beside']].map(([k, t]) =>
+        `<label><input type="radio" name="ctPos" value="${k}"${(c.photoW ? c.photoPos || 'left' : 'top') === k ? ' checked' : ''}>${t}</label>`).join('')}</div></div>
+    ${c.photo || c.photoW ? '<label class="ct-check"><input type="checkbox" id="ctPhotoReset"> Size the photo automatically again</label>' : ''}
+    <label>Text</label><textarea id="ctBody" class="ct-body" maxlength="20000">${esc(c.body || n.body)}</textarea>
+    <div class="ct-row">
+      <button class="btn" type="button" id="ctCardText">Use the card's text</button>
+      ${S.news.length > 1 ? `<select id="ctFrom" aria-label="Add text from another card"><option value="">Add text from another card…</option>
+        ${S.news.filter(o => o.id !== id).map(o => `<option value="${esc(o.id)}">${esc(o.title.slice(0, 70))}</option>`).join('')}</select>` : ''}
+    </div>
+    <div class="acts"><button class="btn" data-close>Cancel</button><button class="btn primary" id="ctSave">Apply</button></div>`, sh => {
+    const paint = () => sh.querySelectorAll('.ct-img').forEach(b => {
+      const k = sel.indexOf(b.dataset.img); b.classList.toggle('on', k >= 0);
+      b.querySelector('b')?.remove(); if (k >= 0) b.insertAdjacentHTML('beforeend', `<b>${k + 1}</b>`);
+    });
+    paint();
+    sh.addEventListener('click', ev => {
+      const b = ev.target.closest('.ct-img'); if (!b) return;
+      const u = b.dataset.img;
+      sel = sel.includes(u) ? sel.filter(x => x !== u) : [...sel, u].slice(-MAX_SHOWN);
+      paint();
+    });
+    sh.querySelector('#ctNoPic').onclick = () => { sel = []; paint(); };
+    sh.querySelector('#ctCardPics').onclick = () => { sel = (n.images || []).slice(0, MAX_SHOWN); paint(); };
+    sh.querySelector('#ctCardText').onclick = () => { sh.querySelector('#ctBody').value = n.body; sh.querySelector('#ctTitle').value = n.title; };
+    const from = sh.querySelector('#ctFrom');
+    if (from) from.onchange = () => {
+      const o = byId(from.value); from.value = ''; if (!o) return;
+      const t = sh.querySelector('#ctBody'); t.value = (t.value.trim() + '\n\n' + o.body).trim(); t.focus();
+    };
+    sh.querySelector('#ctSave').onclick = () => {
+      const r = sh.querySelector('input[name=ctRole]:checked').value;
+      const title = sh.querySelector('#ctTitle').value.trim(), body = sh.querySelector('#ctBody').value.trim();
+      const next = {};
+      if (r === 'story' || r === 'brief') next.kind = r;
+      const card = (n.images || []).slice(0, MAX_SHOWN);
+      if (sel.length !== card.length || sel.some((u, k) => u !== card[k])) next.images = sel;
+      if (title && title !== n.title.trim()) next.title = title;
+      if (body && body !== n.body.trim()) next.body = body;
+      const deck = sh.querySelector('#ctDeck'); if (deck && !deck.checked) next.deck = false;
+      const fs = parseFloat(sh.querySelector('#ctFs').value); if (fs) next.fs = fs;
+      const hs = parseFloat(sh.querySelector('#ctHs').value); if (hs && hs !== 1) next.hs = hs;
+      const ha = sh.querySelector('input[name=ctHa]:checked')?.value; if (ha) next.ha = ha;
+      const cols = +sh.querySelector('#ctCols').value; if (cols) next.cols = cols;
+      const reset = sh.querySelector('#ctPhotoReset')?.checked, pos = sh.querySelector('input[name=ctPos]:checked').value;
+      if (sel.length) {
+        if (c.photo && !reset) next.photo = c.photo;
+        if (pos !== 'top') { next.photoW = (!reset && c.photoW) || 0.45; next.photoPos = pos; }
+      }
+      p.content = p.content || {};
+      if (Object.keys(next).length) p.content[id] = next; else delete p.content[id];
+      // Lead story: swap it into the lead box (the story there takes this one's box).
+      let at = slotId;
+      if (r === 'lead' && slotId !== 'lead') {
+        const cur = p.slots.lead; p.slots.lead = id;
+        if (cur) p.slots[slotId] = cur; else delete p.slots[slotId];
+        p.styles = p.styles || {}; const st = p.styles.lead; p.styles.lead = p.styles[slotId]; p.styles[slotId] = st;
+        Object.keys(p.styles).forEach(k => { if (p.styles[k] === undefined) delete p.styles[k]; });
+        at = 'lead';
+      }
+      closeModal(); commit(); toast(r === 'lead' && at === 'lead' && slotId !== 'lead' ? 'Now the lead story' : 'Story updated on this page');
+    };
+  });
 }
 function openNewEdition() {
   const opts = Object.entries(EDITION_TYPES).map(([k, t]) => `<option value="${k}">${t.label}</option>`).join('');
@@ -1110,6 +1535,7 @@ $('#poolList').addEventListener('pointerdown', e => {
 });
 $('#canvas').addEventListener('pointerdown', e => {
   if (S.preview || S.viewer) return;
+  if (e.target.closest('.rz, .ph-rz, .ph-rzc')) { startResize(e); return; }
   const slot = e.target.closest('.slot.filled'); if (!slot || e.target.closest('button')) return;
   if (e.pointerType !== 'mouse' && !e.target.closest('[data-shandle]')) return;
   const n = byId(slot.dataset.news); press(e, { type: 'news', id: n.id }, n.title);
@@ -1135,8 +1561,15 @@ $('#canvas').addEventListener('click', e => {
   const slot = e.target.closest('.slot'); if (!slot) return;
   const p = ed().pages[+slot.dataset.page];
   if (act && act.dataset.act === 'remove') { const id = p.slots[act.dataset.slot]; delete p.slots[act.dataset.slot]; commit(); toast('Removed from page', 'Undo', () => placeNews(id, +slot.dataset.page, act.dataset.slot)); return; }
+  if (act && act.dataset.act === 'content') { openContent(+slot.dataset.page, act.dataset.slot); return; }
+  if (act && ['hdec', 'hinc', 'tdec', 'tinc', 'ppos', 'cols'].includes(act.dataset.act)) { quickAct(p, act.dataset.slot, act.dataset.act, slot); return; }
   if (act && act.dataset.act === 'style') { p.styles = p.styles || {}; const cur = p.styles[act.dataset.slot] || 'red'; p.styles[act.dataset.slot] = STYLES[(STYLES.indexOf(cur) + 1) % STYLES.length]; commit(); return; }
   if (S.sel) placeNews(S.sel, +slot.dataset.page, slot.dataset.slot);
+  else if (slot.dataset.news) {   // tap a story to show its quick size controls (touch screens have no hover)
+    S.active = S.active === slot.dataset.slot ? null : slot.dataset.slot;
+    document.querySelectorAll('#canvas .slot.active').forEach(x => x.classList.remove('active'));
+    if (S.active) slot.classList.add('active');
+  }
   else if (!slot.dataset.news) { if (narrow()) $('#pool').classList.add('open'); else toast('Pick a news card on the left, then tap this box.'); }
 });
 $('#canvas').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.classList.contains('slot')) e.target.click(); });
@@ -1154,6 +1587,10 @@ $('#pagebar').addEventListener('change', e => {
 });
 $('#pagebar').addEventListener('click', e => {
   if (e.target.id === 'autoBtn') autoFill(false);
+  if (e.target.id === 'layoutModeBtn') { S.layoutMode = !S.layoutMode; S.active = null; renderAll(); if (S.layoutMode) toast('Drag the pink handles to resize boxes, or pick an arrangement above the page'); return; }
+  const arr = e.target.closest('[data-arr]');
+  if (arr) { useArrangement(S.pageIdx, +arr.dataset.arr); return; }
+  if (e.target.id === 'resetLayoutBtn') { delete ed().pages[S.pageIdx].layout; commit(); toast('Boxes sized automatically again'); }
   if (e.target.id === 'mergeBtn') mergeWithNext(S.pageIdx);
   if (e.target.id === 'clearPageBtn') clearPage(S.pageIdx);
   if (e.target.id === 'delPageBtn') deletePage(S.pageIdx);
