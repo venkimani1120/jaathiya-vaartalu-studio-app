@@ -1,4 +1,4 @@
-require('dotenv').config();
+const { APP_ENV } = require('./config/env');
 const path = require('path');
 const fs = require('fs');
 const express = require('express');
@@ -60,7 +60,7 @@ app.use((err, _req, res, _next) => {
 
 const port = process.env.PORT || 4000;
 connectDB().then(() => {
-  app.listen(port, () => console.log(`API on :${port}`));
+  app.listen(port, () => console.log(`API on :${port} (${APP_ENV})`));
   backfillNewsSource().catch(e => console.error('News source backfill failed:', e.message));
   recoverInterrupted().catch(e => console.error('Import recovery failed:', e.message)).then(() => extractor.start())
     .catch(e => console.error('Extractor start failed:', e.message));
