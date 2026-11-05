@@ -4,9 +4,11 @@
   "private": true,
   "main": "src/index.js",
   "scripts": {
-    "start": "node src/index.js",
-    "dev": "node --watch src/index.js",
+    "start": "NODE_ENV=production node src/index.js",
+    "start:local": "NODE_ENV=development node src/index.js",
+    "dev": "NODE_ENV=development node --watch src/index.js",
     "create-admin": "node scripts/create-admin.js",
+    "create-admin:prod": "NODE_ENV=production node scripts/create-admin.js",
     "seed": "node scripts/seed-test-data.js",
     "build:web": "cd ../jaathiya-vaartalu-web && npm ci && npm run build"
   },

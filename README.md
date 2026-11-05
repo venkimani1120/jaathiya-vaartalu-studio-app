@@ -95,10 +95,10 @@ The apps use a State → District → Constituency picker for sign-up, news card
 ```bash
 # 1. API
 cd jaathiya-vaartalu-backend
-cp .env.example .env          # fill in MONGODB_URI, JWT secrets, CLOUDINARY_URL
+cp .env.development.example .env.development   # fill in MONGODB_URI, JWT secrets
 npm install
 npm run create-admin          # creates the first admin from ADMIN_EMAIL / ADMIN_PASSWORD
-npm run dev                   # http://localhost:4000/studio
+npm run dev                   # development env, http://localhost:4000/studio
 
 # 2. Web app (in its own terminal; it calls the local API through the Vite proxy)
 cd jaathiya-vaartalu-web && npm install && npm run dev    # http://localhost:5173
@@ -106,9 +106,18 @@ cd jaathiya-vaartalu-web && npm install && npm run dev    # http://localhost:517
 # 3. Mobile apps (same steps for jaathiya-vaartalu-admin-mobile)
 cd jaathiya-vaartalu-reporter-mobile
 ./setup.sh                    # creates jv-mobile/ with matching Expo versions
-# edit jv-mobile/src/config.js -> API_BASE
-cd jv-mobile && npx expo start   # scan the QR with Expo Go on Android
+cd jv-mobile && npx expo start   # scan the QR with Expo Go; it calls the API on this computer (port 4000)
 ```
+
+### Local and production environments
+
+| App | Local (development) | Production (deployed) |
+|---|---|---|
+| Backend | `npm run dev` loads `.env.development` | `npm start` (or anywhere `RENDER` is set) loads `.env.production`; on Render, set the values in the dashboard. See `.env.*.example`. |
+| Web | `npm run dev` uses `.env.development` (Vite proxy to `DEV_API_TARGET`) | `npm run build` uses `.env.production` (same site as the page) |
+| Reporter / Desk mobile | `npx expo start`: the API on the computer running Expo, port 4000, found automatically (Android emulator: `10.0.2.2`) | Release builds / APKs: `PROD_API` in `src/config.js` |
+
+Variables already set in the shell (or on Render) win over the files. A mobile bundle built with `EXPO_PUBLIC_API_URL=...` uses that server instead, in any mode. Real `.env.development` / `.env.production` files hold secrets and are not committed.
 
 Edit the code in `jaathiya-vaartalu-reporter-mobile/src` (or `jaathiya-vaartalu-admin-mobile/src`), not in `jv-mobile/`; run `./setup.sh` again to copy your changes in.
 
@@ -122,7 +131,7 @@ Each project has its own workflow in `.github/workflows/`. It runs on a push to 
 | `jaathiya-vaartalu-admin-mobile-apk.yml` – Desk (Editor/Admin) mobile – Android APK | `jaathiya-vaartalu-admin-mobile/` | `jv-desk-apk` (app-release.apk) |
 | `jaathiya-vaartalu-web.yml` – Web app – build | `jaathiya-vaartalu-web/` | `jv-web` (static site) |
 
-API URL: a manual run can take one as input. Otherwise the workflows use the repository variable `API_URL` (Settings → Secrets and variables → Actions → Variables) if you set it, else the app's own default (`src/config.js` for mobile; the same site for web).
+API URL: a manual run can take one as input. Otherwise the workflows use the repository variable `API_URL` (Settings → Secrets and variables → Actions → Variables) if you set it, else production (`PROD_API` in `src/config.js` for mobile; the same site for web).
 
 ## Hosting the web app
 

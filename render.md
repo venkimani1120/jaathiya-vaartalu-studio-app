@@ -29,6 +29,9 @@ When the backend starts, it serves `dist/` as static files. The web app uses `#/
 **4. The mobile apps aren't on Render.**
 `jaathiya-vaartalu-reporter-mobile` and `jaathiya-vaartalu-admin-mobile` are built into APKs by the GitHub Actions workflows. They're installed on phones and call the Render API over the internet.
 
+**5. Environment variables.**
+`npm start` runs the backend with `NODE_ENV=production` (it also assumes production whenever Render's `RENDER` variable is set). Secrets come from the Render dashboard's Environment tab; `jaathiya-vaartalu-backend/.env.production.example` lists them. Local runs (`npm run dev`) use `.env.development` instead, so the two never mix. The web build uses `jaathiya-vaartalu-web/.env.production`, and release APKs use `PROD_API` in each mobile app's `src/config.js`.
+
 ## Diagram
 
 ```
