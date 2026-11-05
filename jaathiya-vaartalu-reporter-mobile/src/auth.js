@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { api, saveTokens, clearTokens, setSignedOutHandler } from './api';
+import { api, saveTokens, clearTokens, logout, setSignedOutHandler } from './api';
 import * as SecureStore from 'expo-secure-store';
 
 const Ctx = createContext(null);
@@ -33,7 +33,7 @@ export function AuthProvider({ children }) {
     setUser(data.user);
   };
   const signUp = async form => (await api.post('/auth/signup', form)).data;
-  const signOut = async () => { try { await api.post('/auth/logout'); } catch {} await clearTokens(); setUser(null); };
+  const signOut = async () => { await logout(); setUser(null); };
 
   return <Ctx.Provider value={{ user, ready, signIn, signUp, signOut }}>{children}</Ctx.Provider>;
 }

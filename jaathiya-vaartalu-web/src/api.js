@@ -9,11 +9,16 @@ const remove = k => { try { localStorage.removeItem(k); } catch {} };
 export const saveTokens = d => { write(KEYS.access, d.accessToken); write(KEYS.refresh, d.refreshToken); };
 export const clearTokens = () => { remove(KEYS.access); remove(KEYS.refresh); };
 export const hasSession = () => !!read(KEYS.refresh);
+// Ends the session on the server (the refresh token covers an expired access token), then forgets the tokens.
+export async function logout() {
+  try { await api('/auth/logout', { method: 'POST', body: { refreshToken: read(KEYS.refresh) } }); } catch {}
+  clearTokens();
+}
 
 let onSignedOut = () => {};
 export const setSignedOutHandler = fn => { onSignedOut = fn; };
 
-const NO_REFRESH = ['/auth/login', '/auth/signup', '/auth/refresh'];
+const NO_REFRESH = ['/auth/login', '/auth/signup', '/auth/refresh', '/auth/logout'];
 let refreshing = null;
 async function refresh() {
   const refreshToken = read(KEYS.refresh);

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { api, saveTokens, clearTokens, setSignedOutHandler } from './api';
+import { api, saveTokens, clearTokens, logout, setSignedOutHandler } from './api';
 import * as SecureStore from 'expo-secure-store';
 
 const Ctx = createContext(null);
@@ -32,7 +32,7 @@ export function AuthProvider({ children }) {
     await saveTokens(data);
     setUser(data.user);
   };
-  const signOut = async () => { try { await api.post('/auth/logout'); } catch {} await clearTokens(); setUser(null); };
+  const signOut = async () => { await logout(); setUser(null); };
 
   // UI hints only; the server enforces every rule.
   const can = {

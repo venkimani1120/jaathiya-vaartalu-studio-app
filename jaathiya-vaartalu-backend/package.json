@@ -4,9 +4,11 @@
   "private": true,
   "main": "src/index.js",
   "scripts": {
-    "start": "node src/index.js",
-    "dev": "node --watch src/index.js",
+    "start": "NODE_ENV=production node src/index.js",
+    "start:local": "NODE_ENV=development node src/index.js",
+    "dev": "NODE_ENV=development node --watch src/index.js",
     "create-admin": "node scripts/create-admin.js",
+    "create-admin:prod": "NODE_ENV=production node scripts/create-admin.js",
     "seed": "node scripts/seed-test-data.js",
     "build:web": "cd ../jaathiya-vaartalu-web && npm ci && npm run build"
   },
@@ -21,8 +23,12 @@
     "express": "^4.21.2",
     "express-rate-limit": "^7.4.1",
     "helmet": "^8.0.0",
+    "image-size": "^2.0.4",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.9.0",
-    "multer": "^1.4.5-lts.1"
+    "multer": "^1.4.5-lts.1",
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^6.4.299",
+    "sharp": "^0.35.5"
   }
 }

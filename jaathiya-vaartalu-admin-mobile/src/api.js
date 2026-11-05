@@ -15,6 +15,11 @@ export async function clearTokens() {
   await SecureStore.deleteItemAsync('refresh');
 }
 export const getAccessToken = () => SecureStore.getItemAsync('access');
+// Ends the session on the server (the refresh token covers an expired access token), then forgets the tokens.
+export async function logout() {
+  try { await api.post('/auth/logout', { refreshToken: await SecureStore.getItemAsync('refresh') }); } catch {}
+  await clearTokens();
+}
 
 api.interceptors.request.use(async cfg => {
   const t = await SecureStore.getItemAsync('access');
@@ -23,7 +28,7 @@ api.interceptors.request.use(async cfg => {
 });
 
 // On 401, try one silent refresh (shared across parallel requests), then retry.
-const NO_REFRESH = ['/auth/login', '/auth/signup', '/auth/refresh'];
+const NO_REFRESH = ['/auth/login', '/auth/signup', '/auth/refresh', '/auth/logout'];
 let refreshing = null;
 async function refresh() {
   const rt = await SecureStore.getItemAsync('refresh');

@@ -1,7 +1,7 @@
 // Loads test data for local development: test users, sample photos and news cards in every status.
 // Safe to re-run: it removes the previous test users (emails ending @test.local) and their news first.
 // Also writes server/test-data/ with sample images and stories you can upload by hand from the app or API.
-require('dotenv').config();
+require('../src/config/env');
 const fs = require('fs');
 const path = require('path');
 const zlib = require('zlib');

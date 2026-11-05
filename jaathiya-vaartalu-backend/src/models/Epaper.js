@@ -6,7 +6,14 @@ const pageSchema = new Schema({
   template: { type: String, required: true },
   label: String,
   slots: { type: Map, of: String, default: {} },   // slotId -> News id
-  styles: { type: Map, of: String, default: {} }   // slotId -> headline style (red / blue / boxed)
+  styles: { type: Map, of: String, default: {} },  // slotId -> headline style (red / blue / boxed)
+  // News id -> how that story shows on this page only (the news card is not changed):
+  // { kind: 'story'|'brief', images: [urls], title, body, deck: false }
+  // Box sizes set by hand in the studio: { ids, rows: [[slot ids per column]], w: [row heights], kinds }.
+  // Used while the same stories are on the page; otherwise the page is laid out automatically.
+  layout: Schema.Types.Mixed,
+  content: { type: Map, of: Schema.Types.Mixed, default: {},
+    validate: { validator: v => !v || JSON.stringify(Object.fromEntries(v)).length <= 300000, message: 'Too much story text on one page.' } }
 }, { _id: false });
 
 const epaperSchema = new Schema({

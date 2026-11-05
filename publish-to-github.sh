@@ -2,7 +2,7 @@
 # Creates the GitHub repo, commits everything to a feature branch, waits for the
 # free GitHub Actions builds, and downloads both APKs into ./apk/ (reporter/ and desk/)
 #
-# Usage:   ./publish-to-github.sh [API_URL]
+# Usage:   ./publish-to-github.sh [API_URL]   (no API_URL = the apps use the production server)
 # Example: ./publish-to-github.sh http://192.168.1.10:4000
 # Needs:   git and GitHub CLI (https://cli.github.com). On Windows run it in Git Bash.
 set -euo pipefail
@@ -15,16 +15,17 @@ command -v git >/dev/null || { echo "Install Git first: https://git-scm.com"; ex
 command -v gh  >/dev/null || { echo "Install GitHub CLI first: https://cli.github.com"; exit 1; }
 gh auth status >/dev/null 2>&1 || gh auth login
 
-if [ -n "$API_URL" ]; then
-  for app in jaathiya-vaartalu-reporter-mobile jaathiya-vaartalu-admin-mobile; do echo "export const API_BASE = '$API_URL';" > $app/src/config.js; done
-  echo "Apps will use API: $API_URL"
-fi
-
 if [ ! -d .git ]; then
   git init -b main
   git add README.md .gitignore
   git commit -m "Initial commit"
   gh repo create "$REPO" --private --source=. --remote=origin --push
+fi
+
+# The APK builds read the repository variable API_URL; with none, the apps use the production server.
+if [ -n "$API_URL" ]; then
+  gh variable set API_URL --body "$API_URL"
+  echo "Apps will use API: $API_URL (repository variable API_URL; delete it to go back to production)"
 fi
 
 git checkout -B "$BRANCH"
