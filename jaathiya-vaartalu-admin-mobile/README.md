@@ -1,11 +1,11 @@
-# Jaathiya Vaartalu – Desk app (editors and admins)
+# Jaathiya Vaartalu – Admin app (editors and admins)
 
-The mobile news desk for **editors and admins**: review news from reporters, write news, and manage the team. It runs on **Android and iOS** and uses the same [API server](../jaathiya-vaartalu-backend/README.md) and MongoDB data as the other apps.
+The mobile app for **editors and admins**: review news from reporters, write news, and manage the team. It runs on **Android and iOS** and uses the same [API server](../jaathiya-vaartalu-backend/README.md) and MongoDB data as the other apps.
 
 | | |
 |---|---|
-| App name | JV Desk |
-| Android package / iOS bundle id | `com.jaathiyavaartalu.desk` |
+| App name | JV Admin |
+| Android package / iOS bundle id | `com.jaathiyavaartalu.desk` (kept from when the app was called JV Desk, so installed phones keep updating) |
 | Who can sign in | Editors and admins. Reporters are asked to use JV Reporter. The e-paper layout studio and newspaper uploads are in the separate **JV Studio** app. |
 | API | `https://jaathiya-vaartalu-studio-app.onrender.com` in release builds |
 
@@ -15,12 +15,12 @@ The mobile news desk for **editors and admins**: review news from reporters, wri
 
 - **Review:** news waiting for review. Open a card to approve it, or send it back with a note for the reporter.
 - **Ready to place:** approved news, waiting for the e-paper.
-- **My news:** cards you wrote. Desk staff's cards skip review and go straight to the approved pool.
+- **My news:** cards you wrote. Editors' and admins' cards skip review and go straight to the approved pool.
 - **Filters:** by source (reporter, editor, admin, e-paper) and place, with a count of stories for each.
 - **News card editor:** like the reporter's, plus editing any card and deleting cards.
 - **Team accounts** (admins): approve new sign-ups, change roles, and deactivate accounts.
 
-**One device at a time:** an account can be signed in on one device. Signing in to this app signs the same account out of the other desk app and the web app.
+**One device at a time:** an account can be signed in on one device. Signing in to this app signs the same account out of JV Studio and the web app.
 
 ## How this folder works
 
@@ -51,9 +51,9 @@ Plain `http` to a computer on the local network is allowed on both platforms (An
 
 | Platform | GitHub workflow | Artifact |
 |---|---|---|
-| Android | `.github/workflows/jaathiya-vaartalu-admin-mobile-android.yml` ("Desk (Editor/Admin) mobile – Android") | `jv-desk-apk`: `app-release.apk`, signed with the debug key, for testing |
-| iOS Simulator | `.github/workflows/jaathiya-vaartalu-admin-mobile-ios.yml` ("Desk (Editor/Admin) mobile – iOS") | `jv-desk-ios-simulator`: unzip and drag onto the iOS Simulator in Xcode |
-| iPhone | the same iOS workflow, run by hand with **iOS device build** = `preview` or `testflight` | `jv-desk-ios-device`: `.ipa`, signed on Expo EAS |
+| Android | `.github/workflows/jaathiya-vaartalu-admin-mobile-android.yml` ("Admin mobile – Android") | `jv-admin-apk`: `app-release.apk`, signed with the debug key, for testing |
+| iOS Simulator | `.github/workflows/jaathiya-vaartalu-admin-mobile-ios.yml` ("Admin mobile – iOS") | `jv-admin-ios-simulator`: unzip and drag onto the iOS Simulator in Xcode |
+| iPhone | the same iOS workflow, run by hand with **iOS device build** = `preview` or `testflight` | `jv-admin-ios-device`: `.ipa`, signed on Expo EAS |
 
 The builds run on every push to `main` or `feature/**` that changes this folder. The iPhone build is the exception: it runs only by hand, because each build uses Expo EAS credits. A manual run can also take an API URL.
 

@@ -5,7 +5,7 @@ import { useAuth } from '../auth';
 import { errMsg, uploadImages } from '../api';
 import { Avatar, Badge, Banner, Button, C, Card, Field, Icon, SectionTitle } from '../ui';
 
-// Same as the web app's "My profile" (same file in the Reporter, Desk and Studio apps): photo, name and phone,
+// Same as the web app's "My profile" (same file in the Reporter, Admin and Studio apps): photo, name and phone,
 // a link to change the password, and sign out. Email, role and area stay admin-managed.
 const ROLES = { reporter: ['Reporter', C.saffron], editor: ['Editor', C.blue], admin: ['Admin', C.ok] };
 const fmtDate = d => (d ? new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—');

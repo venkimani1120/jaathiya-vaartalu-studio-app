@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "JV Desk",
+    "name": "JV Admin",
     "slug": "jaathiya-vaartalu-desk",
     "version": "1.0.0",
     "orientation": "default",
@@ -55,7 +55,8 @@
             "usesCleartextTraffic": true
           }
         }
-      ]
+      ],
+      "@react-native-community/datetimepicker"
     ]
   }
 }

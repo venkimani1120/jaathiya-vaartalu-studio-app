@@ -1,16 +1,16 @@
-# Jaathiya Vaartalu – News Desk apps + E-paper Studio
+# Jaathiya Vaartalu – Reporter, Admin and Studio apps + E-paper Studio
 
 Four apps, one backend. Each project has its own README with setup, configuration and build details:
 
 - [API server](jaathiya-vaartalu-backend/README.md)
 - [Web app](jaathiya-vaartalu-web/README.md)
-- [Reporter app](jaathiya-vaartalu-reporter-mobile/README.md) · [Desk app](jaathiya-vaartalu-admin-mobile/README.md) · [Studio app](jaathiya-vaartalu-studio-mobile/README.md) (Android and iOS)
+- [Reporter app](jaathiya-vaartalu-reporter-mobile/README.md) · [Admin app](jaathiya-vaartalu-admin-mobile/README.md) · [Studio app](jaathiya-vaartalu-studio-mobile/README.md) (Android and iOS)
 
 
 | Project | Who uses it | What it does | Tech |
 |---|---|---|---|
 | `jaathiya-vaartalu-reporter-mobile/` | Reporters | Sign up, log in, upload and edit own news cards (photos from gallery or camera), see review notes and daily quota | React Native (Expo), Android and iOS – `JV Reporter` |
-| `jaathiya-vaartalu-admin-mobile/` | Editors, Admins | Review queue, approve / send back, edit any card, upload news, team accounts (admin) | React Native (Expo), Android and iOS – `JV Desk` |
+| `jaathiya-vaartalu-admin-mobile/` | Editors, Admins | Review queue, approve / send back, edit any card, upload news, team accounts (admin) | React Native (Expo), Android and iOS – `JV Admin` |
 | `jaathiya-vaartalu-studio-mobile/` | Editors, Admins | E-paper layout studio, editions and share links, upload other papers (PDF or page photos) and pick their news for the feed, upload news cuts | React Native (Expo), Android and iOS – `JV Studio` |
 | `jaathiya-vaartalu-web/` | Everyone | One web app for every role. After sign-in it shows each person their own pages: reporters get My news, Approved (last 30 days) and the news card editor; editors and admins get the review queue, all news with filters and paging, e-paper editions and a link to the layout studio; admins also get Team accounts. Everyone gets My profile (photo, name, phone) and Change password | React + Vite, static site |
 
@@ -22,7 +22,7 @@ Shared by all of them:
 | `jaathiya-vaartalu-backend/public/epaper-studio.html` | Drag-and-drop page layout (matches the printed paper), merge pages, publish, share link, save as PDF. Also the public reader at `/e/<link>` | Plain HTML/JS, served by the API |
 | `shared/` | States, districts and constituencies, copied into every project | Python scripts |
 
-Each mobile app only lets in its own roles: a reporter signing in to the Desk or Studio app, or an editor signing in to the Reporter app, is told which app to use. The web app lets everyone in and picks the pages from the signed-in person's role. The server still enforces every rule on its own.
+Each mobile app only lets in its own roles: a reporter signing in to the Admin or Studio app, or an editor signing in to the Reporter app, is told which app to use. The web app lets everyone in and picks the pages from the signed-in person's role. The server still enforces every rule on its own.
 
 The three mobile apps have different package ids (`com.jaathiyavaartalu.reporter`, `com.jaathiyavaartalu.desk`, `com.jaathiyavaartalu.studio`), so all of them can be installed on one phone. Builds made before the rename used `com.jaathiyavaarthalu.reporter`, `com.jaathiyavaarthalu.desk` and, for the old single app, `com.jaathiyavaarthalu.newsdesk`. The new builds do not update those apps; uninstall them once the team has moved over.
 
@@ -38,7 +38,7 @@ The three mobile apps have different package ids (`com.jaathiyavaartalu.reporter
 | Build, merge, publish e-paper | – | Yes | Yes |
 | Approve accounts, change roles | – | – | Yes |
 
-Every card has a **source**: `reporter`, `editor` or `admin` (the uploader's role when it was created) or `epaper` (imported from another paper). The server sets it and it never changes. Editors and admins filter by it in the news list, the Desk app and the studio.
+Every card has a **source**: `reporter`, `editor` or `admin` (the uploader's role when it was created) or `epaper` (imported from another paper). The server sets it and it never changes. Editors and admins filter by it in the news list, the Admin app and the studio.
 
 Flow (e-paper news starts as `imported` and joins at `submitted` when added to the feed): `draft → submitted → approved` (or `rejected` with a note → reporter fixes → resubmits) `→ published` when placed in a published edition.
 
@@ -121,7 +121,7 @@ cd jv-mobile && npx expo start   # scan the QR with Expo Go; it calls the API on
 |---|---|---|
 | Backend | `npm run dev` loads `.env.development` | `npm start` (or anywhere `RENDER` is set) loads `.env.production`; on Render, set the values in the dashboard. See `.env.*.example`. |
 | Web | `npm run dev` uses `.env.development` (Vite proxy to `DEV_API_TARGET`) | `npm run build` uses `.env.production` (same site as the page) |
-| Reporter / Desk / Studio mobile | `npx expo start`: the API on the computer running Expo, port 4000, found automatically (Android emulator: `10.0.2.2`) | Release builds / APKs: `PROD_API` in `src/config.js` |
+| Reporter / Admin / Studio mobile | `npx expo start`: the API on the computer running Expo, port 4000, found automatically (Android emulator: `10.0.2.2`) | Release builds / APKs: `PROD_API` in `src/config.js` |
 
 Variables already set in the shell (or on Render) win over the files. A mobile bundle built with `EXPO_PUBLIC_API_URL=...` uses that server instead, in any mode. Real `.env.development` / `.env.production` files hold secrets and are not committed.
 
@@ -135,8 +135,8 @@ Each project has its own workflow in `.github/workflows/`. It runs on a push to 
 |---|---|---|
 | `jaathiya-vaartalu-reporter-mobile-android.yml` – Reporter mobile – Android | `jaathiya-vaartalu-reporter-mobile/` | `jv-reporter-apk` (app-release.apk) |
 | `jaathiya-vaartalu-reporter-mobile-ios.yml` – Reporter mobile – iOS | `jaathiya-vaartalu-reporter-mobile/` | `jv-reporter-ios-simulator`; manual runs also `jv-reporter-ios-device` (.ipa) |
-| `jaathiya-vaartalu-admin-mobile-android.yml` – Desk (Editor/Admin) mobile – Android | `jaathiya-vaartalu-admin-mobile/` | `jv-desk-apk` (app-release.apk) |
-| `jaathiya-vaartalu-admin-mobile-ios.yml` – Desk (Editor/Admin) mobile – iOS | `jaathiya-vaartalu-admin-mobile/` | `jv-desk-ios-simulator`; manual runs also `jv-desk-ios-device` (.ipa) |
+| `jaathiya-vaartalu-admin-mobile-android.yml` – Admin mobile – Android | `jaathiya-vaartalu-admin-mobile/` | `jv-admin-apk` (app-release.apk) |
+| `jaathiya-vaartalu-admin-mobile-ios.yml` – Admin mobile – iOS | `jaathiya-vaartalu-admin-mobile/` | `jv-admin-ios-simulator`; manual runs also `jv-admin-ios-device` (.ipa) |
 | `jaathiya-vaartalu-studio-mobile-android.yml` – Studio (E-paper) mobile – Android | `jaathiya-vaartalu-studio-mobile/` | `jv-studio-apk` (app-release.apk) |
 | `jaathiya-vaartalu-studio-mobile-ios.yml` – Studio (E-paper) mobile – iOS | `jaathiya-vaartalu-studio-mobile/` | `jv-studio-ios-simulator`; manual runs also `jv-studio-ios-device` (.ipa) |
 | `jaathiya-vaartalu-web.yml` – Web app – build | `jaathiya-vaartalu-web/` | `jv-web` (static site) |
@@ -155,9 +155,9 @@ iOS: the `-ios.yml` workflows build for the iOS Simulator on every push (no Appl
 
 **Fastest:** run `./publish-to-github.sh` (optionally with your API URL). It commits everything to `feature/news-desk-epaper`, pushes, waits for the three free Android builds and saves the APKs to `apk/reporter/`, `apk/desk/` and `apk/studio/` (`app-release.apk` in each).
 
-Or pick one of these. All three are free. Examples use `jaathiya-vaartalu-reporter-mobile`; swap in `jaathiya-vaartalu-admin-mobile` for the Desk app or `jaathiya-vaartalu-studio-mobile` for the Studio app.
+Or pick one of these. All three are free. Examples use `jaathiya-vaartalu-reporter-mobile`; swap in `jaathiya-vaartalu-admin-mobile` for the Admin app or `jaathiya-vaartalu-studio-mobile` for the Studio app.
 
-**A. GitHub Actions (no tools on your PC).** Push this folder to a GitHub repo. Open **Actions → Reporter mobile – Android** (or **Desk (Editor/Admin) mobile – Android**, **Studio (E-paper) mobile – Android**) **→ Run workflow**, enter your API URL, and wait about 15–25 minutes. Download the artifact from the finished run, unzip it, and install `app-release.apk` on the phone (allow "Install unknown apps"). Public repos build free; private repos use the free monthly minutes.
+**A. GitHub Actions (no tools on your PC).** Push this folder to a GitHub repo. Open **Actions → Reporter mobile – Android** (or **Admin mobile – Android**, **Studio (E-paper) mobile – Android**) **→ Run workflow**, enter your API URL, and wait about 15–25 minutes. Download the artifact from the finished run, unzip it, and install `app-release.apk` on the phone (allow "Install unknown apps"). Public repos build free; private repos use the free monthly minutes.
 
 **B. Expo EAS cloud build.** Needs a free Expo account.
 ```bash

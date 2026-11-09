@@ -1,6 +1,6 @@
 # Jaathiya Vaartalu – API server
 
-The one backend behind every Jaathiya Vaartalu app: the Reporter, Desk and Studio mobile apps, the web app, the e-paper layout studio and the public e-paper reader. All of them use the same MongoDB database through this server.
+The one backend behind every Jaathiya Vaartalu app: the Reporter, Admin and Studio mobile apps, the web app, the e-paper layout studio and the public e-paper reader. All of them use the same MongoDB database through this server.
 
 - REST API under `/api`: sign-in with roles, news cards and their review, photo uploads, e-paper editions, imported e-papers with news extraction, team accounts.
 - `/studio`: the drag-and-drop e-paper layout studio (`public/epaper-studio.html`), used by the web app and inside the JV Studio app.
@@ -67,7 +67,7 @@ Test data: `npm run seed` adds test users, sample photos and news cards in every
 
 Roles are `reporter`, `editor` and `admin`. New reporters sign up and wait for an admin to approve them. Every rule (who may edit, approve or publish what) is checked here, whatever the app shows.
 
-Each sign-in opens one session: a 15-minute access token plus a refresh token, both tied to it. **One signed-in device per user:** signing in anywhere ends the earlier session. This includes the Desk and Studio apps and the web app, which share editor and admin accounts. A session also ends after `SESSION_IDLE_MINUTES` idle, on sign-out, or when the password, role or active state changes.
+Each sign-in opens one session: a 15-minute access token plus a refresh token, both tied to it. **One signed-in device per user:** signing in anywhere ends the earlier session. This includes the Admin and Studio apps and the web app, which share editor and admin accounts. A session also ends after `SESSION_IDLE_MINUTES` idle, on sign-out, or when the password, role or active state changes.
 
 ## API
 

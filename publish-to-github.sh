@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Creates the GitHub repo, commits everything to a feature branch, waits for the
-# free GitHub Actions builds, and downloads the three APKs into ./apk/ (reporter/, desk/ and studio/)
+# free GitHub Actions builds, and downloads the three APKs into ./apk/ (reporter/, admin/ and studio/)
 #
 # Usage:   ./publish-to-github.sh [API_URL]   (no API_URL = the apps use the production server)
 # Example: ./publish-to-github.sh http://192.168.1.10:4000
@@ -28,11 +28,11 @@ fi
 
 git checkout -B "$BRANCH"
 git add -A
-git commit -m "Reporter, Desk and Studio apps (mobile + web), API, e-paper studio, Android and iOS builds" || echo "Nothing new to commit"
+git commit -m "Reporter, Admin and Studio apps (mobile + web), API, e-paper studio, Android and iOS builds" || echo "Nothing new to commit"
 git push -u origin "$BRANCH"
 
 rm -rf apk
-for pair in "jaathiya-vaartalu-reporter-mobile-android.yml:jv-reporter-apk:reporter" "jaathiya-vaartalu-admin-mobile-android.yml:jv-desk-apk:desk" "jaathiya-vaartalu-studio-mobile-android.yml:jv-studio-apk:studio"; do
+for pair in "jaathiya-vaartalu-reporter-mobile-android.yml:jv-reporter-apk:reporter" "jaathiya-vaartalu-admin-mobile-android.yml:jv-admin-apk:admin" "jaathiya-vaartalu-studio-mobile-android.yml:jv-studio-apk:studio"; do
   IFS=: read -r WF ART DIR <<< "$pair"
   EVENT=push
   if [ -n "$API_URL" ]; then
@@ -52,5 +52,5 @@ for pair in "jaathiya-vaartalu-reporter-mobile-android.yml:jv-reporter-apk:repor
   gh run download "$RUN_ID" -n "$ART" -D "apk/$DIR"
 done
 echo ""
-echo "Done. APKs: $(pwd)/apk/reporter/app-release.apk, $(pwd)/apk/desk/app-release.apk and $(pwd)/apk/studio/app-release.apk"
+echo "Done. APKs: $(pwd)/apk/reporter/app-release.apk, $(pwd)/apk/admin/app-release.apk and $(pwd)/apk/studio/app-release.apk"
 echo "Repo:      $(gh repo view --json url -q .url)"

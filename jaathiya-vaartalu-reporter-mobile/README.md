@@ -6,7 +6,7 @@ The mobile app for **reporters**: sign up, send news cards with photos, and foll
 |---|---|
 | App name | JV Reporter |
 | Android package / iOS bundle id | `com.jaathiyavaartalu.reporter` |
-| Who can sign in | Reporters only. An editor or admin who signs in is asked to use JV Desk or JV Studio instead. |
+| Who can sign in | Reporters only. An editor or admin who signs in is asked to use JV Admin or JV Studio instead. |
 | API | `https://jaathiya-vaartalu-studio-app.onrender.com` in release builds |
 
 **Tech:** React Native with Expo (SDK 58), React Navigation, axios, Expo SecureStore (sign-in tokens), Expo Image Picker.

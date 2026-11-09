@@ -2,18 +2,10 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { api, errMsg } from '../api';
 import { Chips, Empty, Search, Spinner } from '../ui';
 import { NewsCard } from './MyNews';
+import { groupByDay, shortDate } from '../dates';
 
 const DAYS = 30;
 const GROUP_BY = [['reviewedAt', 'Approved date'], ['createdAt', 'Uploaded date']];
-
-const dayKey = d => { const x = new Date(d); return `${x.getFullYear()}-${x.getMonth()}-${x.getDate()}`; };
-const shortDate = d => new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
-function dayLabel(d) {
-  const today = new Date(); const yesterday = new Date(Date.now() - 864e5);
-  if (dayKey(d) === dayKey(today)) return 'Today';
-  if (dayKey(d) === dayKey(yesterday)) return 'Yesterday';
-  return new Date(d).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
-}
 
 // The reporter's own approved and published news from the last 30 days, grouped by day.
 export default function Approved() {
@@ -34,16 +26,7 @@ export default function Approved() {
     return () => { live = false; clearTimeout(t); };
   }, [by, q]);
 
-  const groups = useMemo(() => {
-    const out = [];
-    (items || []).forEach(n => {
-      const d = n[by] || n.createdAt;
-      const last = out[out.length - 1];
-      if (last && last.key === dayKey(d)) last.items.push(n);
-      else out.push({ key: dayKey(d), label: dayLabel(d), items: [n] });
-    });
-    return out;
-  }, [items, by]);
+  const groups = useMemo(() => groupByDay(items, by), [items, by]);
 
   return (
     <main>

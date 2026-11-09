@@ -1,10 +1,10 @@
-# iOS builds of the Desk (Editor/Admin) app (jaathiya-vaartalu-admin-mobile/) on GitHub Actions. The Android build is in jaathiya-vaartalu-admin-mobile-android.yml.
+# iOS builds of the Admin app (jaathiya-vaartalu-admin-mobile/) on GitHub Actions. The Android build is in jaathiya-vaartalu-admin-mobile-android.yml.
 # Runs on every push to main or feature/* that changes jaathiya-vaartalu-admin-mobile/ (Simulator build only), or manually:
-# GitHub repo -> Actions -> "Desk (Editor/Admin) mobile – iOS" -> Run workflow (optionally enter an API URL and pick the device build).
+# GitHub repo -> Actions -> "Admin mobile – iOS" -> Run workflow (optionally enter an API URL and pick the device build).
 # API URL used: the manual input, else the production server https://jaathiya-vaartalu-studio-app.onrender.com (jaathiya-vaartalu-admin-mobile/src/config.js).
 # Download from the finished run -> Artifacts:
-#   jv-desk-ios-simulator  the app for the iPhone/iPad Simulator in Xcode (unzip, drag onto the simulator). No Apple account needed.
-#   jv-desk-ios-device     app.ipa for real iPhones, built and signed on Expo's EAS servers. Manual runs only (each
+#   jv-admin-ios-simulator  the app for the iPhone/iPad Simulator in Xcode (unzip, drag onto the simulator). No Apple account needed.
+#   jv-admin-ios-device     app.ipa for real iPhones, built and signed on Expo's EAS servers. Manual runs only (each
 #                        build uses EAS build credits): pick "iOS device build" when you click Run workflow.
 #                          preview    = ad hoc build for the iPhones registered with `npx eas-cli device:create`
 #                          testflight = App Store build, sent to TestFlight for testers (and later the App Store)
@@ -13,7 +13,7 @@
 #                        jaathiya-vaartalu-admin-mobile/jv-mobile (after ./setup.sh): `npx eas-cli init` and `npx eas-cli credentials -p ios`
 #                        (signs in to Apple and stores the signing certificate and profiles on EAS). For testflight,
 #                        also add an App Store Connect API key there (`npx eas-cli credentials -p ios` -> App Store Connect).
-name: Desk (Editor/Admin) mobile – iOS
+name: Admin mobile – iOS
 on:
   push:
     branches: ["feature/**", "main"]
@@ -57,11 +57,11 @@ jobs:
           xcodebuild -workspace "$WS" -scheme "$(basename "$WS" .xcworkspace)" -configuration Release \
             -sdk iphonesimulator -destination "generic/platform=iOS Simulator" -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO -quiet
-          cd build/Build/Products/Release-iphonesimulator && zip -qry "$GITHUB_WORKSPACE/jv-desk-ios-simulator.zip" *.app
+          cd build/Build/Products/Release-iphonesimulator && zip -qry "$GITHUB_WORKSPACE/jv-admin-ios-simulator.zip" *.app
       - uses: actions/upload-artifact@v4
         with:
-          name: jv-desk-ios-simulator
-          path: jv-desk-ios-simulator.zip
+          name: jv-admin-ios-simulator
+          path: jv-admin-ios-simulator.zip
 
   ios-device:
     # Installable iPhone build, signed on Expo's EAS servers with the credentials stored there (see the top of this file).
@@ -103,8 +103,8 @@ jobs:
           SUBMIT=""; [ "$PROFILE" = production ] && SUBMIT="--auto-submit"
           npx --yes eas-cli@latest build -p ios --profile "$PROFILE" --non-interactive --json $SUBMIT > build.json
           URL=$(node -p "require('./build.json')[0].artifacts.buildUrl")
-          curl -sSfL "$URL" -o "$GITHUB_WORKSPACE/jv-desk-ios.ipa"
+          curl -sSfL "$URL" -o "$GITHUB_WORKSPACE/jv-admin-ios.ipa"
       - uses: actions/upload-artifact@v4
         with:
-          name: jv-desk-ios-device
-          path: jv-desk-ios.ipa
+          name: jv-admin-ios-device
+          path: jv-admin-ios.ipa

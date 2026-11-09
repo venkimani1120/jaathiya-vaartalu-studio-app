@@ -1,10 +1,10 @@
-# Free Android build of the Desk (Editor/Admin) app (jaathiya-vaartalu-admin-mobile/) on GitHub Actions.
+# Free Android build of the Admin app (jaathiya-vaartalu-admin-mobile/) on GitHub Actions.
 # Runs on every push to main or feature/* that changes jaathiya-vaartalu-admin-mobile/, or manually:
-# GitHub repo -> Actions -> "Desk (Editor/Admin) mobile – Android" -> Run workflow (optionally enter an API URL).
+# GitHub repo -> Actions -> "Admin mobile – Android" -> Run workflow (optionally enter an API URL).
 # API URL used: the manual input, else the production server https://jaathiya-vaartalu-studio-app.onrender.com (jaathiya-vaartalu-admin-mobile/src/config.js).
-# Download it: open the finished run -> Artifacts -> jv-desk-apk (a zip containing app-release.apk, signed with the
+# Download it: open the finished run -> Artifacts -> jv-admin-apk (a zip containing app-release.apk, signed with the
 # debug key, for testing only). The iOS builds are in jaathiya-vaartalu-admin-mobile-ios.yml.
-name: Desk (Editor/Admin) mobile – Android
+name: Admin mobile – Android
 on:
   push:
     branches: ["feature/**", "main"]
@@ -46,5 +46,5 @@ jobs:
         run: ./gradlew assembleRelease --no-daemon
       - uses: actions/upload-artifact@v4
         with:
-          name: jv-desk-apk
+          name: jv-admin-apk
           path: jaathiya-vaartalu-admin-mobile/jv-mobile/android/app/build/outputs/apk/release/app-release.apk

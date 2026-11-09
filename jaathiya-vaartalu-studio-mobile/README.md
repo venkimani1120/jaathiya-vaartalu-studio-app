@@ -6,7 +6,7 @@ The e-paper app for **editors and admins**: lay out and publish the e-paper, upl
 |---|---|
 | App name | JV Studio |
 | Android package / iOS bundle id | `com.jaathiyavaartalu.studio` |
-| Who can sign in | Editors and admins, with the same accounts as JV Desk and the web app. Reporters are asked to use JV Reporter. |
+| Who can sign in | Editors and admins, with the same accounts as JV Admin and the web app. Reporters are asked to use JV Reporter. |
 | API | `https://jaathiya-vaartalu-studio-app.onrender.com` in release builds |
 
 **Tech:** React Native with Expo (SDK 58), React Navigation, axios, Expo SecureStore (sign-in tokens), Expo Image Picker, Expo Document Picker, react-native-webview.
@@ -19,7 +19,7 @@ The e-paper app for **editors and admins**: lay out and publish the e-paper, upl
 - **Imported paper:** its pages, and the news the server read from each page. Tick news to **add to the feed** (it then waits for review) or **delete** it. You can read a page or the whole paper again, or delete the import.
 - **Upload news cut:** photograph or pick a small news cutting and crop it, type its headline and text, and choose section and place. It is saved as an approved news card, so it is ready to place in the studio right away.
 
-**One device at a time:** an account can be signed in on one device. Signing in to this app signs the same account out of the other desk app and the web app.
+**One device at a time:** an account can be signed in on one device. Signing in to this app signs the same account out of JV Admin and the web app.
 
 ## How this folder works
 

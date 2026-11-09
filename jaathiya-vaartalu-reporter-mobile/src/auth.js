@@ -5,9 +5,9 @@ import * as SecureStore from 'expo-secure-store';
 const Ctx = createContext(null);
 export const useAuth = () => useContext(Ctx);
 
-// This app is for reporters. Editors and admins use the Desk app.
+// This app is for reporters. Editors and admins use the JV Admin app.
 const ALLOWED_ROLES = ['reporter'];
-const WRONG_APP = 'This app is for reporters. Editors and admins, please use the Jaathiya Vaartalu Desk app.';
+const WRONG_APP = 'This app is for reporters. Editors and admins, please use the JV Admin app.';
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);

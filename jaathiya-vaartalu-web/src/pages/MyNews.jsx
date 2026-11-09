@@ -3,6 +3,7 @@ import { useAuth } from '../auth';
 import { api, errMsg } from '../api';
 import { Badge, Button, Chips, Empty, Icon, Search, Spinner } from '../ui';
 import { go } from '../router';
+import { DateFilter, DayGroups, dateRange, groupByDay } from '../dates';
 
 const FILTERS = [['', 'All'], ['draft', 'Drafts'], ['submitted', 'Waiting'], ['rejected', 'Sent back'], ['approved,published', 'Approved']];
 const greeting = () => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'; };
@@ -24,22 +25,23 @@ export function NewsCard({ n, href = `#/news/${n._id}`, children }) {
 export default function MyNews() {
   const { user } = useAuth();
   const [status, setStatus] = useState('');
+  const [date, setDate] = useState('');
   const [q, setQ] = useState('');
   const [items, setItems] = useState(null);
   const [quota, setQuota] = useState(null);
   const [error, setError] = useState('');
 
-  // The server only returns the reporter's own cards.
+  // The server only returns the reporter's own cards, newest first; they show grouped by upload day.
   useEffect(() => {
     let live = true;
     const t = setTimeout(async () => {
       try {
-        const [news, qt] = await Promise.all([api('/news', { params: { limit: 100, status, q } }), api('/news/quota/today')]);
+        const [news, qt] = await Promise.all([api('/news', { params: { limit: 100, status, ...dateRange(date), q } }), api('/news/quota/today')]);
         if (live) { setItems(news.items); setQuota(qt); setError(''); }
       } catch (e) { if (live) setError(errMsg(e)); }
     }, q ? 300 : 0);
     return () => { live = false; clearTimeout(t); };
-  }, [status, q]);
+  }, [status, date, q]);
 
   const full = quota && quota.remaining === 0;
   return (
@@ -64,17 +66,18 @@ export default function MyNews() {
         <div className="spacer" />
         <Search value={q} onChange={setQ} />
       </div>
+      <div className="toolbar"><DateFilter value={date} onChange={setDate} /></div>
       {error ? <p className="error" role="alert">{error}</p> : null}
       {!items ? (error ? null : <Spinner />) : !items.length ? (
-        <Empty title={status || q ? 'No news here' : 'No news yet'}>{status || q ? 'Try another filter or search.' : 'Click “New news card” to upload your first story.'}</Empty>
+        <Empty title={status || date || q ? 'No news here' : 'No news yet'}>{status || date || q ? 'Try another filter, date or search.' : 'Click “New news card” to upload your first story.'}</Empty>
       ) : (
-        <div className="cards">
-          {items.map(n => (
+        <DayGroups groups={groupByDay(items)}>
+          {n => (
             <NewsCard key={n._id} n={n}>
-              <div className="meta">{n.constituency || n.district || ''} · {new Date(n.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+              <div className="meta">{n.constituency || n.district || ''}</div>
             </NewsCard>
-          ))}
-        </div>
+          )}
+        </DayGroups>
       )}
     </main>
   );

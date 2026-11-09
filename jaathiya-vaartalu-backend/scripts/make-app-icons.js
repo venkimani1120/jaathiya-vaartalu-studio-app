@@ -1,6 +1,6 @@
 // Makes the launcher icons of the three mobile apps from the brand mark, one look per app so they can be
 // told apart on a phone: the torch-and-map mark with a coloured badge for the app's job.
-//   Reporter: saffron badge, microphone.   Desk: navy badge, shield with a tick.   Studio: red badge, layout grid (like the "Layout studio" button).
+//   Reporter: saffron badge, microphone.   Admin: navy badge, shield with a tick.   Studio: red badge, layout grid (like the "Layout studio" button).
 // Writes into each app's assets/:
 //   icon.png           1024², opaque (iOS refuses icons with transparency; also Android's fallback)
 //   adaptive-icon.png  1024², transparent, artwork inside Android's 66% safe circle (the launcher crops the rest)

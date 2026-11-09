@@ -3,7 +3,7 @@ import { ActivityIndicator, Image, Pressable, Text, TextInput, View, StyleSheet,
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
-// Shared look for every screen (same file in the Reporter and Desk apps): navy actions, saffron accents,
+// Shared look for every screen (same file in the Reporter, Admin and Studio apps): navy actions, saffron accents,
 // white rounded cards on a light grey page, Ionicons beside labels. The sign-in page set this style.
 export const C = { red: '#E31E24', blue: '#1F3C99', blueSoft: '#E8EDF8', saffron: '#F28C28', ink: '#1A2130', muted: '#586274',
   faint: '#8A93A3', line: '#D5DAE2', bg: '#F2F4F7', card: '#FFFFFF', pink: '#D8127A', ok: '#17734A', warn: '#B4231F' };

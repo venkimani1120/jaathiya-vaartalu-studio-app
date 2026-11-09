@@ -52,6 +52,13 @@ function listFilter(req, { withSource = true } = {}) {
   const by = req.query.by === 'reviewedAt' ? 'reviewedAt' : 'createdAt';
   const days = Math.min(Number(req.query.days) || 0, 365);
   if (days > 0) filter[by] = { $gte: new Date(Date.now() - days * 864e5) };
+  // ?from=2026-11-01&to=2026-11-09 (either may be left out): whole calendar days in TZ_OFFSET_MINUTES (IST),
+  // on the same date as ?by.
+  const off = Number(process.env.TZ_OFFSET_MINUTES || 330) * 60000;
+  const dayStart = d => (/^\d{4}-\d{2}-\d{2}$/.test(String(d || '')) ? Date.parse(d + 'T00:00:00Z') - off : NaN);
+  const from = dayStart(req.query.from), to = dayStart(req.query.to);
+  if (!Number.isNaN(from)) filter[by] = { ...filter[by], $gte: new Date(Math.max(from, filter[by]?.$gte?.getTime() || 0)) };
+  if (!Number.isNaN(to)) filter[by] = { ...filter[by], $lt: new Date(to + 864e5) };
   return { filter, by };
 }
 
@@ -90,7 +97,7 @@ router.post('/', authorize('reporter', 'editor', 'admin'), wrap(async (req, res)
     used = await takeQuota(req.user.id);
     if (used === null) throw new HttpError(429, `You have uploaded ${DAILY_NEWS_LIMIT} news cards today. The limit resets at midnight.`);
   }
-  // Desk staff skip review: their submitted news goes straight to the approved pool.
+  // Editors and admins skip review: their submitted news goes straight to the approved pool.
   const status = req.body.submit ? (isDesk(req.user) ? 'approved' : 'submitted') : 'draft';
   try {
     const news = await News.create({ ...data, status, source: req.user.role, author: req.user.id });

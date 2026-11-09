@@ -8,7 +8,7 @@ import PlacePicker from '../PlacePicker';
 import { Banner, Button, C, Card, Chips, Field, Icon, Loading, SectionTitle } from '../ui';
 
 // A small news cut: a photo of the cutting (cropped on the phone) plus its headline and text, saved as a
-// news card the same way the web app's "New news card" does. Desk staff's saved cards go straight to the
+// news card the same way the web app's "New news card" does. Editors' and admins' saved cards go straight to the
 // approved pool, so the cut is ready to place in the layout studio.
 export default function NewsCutScreen({ navigation, route }) {
   const id = route.params?.id;
