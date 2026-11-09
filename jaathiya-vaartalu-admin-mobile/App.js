@@ -1,32 +1,32 @@
 import React from 'react';
-import { ActivityIndicator, Image, Text, View } from 'react-native';
+import { Image, Text, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import { AuthProvider, useAuth } from './src/auth';
-import { C } from './src/ui';
+import { Loading, headerStyle } from './src/ui';
 import LoginScreen from './src/screens/LoginScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import NewsEditorScreen from './src/screens/NewsEditorScreen';
 import ReviewScreen from './src/screens/ReviewScreen';
 import EpaperScreen from './src/screens/EpaperScreen';
+import StudioScreen from './src/screens/StudioScreen';
 import UsersScreen from './src/screens/UsersScreen';
 
 const Stack = createNativeStackNavigator();
 // Logo mark beside the title on the home screen.
 const BrandTitle = ({ title }) => (
   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-    <Image source={require('./assets/mark.png')} style={{ width: 30, height: 30, marginRight: 8, backgroundColor: '#fff', borderRadius: 6 }} resizeMode="contain" />
+    <Image source={require('./assets/mark.png')} style={{ width: 32, height: 32, marginRight: 10, backgroundColor: '#fff', borderRadius: 8 }} resizeMode="contain" />
     <Text style={{ color: '#fff', fontWeight: '700', fontSize: 18 }}>{title}</Text>
   </View>
 );
-const header = { headerStyle: { backgroundColor: C.red }, headerTintColor: '#fff', headerTitleStyle: { fontWeight: '700' } };
 
 function Routes() {
   const { user, ready } = useAuth();
-  if (!ready) return <View style={{ flex: 1, justifyContent: 'center' }}><ActivityIndicator size="large" color={C.red} /></View>;
+  if (!ready) return <Loading />;
   return (
-    <Stack.Navigator screenOptions={header}>
+    <Stack.Navigator screenOptions={headerStyle}>
       {!user ? (
         <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
       ) : (
@@ -35,6 +35,7 @@ function Routes() {
           <Stack.Screen name="NewsEditor" component={NewsEditorScreen} options={({ route }) => ({ title: route.params?.id ? 'Edit news' : 'New news card' })} />
           <Stack.Screen name="Review" component={ReviewScreen} options={{ title: 'Review news' }} />
           <Stack.Screen name="Epaper" component={EpaperScreen} options={{ title: 'E-paper' }} />
+          <Stack.Screen name="Studio" component={StudioScreen} options={{ title: 'Layout studio' }} />
           <Stack.Screen name="Users" component={UsersScreen} options={{ title: 'Team accounts' }} />
         </>
       )}

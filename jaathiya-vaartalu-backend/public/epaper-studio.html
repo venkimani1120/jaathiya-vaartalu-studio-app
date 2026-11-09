@@ -491,7 +491,11 @@ const DEMO_NEWS = [
 
 // header logo and tab icon (server/public/logo.png, mark.png)
 // Inside the web app (an iframe on the same site) the app's header already shows the logo and account menu.
-const EMBEDDED = (() => { try { return window.self !== window.top; } catch (_) { return true; } })();
+// Inside the Desk mobile app (a WebView) the same holds, and the app also owns the sign-in: the studio
+// asks it for access tokens and tells it when the session is over (see the API section).
+const NATIVE = !!window.ReactNativeWebView;
+const toNative = msg => { try { window.ReactNativeWebView.postMessage(JSON.stringify(msg)); } catch (_) {} };
+const EMBEDDED = NATIVE || (() => { try { return window.self !== window.top; } catch (_) { return true; } })();
 if (EMBEDDED) document.documentElement.classList.add('embedded');
 const MARK = BRAND.logo.replace('logo.png', 'mark.png');
 document.getElementById('brandLogo').src = MARK; document.getElementById('favicon').href = MARK;
@@ -520,12 +524,21 @@ function placements() {
 // The access token lasts 15 minutes; on a 401 the studio swaps its refresh token for a new pair once
 // and retries, so long editing sessions keep saving. The session ends after 15 minutes without any
 // request, or when the account signs in on another device. (Inside the mobile app the app owns
-// the session and passes window.__JV_TOKEN instead.)
+// the session: it hands over window.__JV_TOKEN, and a fresh one whenever the studio asks.)
 const setSession = d => { store.set('jv_token', d.accessToken); store.set('jv_refresh', d.refreshToken); if (d.user) store.set('jv_user', d.user); };
 const clearSession = () => ['jv_token', 'jv_refresh', 'jv_user'].forEach(k => store.del(k));
+let nativeWaits = [];
+function askNative() {   // resolves true once the app has sent a working token, false if it has none
+  return new Promise(res => { nativeWaits.push(res); toNative({ type: 'jv:token-request' }); setTimeout(() => res(false), 20000); });
+}
+function nativeToken(token, user) {
+  window.__JV_TOKEN = token || null; if (user) store.set('jv_user', user);
+  nativeWaits.forEach(res => res(!!token)); nativeWaits = [];
+}
 const API = {
   token: () => window.__JV_TOKEN || store.get('jv_token', null),
   refresh() {
+    if (NATIVE) return API._ref = API._ref || askNative().finally(() => { API._ref = null; });
     const rt = !window.__JV_TOKEN && store.get('jv_refresh', null); if (!rt) return Promise.resolve(false);
     return API._ref = API._ref || fetch(CFG.apiBase + '/auth/refresh', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ refreshToken: rt }) })
       .then(r => r.ok ? r.json().then(d => { setSession(d); return true; }) : false).catch(() => false).finally(() => { API._ref = null; });
@@ -1446,11 +1459,12 @@ function openShare() {
     ${MODE === 'demo' ? '<p class="err">Demo mode: this link starts working once the server is deployed.</p>' : ''}
     <div class="acts">
       <a class="btn" href="https://wa.me/?text=${encodeURIComponent(text)}" target="_blank" rel="noopener">WhatsApp</a>
-      ${navigator.share ? '<button class="btn" id="shNative">More apps</button>' : ''}
+      ${navigator.share || NATIVE ? '<button class="btn" id="shNative">More apps</button>' : ''}
       <button class="btn" id="shPdf">Save as PDF</button>
       <button class="btn primary" data-close>Done</button></div>`, sh => {
     sh.querySelector('#shCopy').onclick = async () => { try { await navigator.clipboard.writeText(url); toast('Link copied'); } catch (_) { sh.querySelector('#shUrl').select(); toast('Select the link and copy it'); } };
-    const nat = sh.querySelector('#shNative'); if (nat) nat.onclick = () => navigator.share({ title: BRAND.masthead, text, url }).catch(() => {});
+    const nat = sh.querySelector('#shNative');
+    if (nat) nat.onclick = () => NATIVE ? toNative({ type: 'jv:share', text, url }) : navigator.share({ title: BRAND.masthead, text, url }).catch(() => {});
     sh.querySelector('#shPdf').onclick = () => { closeModal(); printEdition(); };
   });
 }
@@ -1458,6 +1472,13 @@ function openShare() {
 // text wrap the same way, fit the stories, then print. Restore the editor only after printing
 // (Safari's print() returns before the page is captured).
 async function printEdition() {
+  // A WebView can't print: open the published edition in the phone's browser, which can save it as a PDF.
+  if (NATIVE) {
+    const e = ed();
+    if (e.shareSlug && e.status === 'published') { toNative({ type: 'jv:open', url: shareUrl(e) }); toast('Opening the edition in your browser. Use its Share or Print menu to save the PDF.'); }
+    else toast('Publish the edition first, then use Save as PDF to open it in your browser.');
+    return;
+  }
   const was = S.preview; S.preview = true; renderAll();
   try { await document.fonts.ready; } catch (_) {}
   await Promise.all([...document.querySelectorAll('#canvas img')].map(im => im.complete ? 0 : new Promise(r => { im.onload = im.onerror = r; })));
@@ -1467,9 +1488,10 @@ async function printEdition() {
   try { window.print(); } catch (_) { restore(); toast('Printing is blocked here. Open the published link in a browser to save the PDF.'); }
 }
 // Every studio page needs a signed-in editor or admin; until then only this form shows.
-// Inside the web app, the app itself goes back to its sign-in page.
+// Inside the web app or the Desk mobile app, the app itself goes back to its sign-in page.
 function showLogin() {
   $('#app').classList.add('locked');
+  if (NATIVE) return toNative({ type: 'jv:signed-out' });   // the app goes back to its own sign-in
   if (EMBEDDED) try { window.parent.postMessage({ type: 'jv:signed-out' }, location.origin); } catch (_) {}
   if (!$('#modal').hidden && $('#lgEmail')) return;
   openModal(`<h2>Sign in</h2><p style="color:var(--muted);margin:0">Editors and admins only.</p>
@@ -1631,7 +1653,11 @@ function refreshPool() {
   API.req('/news?status=approved&limit=300').then(p => { mergeNews(p.items); renderAll(); }).catch(() => {});
 }
 window.addEventListener('message', e => {
-  if (e.origin === location.origin && e.data && e.data.type === 'jv:refresh-pool') refreshPool();
+  if (e.origin !== location.origin || !e.data) return;
+  if (e.data.type === 'jv:refresh-pool') refreshPool();
+  // From the mobile app: a fresh token, or "save now" before it closes the studio
+  if (NATIVE && e.data.type === 'jv:token') nativeToken(e.data.token, e.data.user);
+  if (NATIVE && e.data.type === 'jv:save') saveAll().then(ok => toNative({ type: 'jv:saved', ok, error: saveErr }));
 });
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshPool(); });
 new ResizeObserver(fit).observe($('#canvas'));
@@ -1652,6 +1678,7 @@ async function boot() {
       S.cur = S.editions[0].id; document.title = `${BRAND.masthead} – ${teDate(ed().editionDate)}`;
       $('#modeTag').textContent = ''; renderAll(); return;
     }
+    if (MODE === 'api' && NATIVE && !API.token()) await API.refresh();
     if (MODE === 'api' && !API.token()) { showLogin(); return; }
     await loadAll(); filterForEdition(ed()); renderAll();
     $('#logoutBtn').hidden = MODE !== 'api' || !!window.__JV_TOKEN; showUser(); showSave();
