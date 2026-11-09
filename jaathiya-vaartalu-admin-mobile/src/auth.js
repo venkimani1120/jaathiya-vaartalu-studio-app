@@ -37,7 +37,6 @@ export function AuthProvider({ children }) {
   // UI hints only; the server enforces every rule.
   const can = {
     review: !!user,
-    epaper: !!user,
     users: user?.role === 'admin',
   };
   return <Ctx.Provider value={{ user, ready, signIn, signOut, can }}>{children}</Ctx.Provider>;

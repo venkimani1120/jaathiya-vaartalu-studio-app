@@ -10,7 +10,7 @@ import { Avatar, Badge, Banner, C, Card, Chips, EmptyState, Fab, Icon, IconButto
 const TABS = [['review', 'Review', 'time-outline'], ['approved', 'Ready to place', 'checkmark-done-outline'], ['mine', 'My news', 'create-outline']];
 const EMPTY = {
   review: ['checkmark-circle-outline', 'All caught up', 'Nothing is waiting for review.'],
-  approved: ['albums-outline', 'No approved news yet', 'Approved stories show here, ready for the layout studio.'],
+  approved: ['albums-outline', 'No approved news yet', 'Approved stories show here, ready for the layout studio in the JV Studio app.'],
   mine: ['create-outline', 'No news yet', 'Tap “New news card” to upload your first story.'],
 };
 
@@ -74,11 +74,9 @@ export default function HomeScreen({ navigation }) {
             <Badge text={user.role === 'admin' ? 'Admin' : 'Editor'} color={user.role === 'admin' ? C.ok : C.blue} />
           </View>
         </View>
-        <View style={s.tiles}>
-          {can.epaper ? <Tile icon="newspaper-outline" title="E-paper" onPress={() => navigation.navigate('Epaper')} /> : null}
-          {can.epaper ? <Tile icon="grid-outline" title="Layout studio" onPress={() => navigation.navigate('Studio')} /> : null}
-          {can.users ? <Tile icon="people-outline" title="Team" onPress={() => navigation.navigate('Users')} /> : null}
-        </View>
+        {can.users ? <View style={s.tiles}>
+          <Tile icon="people-outline" title="Team" onPress={() => navigation.navigate('Users')} />
+        </View> : null}
       </Card>
 
       <Chips options={TABS} value={tab} onChange={setTab} />

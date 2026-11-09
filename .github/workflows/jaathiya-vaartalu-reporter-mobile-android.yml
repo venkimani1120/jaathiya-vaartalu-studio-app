@@ -1,25 +1,26 @@
-# Free Android APK build of the Reporter app (jaathiya-vaartalu-reporter-mobile/) on GitHub Actions.
+# Free Android build of the Reporter app (jaathiya-vaartalu-reporter-mobile/) on GitHub Actions.
 # Runs on every push to main or feature/* that changes jaathiya-vaartalu-reporter-mobile/, or manually:
-# GitHub repo -> Actions -> "Reporter mobile – Android APK" -> Run workflow (optionally enter an API URL).
+# GitHub repo -> Actions -> "Reporter mobile – Android" -> Run workflow (optionally enter an API URL).
 # API URL used: the manual input, else the production server https://jaathiya-vaartalu-studio-app.onrender.com (jaathiya-vaartalu-reporter-mobile/src/config.js).
-# Download it: open the finished run -> Artifacts -> jv-reporter-apk (a zip containing app-release.apk).
-name: Reporter mobile – Android APK
+# Download it: open the finished run -> Artifacts -> jv-reporter-apk (a zip containing app-release.apk, signed with the
+# debug key, for testing only). The iOS builds are in jaathiya-vaartalu-reporter-mobile-ios.yml.
+name: Reporter mobile – Android
 on:
   push:
     branches: ["feature/**", "main"]
-    paths: ["jaathiya-vaartalu-reporter-mobile/**", ".github/workflows/jaathiya-vaartalu-reporter-mobile-apk.yml"]
+    paths: ["jaathiya-vaartalu-reporter-mobile/**", ".github/workflows/jaathiya-vaartalu-reporter-mobile-android.yml"]
   workflow_dispatch:
     inputs:
       api_url:
         description: "API server URL the app should use (e.g. http://192.168.1.10:4000 for a local server)"
         required: false
         default: "https://jaathiya-vaartalu-studio-app.onrender.com"
+env:
+  EXPO_PUBLIC_API_URL: ${{ inputs.api_url || 'https://jaathiya-vaartalu-studio-app.onrender.com' }}
 jobs:
-  apk:
+  android:
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    env:
-      EXPO_PUBLIC_API_URL: ${{ inputs.api_url || 'https://jaathiya-vaartalu-studio-app.onrender.com' }}
     defaults:
       run:
         working-directory: jaathiya-vaartalu-reporter-mobile

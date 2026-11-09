@@ -39,7 +39,8 @@ export default function NewsEditorScreen({ navigation, route }) {
     if (room <= 0) return Alert.alert('Photo limit reached', `A news card can have up to ${MAX_IMAGES} photos.`);
     const perm = camera ? await ImagePicker.requestCameraPermissionsAsync() : await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) return Alert.alert('Permission needed', 'Allow photo access in your phone settings to add pictures.');
-    const opts = { mediaTypes: ['images'], quality: 0.6, allowsMultipleSelection: !camera, selectionLimit: room };
+    // Compatible: iPhones hand over JPEG instead of HEIC, which browsers and the web app can't show.
+    const opts = { mediaTypes: ['images'], quality: 0.6, allowsMultipleSelection: !camera, selectionLimit: room, preferredAssetRepresentationMode: ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible };
     const r = camera ? await ImagePicker.launchCameraAsync(opts) : await ImagePicker.launchImageLibraryAsync(opts);
     if (!r.canceled) setImages(s => [...s, ...r.assets.slice(0, room)]);
   };
@@ -67,7 +68,7 @@ export default function NewsEditorScreen({ navigation, route }) {
 
   if (loading) return <Loading />;
   return (
-    <ScrollView style={{ backgroundColor: C.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
+    <ScrollView style={{ backgroundColor: C.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 40 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
       {locked ? <Banner kind="warn" icon="lock-closed">This news is {STATUS[status]?.label.toLowerCase() || status}. Only an editor can change it now.</Banner> : null}
 
       <Card>

@@ -1,0 +1,110 @@
+# iOS builds of the Studio (e-paper layout and uploads) app (jaathiya-vaartalu-studio-mobile/) on GitHub Actions. The Android build is in jaathiya-vaartalu-studio-mobile-android.yml.
+# Runs on every push to main or feature/* that changes jaathiya-vaartalu-studio-mobile/ (Simulator build only), or manually:
+# GitHub repo -> Actions -> "Studio (E-paper) mobile – iOS" -> Run workflow (optionally enter an API URL and pick the device build).
+# API URL used: the manual input, else the production server https://jaathiya-vaartalu-studio-app.onrender.com (jaathiya-vaartalu-studio-mobile/src/config.js).
+# Download from the finished run -> Artifacts:
+#   jv-studio-ios-simulator  the app for the iPhone/iPad Simulator in Xcode (unzip, drag onto the simulator). No Apple account needed.
+#   jv-studio-ios-device     app.ipa for real iPhones, built and signed on Expo's EAS servers. Manual runs only (each
+#                        build uses EAS build credits): pick "iOS device build" when you click Run workflow.
+#                          preview    = ad hoc build for the iPhones registered with `npx eas-cli device:create`
+#                          testflight = App Store build, sent to TestFlight for testers (and later the App Store)
+#                        One-time setup: an Apple Developer account; an Expo account with a repository secret
+#                        EXPO_TOKEN (expo.dev -> Account settings -> Access tokens); then once, on any computer, from
+#                        jaathiya-vaartalu-studio-mobile/jv-mobile (after ./setup.sh): `npx eas-cli init` and `npx eas-cli credentials -p ios`
+#                        (signs in to Apple and stores the signing certificate and profiles on EAS). For testflight,
+#                        also add an App Store Connect API key there (`npx eas-cli credentials -p ios` -> App Store Connect).
+name: Studio (E-paper) mobile – iOS
+on:
+  push:
+    branches: ["feature/**", "main"]
+    paths: ["jaathiya-vaartalu-studio-mobile/**", ".github/workflows/jaathiya-vaartalu-studio-mobile-ios.yml"]
+  workflow_dispatch:
+    inputs:
+      api_url:
+        description: "API server URL the app should use (e.g. http://192.168.1.10:4000 for a local server)"
+        required: false
+        default: "https://jaathiya-vaartalu-studio-app.onrender.com"
+      ios_device_build:
+        description: "iOS device build on EAS (uses EAS build credits)"
+        type: choice
+        options: [none, preview, testflight]
+        default: preview
+env:
+  EXPO_PUBLIC_API_URL: ${{ inputs.api_url || 'https://jaathiya-vaartalu-studio-app.onrender.com' }}
+jobs:
+  ios:
+    runs-on: macos-15
+    timeout-minutes: 75
+    defaults:
+      run:
+        working-directory: jaathiya-vaartalu-studio-mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - name: Create Expo project and install libraries
+        run: ./setup.sh
+      - name: Show which server the app will use
+        run: |
+          echo "API: $EXPO_PUBLIC_API_URL"
+      - name: Generate the native iOS project (installs CocoaPods)
+        working-directory: jaathiya-vaartalu-studio-mobile/jv-mobile
+        run: npx expo prebuild --platform ios
+      - name: Build the app for the iOS Simulator (no Apple signing needed)
+        working-directory: jaathiya-vaartalu-studio-mobile/jv-mobile/ios
+        run: |
+          WS=$(ls -d *.xcworkspace | head -1)
+          xcodebuild -workspace "$WS" -scheme "$(basename "$WS" .xcworkspace)" -configuration Release \
+            -sdk iphonesimulator -destination "generic/platform=iOS Simulator" -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO -quiet
+          cd build/Build/Products/Release-iphonesimulator && zip -qry "$GITHUB_WORKSPACE/jv-studio-ios-simulator.zip" *.app
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jv-studio-ios-simulator
+          path: jv-studio-ios-simulator.zip
+
+  ios-device:
+    # Installable iPhone build, signed on Expo's EAS servers with the credentials stored there (see the top of this file).
+    if: github.event_name == 'workflow_dispatch' && inputs.ios_device_build != 'none'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      EAS_NO_VCS: 1          # jv-mobile is generated (git-ignored); upload it as it is
+      PROFILE: ${{ inputs.ios_device_build == 'testflight' && 'production' || 'preview' }}
+    defaults:
+      run:
+        working-directory: jaathiya-vaartalu-studio-mobile
+    steps:
+      - name: Check the Expo token
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo "::error::Add the repository secret EXPO_TOKEN (expo.dev -> Account settings -> Access tokens). See the top of this workflow."
+            exit 1
+          fi
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - name: Create Expo project and install libraries
+        run: ./setup.sh
+      - name: Link the EAS project and set the API server
+        working-directory: jaathiya-vaartalu-studio-mobile/jv-mobile
+        run: |
+          npx --yes eas-cli@latest init --non-interactive --force
+          # EAS builds on its own servers, which don't see this job's environment: put the API URL in the build profile.
+          node -e "
+            const fs = require('fs'), f = 'eas.json', j = JSON.parse(fs.readFileSync(f, 'utf8'));
+            const p = j.build[process.env.PROFILE]; p.env = { ...p.env, EXPO_PUBLIC_API_URL: process.env.EXPO_PUBLIC_API_URL };
+            fs.writeFileSync(f, JSON.stringify(j, null, 2));"
+          echo "API: $EXPO_PUBLIC_API_URL · profile: $PROFILE"
+      - name: Build for iPhone on EAS (and send to TestFlight when chosen)
+        working-directory: jaathiya-vaartalu-studio-mobile/jv-mobile
+        run: |
+          SUBMIT=""; [ "$PROFILE" = production ] && SUBMIT="--auto-submit"
+          npx --yes eas-cli@latest build -p ios --profile "$PROFILE" --non-interactive --json $SUBMIT > build.json
+          URL=$(node -p "require('./build.json')[0].artifacts.buildUrl")
+          curl -sSfL "$URL" -o "$GITHUB_WORKSPACE/jv-studio-ios.ipa"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jv-studio-ios-device
+          path: jv-studio-ios.ipa

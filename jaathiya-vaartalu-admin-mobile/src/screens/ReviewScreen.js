@@ -20,7 +20,7 @@ export default function ReviewScreen({ navigation, route }) {
   if (!n) return <Loading />;
   const src = SOURCES[n.source || 'reporter'] || SOURCES.reporter;
   return (
-    <ScrollView style={{ backgroundColor: C.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
+    <ScrollView style={{ backgroundColor: C.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 40 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
       <Card accent>
         <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
           <Badge text={STATUS[n.status]?.label} color={STATUS[n.status]?.color} />
