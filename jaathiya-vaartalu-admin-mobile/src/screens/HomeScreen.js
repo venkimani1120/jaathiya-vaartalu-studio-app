@@ -5,7 +5,7 @@ import { useAuth } from '../auth';
 import { api, errMsg } from '../api';
 import { SOURCES, STATUS } from '../constants';
 import PlacePicker from '../PlacePicker';
-import { Avatar, Badge, Banner, C, Card, Chips, EmptyState, Fab, Icon, IconButton, NewsItem } from '../ui';
+import { Avatar, Badge, Banner, C, Card, Chips, EmptyState, Fab, Icon, NewsItem } from '../ui';
 
 const TABS = [['review', 'Review', 'time-outline'], ['approved', 'Ready to place', 'checkmark-done-outline'], ['mine', 'My news', 'create-outline']];
 const EMPTY = {
@@ -23,7 +23,7 @@ const Tile = ({ icon, title, onPress }) => (
 );
 
 export default function HomeScreen({ navigation }) {
-  const { user, can, signOut } = useAuth();
+  const { user, can } = useAuth();
   const [tab, setTab] = useState('review');
   const [source, setSource] = useState('');
   const [counts, setCounts] = useState(null);
@@ -34,8 +34,13 @@ export default function HomeScreen({ navigation }) {
   const [error, setError] = useState('');
 
   useLayoutEffect(() => navigation.setOptions({
-    headerRight: () => <IconButton icon="log-out-outline" color="#fff" label="Sign out" onPress={signOut} />,
-  }), [navigation, signOut]);
+    headerRight: () => (
+      <Pressable onPress={() => navigation.navigate('Profile')} hitSlop={10} accessibilityRole="button" accessibilityLabel={`My profile (${user.name})`}
+        style={({ pressed }) => [s.headAvatar, pressed && { opacity: 0.7 }]}>
+        <Avatar name={user.name} uri={user.avatar} size={32} />
+      </Pressable>
+    ),
+  }), [navigation, user]);
 
   const load = useCallback(async () => {
     setLoading(true); setError('');
@@ -67,13 +72,15 @@ export default function HomeScreen({ navigation }) {
   const header = (
     <View>
       <Card style={{ padding: 14 }}>
-        <View style={s.profile}>
-          <Avatar name={user.name} size={46} />
+        <Pressable onPress={() => navigation.navigate('Profile')} accessibilityRole="button" accessibilityLabel="My profile"
+          style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center' }, pressed && { opacity: 0.7 }]}>
+          <Avatar name={user.name} uri={user.avatar} size={46} />
           <View style={{ flex: 1, marginLeft: 12 }}>
             <Text style={s.hello} numberOfLines={1}>{user.name}</Text>
             <Badge text={user.role === 'admin' ? 'Admin' : 'Editor'} color={user.role === 'admin' ? C.ok : C.blue} />
           </View>
-        </View>
+          <Icon name="chevron-forward" size={18} color={C.faint} />
+        </Pressable>
         {can.users ? <View style={s.tiles}>
           <Tile icon="people-outline" title="Team" onPress={() => navigation.navigate('Users')} />
         </View> : null}
@@ -117,7 +124,7 @@ export default function HomeScreen({ navigation }) {
 }
 
 const s = StyleSheet.create({
-  profile: { flexDirection: 'row', alignItems: 'center' },
+  headAvatar: { borderRadius: 18, borderWidth: 2, borderColor: 'rgba(255,255,255,.7)' },
   hello: { fontSize: 17, fontWeight: '800', color: C.ink, marginBottom: 4 },
   tiles: { flexDirection: 'row', gap: 8, marginTop: 14 },
   tile: { flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: 12, borderWidth: 1, borderColor: C.line },

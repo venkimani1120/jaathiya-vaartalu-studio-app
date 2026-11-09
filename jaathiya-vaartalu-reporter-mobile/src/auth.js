@@ -34,6 +34,12 @@ export function AuthProvider({ children }) {
   };
   const signUp = async form => (await api.post('/auth/signup', form)).data;
   const signOut = async () => { await logout(); setUser(null); };
+  const updateProfile = async body => { const me = (await api.patch('/auth/me', body)).data.user; setUser(me); return me; };
+  // The server signs other devices out and returns fresh tokens for this one.
+  const changePassword = async (currentPassword, newPassword) => {
+    const { data } = await api.post('/auth/password', { currentPassword, newPassword });
+    await saveTokens(data); setUser(data.user);
+  };
 
-  return <Ctx.Provider value={{ user, ready, signIn, signUp, signOut }}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={{ user, ready, signIn, signUp, signOut, updateProfile, changePassword }}>{children}</Ctx.Provider>;
 }

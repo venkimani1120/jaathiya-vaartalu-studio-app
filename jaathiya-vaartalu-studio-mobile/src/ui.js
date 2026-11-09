@@ -131,12 +131,18 @@ export const Meta = ({ icon, text, color = C.muted }) => text ? (
   </View>
 ) : null;
 
-export const Avatar = ({ name = '', size = 40 }) => (
-  <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: C.blueSoft, alignItems: 'center', justifyContent: 'center' }}>
-    <Text style={{ color: C.blue, fontWeight: '800', fontSize: size * 0.38 }}>
-      {name.trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?'}</Text>
-  </View>
-);
+// Profile photo, or the initials when there is none (or it fails to load).
+export function Avatar({ name = '', uri, size = 40 }) {
+  const [broken, setBroken] = useState(null);
+  const box = { width: size, height: size, borderRadius: size / 2 };
+  if (uri && broken !== uri) return <Image source={{ uri }} style={[box, { backgroundColor: C.blueSoft }]} onError={() => setBroken(uri)} />;
+  return (
+    <View style={[box, { backgroundColor: C.blueSoft, alignItems: 'center', justifyContent: 'center' }]}>
+      <Text style={{ color: C.blue, fontWeight: '800', fontSize: size * 0.38 }}>
+        {name.trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?'}</Text>
+    </View>
+  );
+}
 
 // One story in a list: photo (or a placeholder icon), headline, where/who, status badges, editor's note.
 export function NewsItem({ news: n, badges = [], author, onPress }) {

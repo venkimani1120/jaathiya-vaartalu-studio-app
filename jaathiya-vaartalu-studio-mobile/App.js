@@ -7,6 +7,8 @@ import { AuthProvider, useAuth } from './src/auth';
 import { Loading, headerStyle } from './src/ui';
 import LoginScreen from './src/screens/LoginScreen';
 import HomeScreen from './src/screens/HomeScreen';
+import ProfileScreen from './src/screens/ProfileScreen';
+import PasswordScreen from './src/screens/PasswordScreen';
 import StudioScreen from './src/screens/StudioScreen';
 import ImportsScreen from './src/screens/ImportsScreen';
 import ImportPaperScreen from './src/screens/ImportPaperScreen';
@@ -36,6 +38,8 @@ function Routes() {
           <Stack.Screen name="Imports" component={ImportsScreen} options={{ title: 'Upload newspaper' }} />
           <Stack.Screen name="ImportPaper" component={ImportPaperScreen} options={({ route }) => ({ title: route.params?.title || 'Imported paper' })} />
           <Stack.Screen name="NewsCut" component={NewsCutScreen} options={({ route }) => ({ title: route.params?.id ? 'Edit news cut' : 'New news cut' })} />
+          <Stack.Screen name="Profile" component={ProfileScreen} options={{ title: 'My profile' }} />
+          <Stack.Screen name="Password" component={PasswordScreen} options={{ title: 'Change password' }} />
         </>
       )}
     </Stack.Navigator>

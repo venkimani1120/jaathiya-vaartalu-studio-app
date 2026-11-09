@@ -8,6 +8,8 @@ import { Loading, headerStyle } from './src/ui';
 import LoginScreen from './src/screens/LoginScreen';
 import SignupScreen from './src/screens/SignupScreen';
 import HomeScreen from './src/screens/HomeScreen';
+import ProfileScreen from './src/screens/ProfileScreen';
+import PasswordScreen from './src/screens/PasswordScreen';
 import NewsEditorScreen from './src/screens/NewsEditorScreen';
 
 const Stack = createNativeStackNavigator();
@@ -33,6 +35,8 @@ function Routes() {
         <>
           <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'జాతియ వార్తలు', headerTitle: () => <BrandTitle title={'జాతియ వార్తలు'} /> }} />
           <Stack.Screen name="NewsEditor" component={NewsEditorScreen} options={({ route }) => ({ title: route.params?.id ? 'Edit news' : 'New news card' })} />
+          <Stack.Screen name="Profile" component={ProfileScreen} options={{ title: 'My profile' }} />
+          <Stack.Screen name="Password" component={PasswordScreen} options={{ title: 'Change password' }} />
         </>
       )}
     </Stack.Navigator>

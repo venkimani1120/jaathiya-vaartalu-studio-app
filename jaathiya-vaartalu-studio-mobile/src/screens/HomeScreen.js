@@ -4,7 +4,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../auth';
 import { api, errMsg } from '../api';
 import { API_BASE } from '../config';
-import { Avatar, Badge, Banner, Button, C, Card, EmptyState, Icon, IconButton, Meta } from '../ui';
+import { Avatar, Badge, Banner, Button, C, Card, EmptyState, Icon, Meta } from '../ui';
 
 // One big action on the dashboard.
 const Action = ({ icon, title, text, onPress }) => (
@@ -20,14 +20,19 @@ const Action = ({ icon, title, text, onPress }) => (
 
 // The studio app's start: what to do (layout, upload a paper, upload a news cut), then the editions made so far.
 export default function HomeScreen({ navigation }) {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   useLayoutEffect(() => navigation.setOptions({
-    headerRight: () => <IconButton icon="log-out-outline" color="#fff" label="Sign out" onPress={signOut} />,
-  }), [navigation, signOut]);
+    headerRight: () => (
+      <Pressable onPress={() => navigation.navigate('Profile')} hitSlop={10} accessibilityRole="button" accessibilityLabel={`My profile (${user.name})`}
+        style={({ pressed }) => [s.headAvatar, pressed && { opacity: 0.7 }]}>
+        <Avatar name={user.name} uri={user.avatar} size={32} />
+      </Pressable>
+    ),
+  }), [navigation, user]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -44,13 +49,15 @@ export default function HomeScreen({ navigation }) {
   const header = (
     <View>
       <Card style={{ padding: 14 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <Avatar name={user.name} size={46} />
+        <Pressable onPress={() => navigation.navigate('Profile')} accessibilityRole="button" accessibilityLabel="My profile"
+          style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center' }, pressed && { opacity: 0.7 }]}>
+          <Avatar name={user.name} uri={user.avatar} size={46} />
           <View style={{ flex: 1, marginLeft: 12 }}>
             <Text style={s.hello} numberOfLines={1}>{user.name}</Text>
             <Badge text={user.role === 'admin' ? 'Admin' : 'Editor'} color={user.role === 'admin' ? C.ok : C.blue} />
           </View>
-        </View>
+          <Icon name="chevron-forward" size={18} color={C.faint} />
+        </Pressable>
       </Card>
       <View style={s.hero}>
         <View style={s.heroIcon}><Icon name="grid-outline" size={24} color="#fff" /></View>
@@ -95,6 +102,7 @@ export default function HomeScreen({ navigation }) {
 }
 
 const s = StyleSheet.create({
+  headAvatar: { borderRadius: 18, borderWidth: 2, borderColor: 'rgba(255,255,255,.7)' },
   hello: { fontSize: 17, fontWeight: '800', color: C.ink, marginBottom: 4 },
   hero: { backgroundColor: C.blue, borderRadius: 16, padding: 18, marginBottom: 12, borderBottomWidth: 4, borderBottomColor: C.saffron },
   heroIcon: { width: 44, height: 44, borderRadius: 12, backgroundColor: 'rgba(255,255,255,.15)', alignItems: 'center', justifyContent: 'center', marginBottom: 10 },
