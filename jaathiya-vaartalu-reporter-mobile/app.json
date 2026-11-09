@@ -6,11 +6,6 @@
     "orientation": "default",
     "userInterfaceStyle": "light",
     "icon": "./assets/icon.png",
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#FFFFFF"
-    },
     "android": {
       "package": "com.jaathiyavaartalu.reporter",
       "permissions": [
@@ -27,6 +22,15 @@
       "supportsTablet": true
     },
     "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#FFFFFF"
+        }
+      ],
       [
         "expo-image-picker",
         {

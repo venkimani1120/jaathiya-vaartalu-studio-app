@@ -1,12 +1,13 @@
 import React, { useCallback, useLayoutEffect, useState } from 'react';
-import { FlatList, Image, Pressable, RefreshControl, Text, View } from 'react-native';
+import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../auth';
 import { api, errMsg } from '../api';
 import { STATUS } from '../constants';
-import { Badge, Button, Chips, C } from '../ui';
+import { Avatar, Banner, C, Card, Chips, EmptyState, Fab, IconButton, Meta, NewsItem } from '../ui';
 
-const FILTERS = [['', 'All'], ['draft', 'Drafts'], ['submitted', 'Waiting'], ['rejected', 'Sent back'], ['approved,published', 'Approved']];
+const FILTERS = [['', 'All', 'list-outline'], ['draft', 'Drafts', 'document-outline'], ['submitted', 'Waiting', 'time-outline'],
+  ['rejected', 'Sent back', 'arrow-undo-outline'], ['approved,published', 'Approved', 'checkmark-done-outline']];
 
 export default function HomeScreen({ navigation }) {
   const { user, signOut } = useAuth();
@@ -17,7 +18,7 @@ export default function HomeScreen({ navigation }) {
   const [error, setError] = useState('');
 
   useLayoutEffect(() => navigation.setOptions({
-    headerRight: () => <Pressable onPress={signOut} hitSlop={10}><Text style={{ color: '#fff', fontWeight: '700' }}>Sign out</Text></Pressable>,
+    headerRight: () => <IconButton icon="log-out-outline" color="#fff" label="Sign out" onPress={signOut} />,
   }), [navigation, signOut]);
 
   // The server only returns the reporter's own cards.
@@ -33,35 +34,58 @@ export default function HomeScreen({ navigation }) {
   }, [status]);
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
+  const full = quota && quota.remaining === 0;
+  const pct = quota ? Math.min(100, Math.round((quota.used / Math.max(quota.limit, 1)) * 100)) : 0;
+  const header = (
+    <View>
+      <Card style={{ padding: 14 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Avatar name={user.name} size={46} />
+          <View style={{ flex: 1, marginLeft: 12 }}>
+            <Text style={s.hello} numberOfLines={1}>{user.name}</Text>
+            <Meta icon="location-outline" text={user.constituency || user.district || 'Reporter'} />
+          </View>
+        </View>
+        {quota ? (
+          <View style={{ marginTop: 14 }}>
+            <View style={s.quotaRow}>
+              <Text style={s.quotaLabel}>Today's news cards</Text>
+              <Text style={[s.quotaNum, full && { color: C.warn }]}>{quota.used} / {quota.limit}</Text>
+            </View>
+            <View style={s.track}><View style={[s.fill, { width: `${pct}%` }, full && { backgroundColor: C.warn }]} /></View>
+          </View>
+        ) : null}
+      </Card>
+      {full ? <Banner kind="warn">You've used today's limit. You can upload again tomorrow.</Banner> : null}
+      <Chips options={FILTERS} value={status} onChange={setStatus} />
+      {error ? <Banner kind="error">{error}</Banner> : null}
+    </View>
+  );
+
   return (
     <View style={{ flex: 1, backgroundColor: C.bg }}>
-      <View style={{ padding: 12, paddingBottom: 0 }}>
-        <Text style={{ fontSize: 16, fontWeight: '700', color: C.ink }}>{user.name}  <Text style={{ color: C.muted, fontWeight: '400' }}>({user.constituency || user.district || 'reporter'})</Text></Text>
-        {quota ? <Text style={{ color: quota.remaining ? C.muted : C.warn, marginTop: 2 }}>Today: {quota.used} of {quota.limit} news cards used</Text> : null}
-        <View style={{ marginTop: 12 }}><Chips options={FILTERS} value={status} onChange={setStatus} /></View>
-        {error ? <Text style={{ color: C.warn, marginBottom: 8 }}>{error}</Text> : null}
-      </View>
       <FlatList
-        data={items} keyExtractor={n => n._id}
-        refreshControl={<RefreshControl refreshing={loading} onRefresh={load} />}
-        contentContainerStyle={{ padding: 12, paddingBottom: 100 }}
-        ListEmptyComponent={!loading ? <Text style={{ textAlign: 'center', color: C.muted, marginTop: 40 }}>
-          {status ? 'No news here.' : 'No news yet. Tap “New news card” to upload your first story.'}</Text> : null}
+        data={items} keyExtractor={n => n._id} ListHeaderComponent={header}
+        refreshControl={<RefreshControl refreshing={loading} onRefresh={load} colors={[C.blue]} tintColor={C.blue} />}
+        contentContainerStyle={{ padding: 16, paddingBottom: 120 }}
+        ListEmptyComponent={!loading ? (status
+          ? <EmptyState icon="file-tray-outline" title="Nothing here" text="No news with this status." />
+          : <EmptyState icon="create-outline" title="No news yet" text="Tap “New news card” to upload your first story." />) : null}
         renderItem={({ item: n }) => (
-          <Pressable onPress={() => navigation.navigate('NewsEditor', { id: n._id })} style={{ backgroundColor: '#fff', borderRadius: 12, padding: 10, marginBottom: 10, flexDirection: 'row', gap: 10, borderWidth: 1, borderColor: C.line }}>
-            {n.images?.[0] ? <Image source={{ uri: n.images[0] }} style={{ width: 72, height: 56, borderRadius: 6 }} /> : <View style={{ width: 72, height: 56, borderRadius: 6, backgroundColor: C.bg }} />}
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 15, fontWeight: '700', color: C.ink }} numberOfLines={2}>{n.title}</Text>
-              <Text style={{ color: C.muted, fontSize: 12, marginVertical: 3 }}>{n.constituency || n.district || ''}</Text>
-              <Badge text={STATUS[n.status]?.label} color={STATUS[n.status]?.color} />
-              {n.status === 'rejected' && n.reviewNote ? <Text style={{ color: C.warn, fontSize: 12, marginTop: 4 }}>Editor: {n.reviewNote}</Text> : null}
-            </View>
-          </Pressable>
+          <NewsItem news={n} onPress={() => navigation.navigate('NewsEditor', { id: n._id })}
+            badges={[[STATUS[n.status]?.label, STATUS[n.status]?.color]]} />
         )}
       />
-      <View style={{ position: 'absolute', left: 16, right: 16, bottom: 24 }}>
-        <Button title="New news card" onPress={() => navigation.navigate('NewsEditor')} disabled={quota && quota.remaining === 0} />
-      </View>
+      <Fab title="New news card" onPress={() => navigation.navigate('NewsEditor')} disabled={full} />
     </View>
   );
 }
+
+const s = StyleSheet.create({
+  hello: { fontSize: 17, fontWeight: '800', color: C.ink, marginBottom: 3 },
+  quotaRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
+  quotaLabel: { fontSize: 13, fontWeight: '600', color: C.ink },
+  quotaNum: { fontSize: 13, fontWeight: '800', color: C.blue },
+  track: { height: 8, borderRadius: 4, backgroundColor: C.blueSoft, overflow: 'hidden' },
+  fill: { height: 8, borderRadius: 4, backgroundColor: C.saffron },
+});

@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Image, Pressable, ScrollView, Text, View } from 'react-native';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../auth';
 import { api, errMsg, uploadImages } from '../api';
-import { SECTIONS, MAX_IMAGES, stateOf } from '../constants';
+import { SECTIONS, MAX_IMAGES, STATUS, stateOf } from '../constants';
 import PlacePicker from '../PlacePicker';
-import { Button, Chips, Field, C } from '../ui';
+import { Banner, Button, C, Card, Chips, Field, Icon, Loading, SectionTitle } from '../ui';
 
 const EDITABLE_BY_REPORTER = ['draft', 'submitted', 'rejected'];
 
@@ -65,40 +65,64 @@ export default function NewsEditorScreen({ navigation, route }) {
       try { await api.delete(`/news/${id}`); navigation.goBack(); } catch (e) { Alert.alert('Not deleted', errMsg(e)); } } },
   ]);
 
-  if (loading) return <ActivityIndicator style={{ marginTop: 40 }} color={C.red} />;
+  if (loading) return <Loading />;
   return (
-    <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
-      {locked ? <Text style={{ backgroundColor: '#FFF4E5', padding: 10, borderRadius: 8, marginBottom: 12, color: '#8A4B00' }}>
-        This news is {status}. Only an editor can change it now.</Text> : null}
-      <Field label="Headline" value={f.title} onChangeText={set('title')} editable={!locked} />
-      <Field label="Highlights (one per line, up to 5)" value={f.highlights} onChangeText={set('highlights')} multiline editable={!locked} style={{ minHeight: 80 }} />
+    <ScrollView style={{ backgroundColor: C.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
+      {locked ? <Banner kind="warn" icon="lock-closed">This news is {STATUS[status]?.label.toLowerCase() || status}. Only an editor can change it now.</Banner> : null}
 
-      <Text style={{ fontSize: 13, color: C.muted, marginBottom: 6 }}>Photos ({images.length}/{MAX_IMAGES})</Text>
-      <ScrollView horizontal style={{ marginBottom: 8 }}>
-        {images.map((im, i) => (
-          <View key={im.uri + i} style={{ marginRight: 8 }}>
-            <Image source={{ uri: im.uri }} style={{ width: 96, height: 72, borderRadius: 8 }} />
-            {!locked ? <Pressable onPress={() => setImages(s => s.filter((_, j) => j !== i))} hitSlop={8}
-              style={{ position: 'absolute', top: 2, right: 2, backgroundColor: 'rgba(0,0,0,.65)', borderRadius: 12, width: 24, height: 24, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ color: '#fff', fontWeight: '700' }}>✕</Text></Pressable> : null}
-          </View>
-        ))}
-      </ScrollView>
-      {!locked ? <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
-        <Button title="Gallery" kind="secondary" onPress={() => pick(false)} style={{ flex: 1 }} />
-        <Button title="Camera" kind="secondary" onPress={() => pick(true)} style={{ flex: 1 }} />
+      <Card>
+        <SectionTitle icon="document-text-outline" title="Story" sub="Headline, key points and the full text" />
+        <Field label="Headline" value={f.title} onChangeText={set('title')} editable={!locked} placeholder="Write a clear headline" />
+        <Field label="Highlights" hint="One per line, up to 5" value={f.highlights} onChangeText={set('highlights')} multiline editable={!locked} style={{ minHeight: 70 }} />
+        <Field label="News text" value={f.body} onChangeText={set('body')} multiline editable={!locked} style={{ minHeight: 180 }} />
+      </Card>
+
+      <Card>
+        <SectionTitle icon="images-outline" title="Photos" sub={`${images.length} of ${MAX_IMAGES} added`} />
+        <View style={s.grid}>
+          {images.map((im, i) => (
+            <View key={im.uri + i} style={s.cell}>
+              <Image source={{ uri: im.uri }} style={s.photo} />
+              {i === 0 ? <Text style={s.cover}>Cover</Text> : null}
+              {!locked ? <Pressable onPress={() => setImages(x => x.filter((_, j) => j !== i))} hitSlop={8} style={s.remove}
+                accessibilityRole="button" accessibilityLabel={`Remove photo ${i + 1}`}>
+                <Icon name="close" size={16} color="#fff" /></Pressable> : null}
+            </View>
+          ))}
+          {!locked && images.length < MAX_IMAGES ? <>
+            <Pressable onPress={() => pick(false)} style={[s.cell, s.add]} accessibilityRole="button">
+              <Icon name="images-outline" size={24} color={C.blue} /><Text style={s.addText}>Gallery</Text></Pressable>
+            <Pressable onPress={() => pick(true)} style={[s.cell, s.add]} accessibilityRole="button">
+              <Icon name="camera-outline" size={24} color={C.blue} /><Text style={s.addText}>Camera</Text></Pressable>
+          </> : null}
+        </View>
+        {!images.length && locked ? <Text style={{ color: C.muted }}>No photos.</Text> : null}
+      </Card>
+
+      <Card>
+        <SectionTitle icon="location-outline" title="Section and place" sub="Where this news belongs in the paper" />
+        <Chips label="Section" options={Object.entries(SECTIONS)} value={f.section} onChange={locked ? () => {} : set('section')} />
+        <PlacePicker value={f} disabled={locked} onChange={p => setF(x => ({ ...x, ...p }))} />
+        <Field label="Dateline place" hint="Optional. Shown before the text." value={f.dateline} onChangeText={set('dateline')}
+          placeholder={f.constituency || 'e.g. నరసరావుపేట'} editable={!locked} icon="pin-outline" />
+      </Card>
+
+      {!locked ? <View style={{ gap: 10, marginTop: 4 }}>
+        <Button title="Submit for review" icon="send-outline" onPress={() => save(true)} loading={busy} />
+        <Button title="Save as draft" icon="save-outline" kind="secondary" onPress={() => save(false)} disabled={busy} />
+        {id ? <Button title="Delete" icon="trash-outline" kind="danger" onPress={remove} disabled={busy} /> : null}
       </View> : null}
-
-      <Field label="News text" value={f.body} onChangeText={set('body')} multiline editable={!locked} style={{ minHeight: 200 }} />
-      <Chips label="Section" options={Object.entries(SECTIONS)} value={f.section} onChange={locked ? () => {} : set('section')} />
-      <PlacePicker value={f} disabled={locked} onChange={p => setF(s => ({ ...s, ...p }))} />
-      <Field label="Dateline place (optional)" value={f.dateline} onChangeText={set('dateline')} placeholder={f.constituency || 'e.g. నరసరావుపేట'} editable={!locked} />
-
-      {!locked ? <>
-        <Button title={busy ? 'Saving…' : 'Submit for review'} onPress={() => save(true)} disabled={busy} />
-        <Button title="Save as draft" kind="secondary" onPress={() => save(false)} disabled={busy} style={{ marginTop: 10 }} />
-        {id ? <Button title="Delete" kind="danger" onPress={remove} disabled={busy} style={{ marginTop: 10 }} /> : null}
-      </> : null}
     </ScrollView>
   );
 }
+
+const s = StyleSheet.create({
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  cell: { width: '31.5%', aspectRatio: 4 / 3, borderRadius: 10, overflow: 'hidden' },
+  photo: { width: '100%', height: '100%' },
+  cover: { position: 'absolute', left: 4, bottom: 4, color: '#fff', fontSize: 10, fontWeight: '700', backgroundColor: 'rgba(0,0,0,.6)',
+    paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, overflow: 'hidden' },
+  remove: { position: 'absolute', top: 4, right: 4, width: 24, height: 24, borderRadius: 12, backgroundColor: 'rgba(0,0,0,.65)', alignItems: 'center', justifyContent: 'center' },
+  add: { borderWidth: 1.5, borderStyle: 'dashed', borderColor: C.blue, backgroundColor: C.blueSoft, alignItems: 'center', justifyContent: 'center' },
+  addText: { fontSize: 12, fontWeight: '700', color: C.blue, marginTop: 4 },
+});

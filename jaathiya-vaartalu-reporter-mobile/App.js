@@ -1,10 +1,10 @@
 import React from 'react';
-import { ActivityIndicator, Image, Text, View } from 'react-native';
+import { Image, Text, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import { AuthProvider, useAuth } from './src/auth';
-import { C } from './src/ui';
+import { Loading, headerStyle } from './src/ui';
 import LoginScreen from './src/screens/LoginScreen';
 import SignupScreen from './src/screens/SignupScreen';
 import HomeScreen from './src/screens/HomeScreen';
@@ -14,17 +14,16 @@ const Stack = createNativeStackNavigator();
 // Logo mark beside the title on the home screen.
 const BrandTitle = ({ title }) => (
   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-    <Image source={require('./assets/mark.png')} style={{ width: 30, height: 30, marginRight: 8, backgroundColor: '#fff', borderRadius: 6 }} resizeMode="contain" />
+    <Image source={require('./assets/mark.png')} style={{ width: 32, height: 32, marginRight: 10, backgroundColor: '#fff', borderRadius: 8 }} resizeMode="contain" />
     <Text style={{ color: '#fff', fontWeight: '700', fontSize: 18 }}>{title}</Text>
   </View>
 );
-const header = { headerStyle: { backgroundColor: C.red }, headerTintColor: '#fff', headerTitleStyle: { fontWeight: '700' } };
 
 function Routes() {
   const { user, ready } = useAuth();
-  if (!ready) return <View style={{ flex: 1, justifyContent: 'center' }}><ActivityIndicator size="large" color={C.red} /></View>;
+  if (!ready) return <Loading />;
   return (
-    <Stack.Navigator screenOptions={header}>
+    <Stack.Navigator screenOptions={headerStyle}>
       {!user ? (
         <>
           <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />

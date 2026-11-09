@@ -1,25 +1,40 @@
 import React, { useCallback, useLayoutEffect, useState } from 'react';
-import { FlatList, Image, Pressable, RefreshControl, Text, View } from 'react-native';
+import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../auth';
 import { api, errMsg } from '../api';
 import { SOURCES, STATUS } from '../constants';
 import PlacePicker from '../PlacePicker';
-import { Badge, Button, Chips, C } from '../ui';
+import { Avatar, Badge, Banner, C, Card, Chips, EmptyState, Fab, Icon, IconButton, NewsItem } from '../ui';
+
+const TABS = [['review', 'Review', 'time-outline'], ['approved', 'Ready to place', 'checkmark-done-outline'], ['mine', 'My news', 'create-outline']];
+const EMPTY = {
+  review: ['checkmark-circle-outline', 'All caught up', 'Nothing is waiting for review.'],
+  approved: ['albums-outline', 'No approved news yet', 'Approved stories show here, ready for the layout studio.'],
+  mine: ['create-outline', 'No news yet', 'Tap “New news card” to upload your first story.'],
+};
+
+// One shortcut tile in the row under the profile.
+const Tile = ({ icon, title, onPress }) => (
+  <Pressable onPress={onPress} accessibilityRole="button" style={({ pressed }) => [s.tile, pressed && { backgroundColor: C.blueSoft }]}>
+    <View style={s.tileIcon}><Icon name={icon} size={20} color={C.blue} /></View>
+    <Text style={s.tileText} numberOfLines={1}>{title}</Text>
+  </Pressable>
+);
 
 export default function HomeScreen({ navigation }) {
   const { user, can, signOut } = useAuth();
-  const tabs = [['review', 'Review'], ['approved', 'Ready to place'], ['mine', 'My news']];
   const [tab, setTab] = useState('review');
   const [source, setSource] = useState('');
   const [counts, setCounts] = useState(null);
   const [place, setPlace] = useState({ state: '', district: '', constituency: '' });
+  const [showFilters, setShowFilters] = useState(false);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   useLayoutEffect(() => navigation.setOptions({
-    headerRight: () => <Pressable onPress={signOut} hitSlop={10}><Text style={{ color: '#fff', fontWeight: '700' }}>Sign out</Text></Pressable>,
+    headerRight: () => <IconButton icon="log-out-outline" color="#fff" label="Sign out" onPress={signOut} />,
   }), [navigation, signOut]);
 
   const load = useCallback(async () => {
@@ -44,46 +59,74 @@ export default function HomeScreen({ navigation }) {
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
   const countOf = k => (counts ? ` ${k ? counts.counts[k] : counts.total}` : '');
-  const sourceChips = [['', `All${countOf('')}`], ...Object.entries(SOURCES).map(([k, s]) => [k, `${s.label}${countOf(k)}`])];
+  const sourceChips = [['', `All${countOf('')}`], ...Object.entries(SOURCES).map(([k, x]) => [k, `${x.label}${countOf(k)}`])];
+  const active = [source, place.state, place.district, place.constituency].filter(Boolean).length;
   const open = n => (tab === 'mine' ? navigation.navigate('NewsEditor', { id: n._id }) : navigation.navigate('Review', { id: n._id }));
+  const [eIcon, eTitle, eText] = EMPTY[tab];
+
+  const header = (
+    <View>
+      <Card style={{ padding: 14 }}>
+        <View style={s.profile}>
+          <Avatar name={user.name} size={46} />
+          <View style={{ flex: 1, marginLeft: 12 }}>
+            <Text style={s.hello} numberOfLines={1}>{user.name}</Text>
+            <Badge text={user.role === 'admin' ? 'Admin' : 'Editor'} color={user.role === 'admin' ? C.ok : C.blue} />
+          </View>
+        </View>
+        <View style={s.tiles}>
+          {can.epaper ? <Tile icon="newspaper-outline" title="E-paper" onPress={() => navigation.navigate('Epaper')} /> : null}
+          {can.epaper ? <Tile icon="grid-outline" title="Layout studio" onPress={() => navigation.navigate('Studio')} /> : null}
+          {can.users ? <Tile icon="people-outline" title="Team" onPress={() => navigation.navigate('Users')} /> : null}
+        </View>
+      </Card>
+
+      <Chips options={TABS} value={tab} onChange={setTab} />
+      {tab !== 'mine' ? (
+        <Pressable onPress={() => setShowFilters(v => !v)} style={s.filterBar} accessibilityRole="button" accessibilityState={{ expanded: showFilters }}>
+          <Icon name="options-outline" size={18} color={C.blue} />
+          <Text style={s.filterText}>Filters{active ? ` · ${active} on` : ''}</Text>
+          {counts ? <Text style={s.count}>{counts.total} stories</Text> : null}
+          <Icon name={showFilters ? 'chevron-up' : 'chevron-down'} size={18} color={C.muted} />
+        </Pressable>
+      ) : null}
+      {tab !== 'mine' && showFilters ? (
+        <Card style={{ paddingBottom: 4 }}>
+          <Chips label="Source" options={sourceChips} value={source} onChange={setSource} />
+          <PlacePicker value={place} onChange={setPlace} allowAll />
+        </Card>
+      ) : null}
+      {error ? <Banner kind="error">{error}</Banner> : null}
+    </View>
+  );
 
   return (
     <View style={{ flex: 1, backgroundColor: C.bg }}>
-      <View style={{ padding: 12, paddingBottom: 0 }}>
-        <Text style={{ fontSize: 16, fontWeight: '700', color: C.ink }}>{user.name}  <Text style={{ color: C.muted, fontWeight: '400' }}>({user.role})</Text></Text>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
-          {can.epaper ? <Button title="E-paper" kind="secondary" onPress={() => navigation.navigate('Epaper')} style={{ paddingVertical: 8 }} /> : null}
-          {can.users ? <Button title="Team accounts" kind="secondary" onPress={() => navigation.navigate('Users')} style={{ paddingVertical: 8 }} /> : null}
-        </View>
-        <View style={{ marginTop: 12 }}><Chips options={tabs} value={tab} onChange={setTab} /></View>
-        {tab !== 'mine' ? <Chips options={sourceChips} value={source} onChange={setSource} /> : null}
-        {tab !== 'mine' ? <PlacePicker value={place} onChange={setPlace} allowAll labels={false} /> : null}
-        {error ? <Text style={{ color: C.warn, marginBottom: 8 }}>{error}</Text> : null}
-      </View>
       <FlatList
-        data={items} keyExtractor={n => n._id}
-        refreshControl={<RefreshControl refreshing={loading} onRefresh={load} />}
-        contentContainerStyle={{ padding: 12, paddingBottom: 100 }}
-        ListEmptyComponent={!loading ? <Text style={{ textAlign: 'center', color: C.muted, marginTop: 40 }}>
-          {tab === 'review' ? 'Nothing waiting for review.' : tab === 'approved' ? 'No approved news yet.' : 'No news yet. Tap “New news card” to upload your first story.'}</Text> : null}
-        renderItem={({ item: n }) => (
-          <Pressable onPress={() => open(n)} style={{ backgroundColor: '#fff', borderRadius: 12, padding: 10, marginBottom: 10, flexDirection: 'row', gap: 10, borderWidth: 1, borderColor: C.line }}>
-            {n.images?.[0] ? <Image source={{ uri: n.images[0] }} style={{ width: 72, height: 56, borderRadius: 6 }} /> : <View style={{ width: 72, height: 56, borderRadius: 6, backgroundColor: C.bg }} />}
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 15, fontWeight: '700', color: C.ink }} numberOfLines={2}>{n.title}</Text>
-              <Text style={{ color: C.muted, fontSize: 12, marginVertical: 3 }}>{n.constituency || n.district || ''}{n.author?.name ? `, ${n.author.name}` : ''}</Text>
-              <View style={{ flexDirection: 'row', gap: 6 }}>
-                <Badge text={STATUS[n.status]?.label} color={STATUS[n.status]?.color} />
-                <Badge text={SOURCES[n.source || 'reporter']?.label} color={SOURCES[n.source || 'reporter']?.color} />
-              </View>
-              {n.status === 'rejected' && n.reviewNote ? <Text style={{ color: C.warn, fontSize: 12, marginTop: 4 }}>Editor: {n.reviewNote}</Text> : null}
-            </View>
-          </Pressable>
-        )}
+        data={items} keyExtractor={n => n._id} ListHeaderComponent={header}
+        refreshControl={<RefreshControl refreshing={loading} onRefresh={load} colors={[C.blue]} tintColor={C.blue} />}
+        contentContainerStyle={{ padding: 16, paddingBottom: 120 }}
+        ListEmptyComponent={!loading ? <EmptyState icon={eIcon} title={eTitle} text={eText} /> : null}
+        renderItem={({ item: n }) => {
+          const src = SOURCES[n.source || 'reporter'];
+          return <NewsItem news={n} author={n.author?.name} onPress={() => open(n)}
+            badges={[[STATUS[n.status]?.label, STATUS[n.status]?.color], [src?.label, src?.color]]} />;
+        }}
       />
-      <View style={{ position: 'absolute', left: 16, right: 16, bottom: 24 }}>
-        <Button title="New news card" onPress={() => navigation.navigate('NewsEditor')} />
-      </View>
+      <Fab title="New news card" onPress={() => navigation.navigate('NewsEditor')} />
     </View>
   );
 }
+
+const s = StyleSheet.create({
+  profile: { flexDirection: 'row', alignItems: 'center' },
+  hello: { fontSize: 17, fontWeight: '800', color: C.ink, marginBottom: 4 },
+  tiles: { flexDirection: 'row', gap: 8, marginTop: 14 },
+  tile: { flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: 12, borderWidth: 1, borderColor: C.line },
+  tileIcon: { width: 36, height: 36, borderRadius: 10, backgroundColor: C.blueSoft, alignItems: 'center', justifyContent: 'center', marginBottom: 6 },
+  tileText: { fontSize: 12, fontWeight: '700', color: C.ink },
+  filterBar: { flexDirection: 'row', alignItems: 'center', gap: 8, height: 44, paddingHorizontal: 14, marginBottom: 12,
+    borderRadius: 12, backgroundColor: '#fff', borderWidth: 1, borderColor: C.line },
+  filterText: { flex: 1, fontSize: 14, fontWeight: '700', color: C.ink },
+  count: { fontSize: 12, color: C.muted },
+});
