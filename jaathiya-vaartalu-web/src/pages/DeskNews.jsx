@@ -5,21 +5,26 @@ import PlacePicker from '../PlacePicker';
 import { Button, Chips, Empty, Icon, Search, SourceBadge, Spinner } from '../ui';
 import { go } from '../router';
 import { NewsCard } from './MyNews';
+import { DateFilter, DayGroups, dateRange, groupByDay, shortDate } from '../dates';
 
 const TABS = [['review', 'Review'], ['approved', 'Ready to place'], ['all', 'All news'], ['mine', 'My news']];
 const TAB_PARAMS = { review: { status: 'submitted' }, approved: { status: 'approved' }, all: {}, mine: { author: 'me' } };
+// Ready to place goes by the day a story was approved; the other tabs by the day it was uploaded.
+const byOf = tab => (tab === 'approved' ? 'reviewedAt' : 'createdAt');
 const EMPTY = { review: ['Nothing waiting for review', 'New stories from reporters show up here.'], approved: ['No approved news yet', 'Approve stories in Review to place them in the e-paper.'] };
 const PAGE = 60;
 
 const remembered = (key, fallback) => { try { return sessionStorage.getItem(key) ?? fallback; } catch { return fallback; } };
 
-// Editors and admins: all news, filtered by status, source (reporter / editor / admin / e-paper), place and section.
+// Editors and admins: all news, filtered by status, source (reporter / editor / admin / e-paper), place, section and date,
+// grouped by day.
 export default function DeskNews() {
   const [tab, setTab] = useState(() => remembered('jv_desk_tab', 'review'));
   const [source, setSource] = useState(() => remembered('jv_desk_source', ''));
   const [counts, setCounts] = useState(null);
   const [place, setPlace] = useState({ state: '', district: '', constituency: '' });
   const [section, setSection] = useState('');
+  const [date, setDate] = useState('');
   const [q, setQ] = useState('');
   const [items, setItems] = useState(null);
   const [total, setTotal] = useState(0);
@@ -30,27 +35,29 @@ export default function DeskNews() {
   const [notice, setNotice] = useState('');
 
   useEffect(() => { try { sessionStorage.setItem('jv_desk_tab', tab); sessionStorage.setItem('jv_desk_source', source); } catch {} }, [tab, source]);
-  useEffect(() => { setPage(1); setPicked(new Set()); }, [tab, source, place, section, q]);
+  useEffect(() => { setPage(1); setPicked(new Set()); }, [tab, source, place, section, date, q]);
+  const by = byOf(tab);
+  const dates = { ...dateRange(date), by };
 
-  // Per-source totals for the chips, under the same tab, place, section and search.
+  // Per-source totals for the chips, under the same tab, place, section, date and search.
   useEffect(() => {
     let live = true;
-    const t = setTimeout(() => api('/news/counts', { params: { ...TAB_PARAMS[tab], ...place, section, q } })
+    const t = setTimeout(() => api('/news/counts', { params: { ...TAB_PARAMS[tab], ...place, section, ...dates, q } })
       .then(r => live && setCounts(r)).catch(() => live && setCounts(null)), q ? 300 : 0);
     return () => { live = false; clearTimeout(t); };
-  }, [tab, place, section, q]);
+  }, [tab, place, section, date, q]);
 
   useEffect(() => {
     let live = true;
     const t = setTimeout(async () => {
       try {
-        const data = await api('/news', { params: { limit: PAGE, page, ...TAB_PARAMS[tab], source, ...place, section, q } });
+        const data = await api('/news', { params: { limit: PAGE, page, ...TAB_PARAMS[tab], source, ...place, section, ...dates, q } });
         if (!live) return;
         setItems(s => (page === 1 ? data.items : [...(s || []), ...data.items])); setTotal(data.total); setError('');
       } catch (e) { if (live) setError(errMsg(e)); }
     }, q ? 300 : 0);
     return () => { live = false; clearTimeout(t); };
-  }, [tab, source, place, section, q, page]);
+  }, [tab, source, place, section, date, q, page]);
 
   // News in a published e-paper can't be deleted, so it has no tick box.
   const deletable = (items || []).filter(n => n.status !== 'published');
@@ -73,7 +80,7 @@ export default function DeskNews() {
       setNotice([deleted ? `Deleted ${deleted} news card${deleted === 1 ? '' : 's'}.` : '',
         returned ? `${returned} sent back to ${returned === 1 ? 'its' : 'their'} imported e-paper.` : '',
         published ? `${published} kept: in a published e-paper.` : ''].filter(Boolean).join(' '));
-      api('/news/counts', { params: { ...TAB_PARAMS[tab], ...place, section, q } }).then(setCounts).catch(() => {});
+      api('/news/counts', { params: { ...TAB_PARAMS[tab], ...place, section, ...dates, q } }).then(setCounts).catch(() => {});
     } catch (e) { setError(errMsg(e)); }
     setDeleting(false);
   };
@@ -81,7 +88,7 @@ export default function DeskNews() {
   const countOf = k => (counts ? <span className="n">{k ? counts.counts[k] : counts.total}</span> : null);
   const sourceChips = [['', <>All sources{countOf('')}</>], ...Object.entries(SOURCES).map(([k, s]) => [k, <>{s.label}{countOf(k)}</>])];
   const href = n => (tab === 'mine' ? `#/news/${n._id}` : `#/review/${n._id}`);
-  const [emptyTitle, emptyText] = EMPTY[tab] || ['No news here', 'Try another filter or search.'];
+  const [emptyTitle, emptyText] = date ? ['Nothing on this date', 'Try another day or “Any date”.'] : EMPTY[tab] || ['No news here', 'Try another filter or search.'];
   return (
     <main>
       <div className="page-head">
@@ -106,6 +113,7 @@ export default function DeskNews() {
           </PlacePicker>
         </div>
         <Chips label="Source" options={sourceChips} value={source} onChange={setSource} />
+        <div className="field" style={{ margin: '12px 0 0' }}><span>Date</span><DateFilter value={date} onChange={setDate} /></div>
       </div>
       {error ? <p className="error" role="alert">{error}</p> : null}
       {!items ? (error ? null : <Spinner />) : !items.length ? <Empty title={emptyTitle}>{emptyText}</Empty> : (
@@ -121,17 +129,17 @@ export default function DeskNews() {
             </> : null}
           </div>
           {notice ? <p className="notice" role="status">{notice}</p> : null}
-          <div className="cards">
-            {items.map(n => (
+          <DayGroups groups={groupByDay(items, by)}>
+            {n => (
               <div key={n._id} className={`pickable${picked.has(n._id) ? ' picked' : ''}`}>
                 {n.status !== 'published' ? <input type="checkbox" className="pick" checked={picked.has(n._id)} onChange={() => toggle(n._id)}
                   disabled={deleting} aria-label={`Select ${n.title}`} /> : null}
                 <NewsCard n={n} href={href(n)}>
-                  <div className="meta"><SourceBadge source={n.source} />{n.constituency || n.district || ''}{n.sourceRef?.publisher ? ` · ${n.sourceRef.publisher} ${n.sourceRef.editionName}, p${n.sourceRef.page}` : n.author?.name ? ` · ${n.author.name}` : ''} · {new Date(n.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+                  <div className="meta"><SourceBadge source={n.source} />{n.constituency || n.district || ''}{n.sourceRef?.publisher ? ` · ${n.sourceRef.publisher} ${n.sourceRef.editionName}, p${n.sourceRef.page}` : n.author?.name ? ` · ${n.author.name}` : ''}{n.reviewedAt && by === 'reviewedAt' ? ` · Uploaded ${shortDate(n.createdAt)}` : ''}</div>
                 </NewsCard>
               </div>
-            ))}
-          </div>
+            )}
+          </DayGroups>
           {items.length < total ? <div className="row" style={{ justifyContent: 'center', marginTop: 20 }}>
             <Button kind="secondary" onClick={() => setPage(p => p + 1)}>Load more</Button></div> : null}
         </>

@@ -6,7 +6,7 @@ import { useAuth } from './auth';
 import { errMsg } from './api';
 import { Banner, Button, C, Field } from './ui';
 
-// Sign-in page shared by the Reporter and Desk apps (same file in both): brand on top, one card with
+// Sign-in page shared by the Reporter, Admin and Studio apps (same file in each): brand on top, one card with
 // the form, then whatever the app adds below it (`footer`). Centred and capped in width on tablets.
 
 export default function LoginView({ badge, badgeIcon, subtitle, footer }) {

@@ -138,6 +138,9 @@ main { max-width: 1120px; margin: 0 auto; padding: 24px 16px 48px; }
 .src-admin { color: var(--green); }
 .src-epaper { color: var(--red); }
 .chip .n { margin-left: 6px; font-size: 11px; opacity: .75; }
+/* "Pick date": a chip over the browser's date input, which stays invisible and only opens the calendar */
+.date-chip { position: relative; display: inline-flex; align-items: center; gap: 6px; }
+.date-input { position: absolute; left: 0; bottom: 0; width: 100%; height: 0; padding: 0; border: 0; opacity: 0; pointer-events: none; }
 .badge-published { background: var(--green-50); color: var(--green); }
 .badge-imported { background: #F0EFEC; color: #5B5F6E; }
 

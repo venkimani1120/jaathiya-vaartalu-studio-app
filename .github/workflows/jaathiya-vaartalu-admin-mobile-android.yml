@@ -1,25 +1,26 @@
-# Free Android APK build of the Desk (Editor/Admin) app (jaathiya-vaartalu-admin-mobile/) on GitHub Actions.
+# Free Android build of the Admin app (jaathiya-vaartalu-admin-mobile/) on GitHub Actions.
 # Runs on every push to main or feature/* that changes jaathiya-vaartalu-admin-mobile/, or manually:
-# GitHub repo -> Actions -> "Desk (Editor/Admin) mobile – Android APK" -> Run workflow (optionally enter an API URL).
+# GitHub repo -> Actions -> "Admin mobile – Android" -> Run workflow (optionally enter an API URL).
 # API URL used: the manual input, else the production server https://jaathiya-vaartalu-studio-app.onrender.com (jaathiya-vaartalu-admin-mobile/src/config.js).
-# Download it: open the finished run -> Artifacts -> jv-desk-apk (a zip containing app-release.apk).
-name: Desk (Editor/Admin) mobile – Android APK
+# Download it: open the finished run -> Artifacts -> jv-admin-apk (a zip containing app-release.apk, signed with the
+# debug key, for testing only). The iOS builds are in jaathiya-vaartalu-admin-mobile-ios.yml.
+name: Admin mobile – Android
 on:
   push:
     branches: ["feature/**", "main"]
-    paths: ["jaathiya-vaartalu-admin-mobile/**", ".github/workflows/jaathiya-vaartalu-admin-mobile-apk.yml"]
+    paths: ["jaathiya-vaartalu-admin-mobile/**", ".github/workflows/jaathiya-vaartalu-admin-mobile-android.yml"]
   workflow_dispatch:
     inputs:
       api_url:
         description: "API server URL the app should use (e.g. http://192.168.1.10:4000 for a local server)"
         required: false
         default: "https://jaathiya-vaartalu-studio-app.onrender.com"
+env:
+  EXPO_PUBLIC_API_URL: ${{ inputs.api_url || 'https://jaathiya-vaartalu-studio-app.onrender.com' }}
 jobs:
-  apk:
+  android:
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    env:
-      EXPO_PUBLIC_API_URL: ${{ inputs.api_url || 'https://jaathiya-vaartalu-studio-app.onrender.com' }}
     defaults:
       run:
         working-directory: jaathiya-vaartalu-admin-mobile
@@ -45,5 +46,5 @@ jobs:
         run: ./gradlew assembleRelease --no-daemon
       - uses: actions/upload-artifact@v4
         with:
-          name: jv-desk-apk
+          name: jv-admin-apk
           path: jaathiya-vaartalu-admin-mobile/jv-mobile/android/app/build/outputs/apk/release/app-release.apk

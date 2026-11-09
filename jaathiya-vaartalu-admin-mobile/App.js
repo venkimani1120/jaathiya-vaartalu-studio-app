@@ -7,18 +7,18 @@ import { AuthProvider, useAuth } from './src/auth';
 import { Loading, headerStyle } from './src/ui';
 import LoginScreen from './src/screens/LoginScreen';
 import HomeScreen from './src/screens/HomeScreen';
+import ProfileScreen from './src/screens/ProfileScreen';
+import PasswordScreen from './src/screens/PasswordScreen';
 import NewsEditorScreen from './src/screens/NewsEditorScreen';
 import ReviewScreen from './src/screens/ReviewScreen';
-import EpaperScreen from './src/screens/EpaperScreen';
-import StudioScreen from './src/screens/StudioScreen';
 import UsersScreen from './src/screens/UsersScreen';
 
 const Stack = createNativeStackNavigator();
 // Logo mark beside the title on the home screen.
 const BrandTitle = ({ title }) => (
-  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+  <View style={{ flexDirection: 'row', alignItems: 'center', flexShrink: 1 }}>
     <Image source={require('./assets/mark.png')} style={{ width: 32, height: 32, marginRight: 10, backgroundColor: '#fff', borderRadius: 8 }} resizeMode="contain" />
-    <Text style={{ color: '#fff', fontWeight: '700', fontSize: 18 }}>{title}</Text>
+    <Text style={{ color: '#fff', fontWeight: '700', fontSize: 18, flexShrink: 1 }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{title}</Text>
   </View>
 );
 
@@ -31,12 +31,12 @@ function Routes() {
         <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
       ) : (
         <>
-          <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'జాతియ వార్తలు Desk', headerTitle: () => <BrandTitle title={'జాతియ వార్తలు Desk'} /> }} />
+          <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'జాతియ వార్తలు Admin', headerTitle: () => <BrandTitle title={'జాతియ వార్తలు Admin'} /> }} />
           <Stack.Screen name="NewsEditor" component={NewsEditorScreen} options={({ route }) => ({ title: route.params?.id ? 'Edit news' : 'New news card' })} />
           <Stack.Screen name="Review" component={ReviewScreen} options={{ title: 'Review news' }} />
-          <Stack.Screen name="Epaper" component={EpaperScreen} options={{ title: 'E-paper' }} />
-          <Stack.Screen name="Studio" component={StudioScreen} options={{ title: 'Layout studio' }} />
           <Stack.Screen name="Users" component={UsersScreen} options={{ title: 'Team accounts' }} />
+          <Stack.Screen name="Profile" component={ProfileScreen} options={{ title: 'My profile' }} />
+          <Stack.Screen name="Password" component={PasswordScreen} options={{ title: 'Change password' }} />
         </>
       )}
     </Stack.Navigator>

@@ -14,12 +14,21 @@
       ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#FFFFFF"
-      }
+        "backgroundColor": "#FFFFFF",
+        "monochromeImage": "./assets/monochrome-icon.png"
+      },
+      "versionCode": 1
     },
     "ios": {
       "bundleIdentifier": "com.jaathiyavaartalu.reporter",
-      "supportsTablet": true
+      "supportsTablet": true,
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSAppTransportSecurity": {
+          "NSAllowsLocalNetworking": true
+        },
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "plugins": [
       [
@@ -46,7 +55,8 @@
             "usesCleartextTraffic": true
           }
         }
-      ]
+      ],
+      "@react-native-community/datetimepicker"
     ]
   }
 }

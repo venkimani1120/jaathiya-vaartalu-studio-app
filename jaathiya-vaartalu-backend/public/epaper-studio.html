@@ -491,7 +491,7 @@ const DEMO_NEWS = [
 
 // header logo and tab icon (server/public/logo.png, mark.png)
 // Inside the web app (an iframe on the same site) the app's header already shows the logo and account menu.
-// Inside the Desk mobile app (a WebView) the same holds, and the app also owns the sign-in: the studio
+// Inside the JV Studio mobile app (a WebView) the same holds, and the app also owns the sign-in: the studio
 // asks it for access tokens and tells it when the session is over (see the API section).
 const NATIVE = !!window.ReactNativeWebView;
 const toNative = msg => { try { window.ReactNativeWebView.postMessage(JSON.stringify(msg)); } catch (_) {} };
@@ -1488,7 +1488,7 @@ async function printEdition() {
   try { window.print(); } catch (_) { restore(); toast('Printing is blocked here. Open the published link in a browser to save the PDF.'); }
 }
 // Every studio page needs a signed-in editor or admin; until then only this form shows.
-// Inside the web app or the Desk mobile app, the app itself goes back to its sign-in page.
+// Inside the web app or the JV Studio mobile app, the app itself goes back to its sign-in page.
 function showLogin() {
   $('#app').classList.add('locked');
   if (NATIVE) return toNative({ type: 'jv:signed-out' });   // the app goes back to its own sign-in

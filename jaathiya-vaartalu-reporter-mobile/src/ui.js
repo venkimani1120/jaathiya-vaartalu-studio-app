@@ -3,7 +3,7 @@ import { ActivityIndicator, Image, Pressable, Text, TextInput, View, StyleSheet,
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
-// Shared look for every screen (same file in the Reporter and Desk apps): navy actions, saffron accents,
+// Shared look for every screen (same file in the Reporter, Admin and Studio apps): navy actions, saffron accents,
 // white rounded cards on a light grey page, Ionicons beside labels. The sign-in page set this style.
 export const C = { red: '#E31E24', blue: '#1F3C99', blueSoft: '#E8EDF8', saffron: '#F28C28', ink: '#1A2130', muted: '#586274',
   faint: '#8A93A3', line: '#D5DAE2', bg: '#F2F4F7', card: '#FFFFFF', pink: '#D8127A', ok: '#17734A', warn: '#B4231F' };
@@ -131,12 +131,18 @@ export const Meta = ({ icon, text, color = C.muted }) => text ? (
   </View>
 ) : null;
 
-export const Avatar = ({ name = '', size = 40 }) => (
-  <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: C.blueSoft, alignItems: 'center', justifyContent: 'center' }}>
-    <Text style={{ color: C.blue, fontWeight: '800', fontSize: size * 0.38 }}>
-      {name.trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?'}</Text>
-  </View>
-);
+// Profile photo, or the initials when there is none (or it fails to load).
+export function Avatar({ name = '', uri, size = 40 }) {
+  const [broken, setBroken] = useState(null);
+  const box = { width: size, height: size, borderRadius: size / 2 };
+  if (uri && broken !== uri) return <Image source={{ uri }} style={[box, { backgroundColor: C.blueSoft }]} onError={() => setBroken(uri)} />;
+  return (
+    <View style={[box, { backgroundColor: C.blueSoft, alignItems: 'center', justifyContent: 'center' }]}>
+      <Text style={{ color: C.blue, fontWeight: '800', fontSize: size * 0.38 }}>
+        {name.trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?'}</Text>
+    </View>
+  );
+}
 
 // One story in a list: photo (or a placeholder icon), headline, where/who, status badges, editor's note.
 export function NewsItem({ news: n, badges = [], author, onPress }) {

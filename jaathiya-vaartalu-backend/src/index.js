@@ -1,4 +1,4 @@
-const { APP_ENV } = require('./config/env');
+const { APP_ENV, isProd } = require('./config/env');
 const path = require('path');
 const fs = require('fs');
 const express = require('express');
@@ -19,7 +19,9 @@ app.use(helmet({
     styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
     fontSrc: ["'self'", 'https://fonts.gstatic.com'],
     imgSrc: ["'self'", 'data:', 'blob:', 'https://res.cloudinary.com'],
-    connectSrc: ["'self'"]
+    connectSrc: ["'self'"],
+    // Only over HTTPS: on the local http://<LAN IP>:4000 server it would send the studio's API calls to https and fail.
+    upgradeInsecureRequests: isProd ? [] : null
   } }
 }));
 const origins = (process.env.CORS_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);

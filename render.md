@@ -48,7 +48,7 @@ Render (one web service)
                 ├── /studio       e-paper studio (public/epaper-studio.html)
                 └── /e/<link>     public e-paper reader
 
-GitHub Actions ──► APKs (reporter + desk) ──► phones ──► call /api/* on Render
+GitHub Actions ──► APKs (reporter + admin + studio) ──► phones ──► call /api/* on Render
 ```
 
 The live service at `https://jaathiya-vaartalu-studio-app.onrender.com` is set up this way: `/app/` returns the built page and its `/app/assets/index-….js` and `.css` files, which only exist if `build:web` ran on Render.

@@ -1,0 +1,61 @@
+{
+  "expo": {
+    "name": "JV Studio",
+    "slug": "jaathiya-vaartalu-studio",
+    "version": "1.0.0",
+    "orientation": "default",
+    "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
+    "android": {
+      "package": "com.jaathiyavaartalu.studio",
+      "permissions": [
+        "CAMERA",
+        "READ_MEDIA_IMAGES"
+      ],
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FFFFFF",
+        "monochromeImage": "./assets/monochrome-icon.png"
+      },
+      "versionCode": 1
+    },
+    "ios": {
+      "bundleIdentifier": "com.jaathiyavaartalu.studio",
+      "supportsTablet": true,
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSAppTransportSecurity": {
+          "NSAllowsLocalNetworking": true
+        },
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#FFFFFF"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Pick e-paper pages and news cuts to upload.",
+          "cameraPermission": "Photograph e-paper pages and news cuts to upload."
+        }
+      ],
+      "expo-secure-store",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ]
+    ]
+  }
+}

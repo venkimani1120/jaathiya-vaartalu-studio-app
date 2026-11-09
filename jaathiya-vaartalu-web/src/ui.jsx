@@ -50,6 +50,7 @@ const PATHS = {
   plus: 'M12 5v14M5 12h14',
   news: 'M4 5h13a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zM19 9h1a1 1 0 0 1 1 1v8a2 2 0 0 1-2 2M8 9h7M8 13h7M8 17h4',
   check: 'M20 6 9 17l-5-5',
+  calendar: 'M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zM4 10h16M8 3v4M16 3v4',
   user: 'M20 21a8 8 0 1 0-16 0M12 13a5 5 0 1 0 0-10 5 5 0 0 0 0 10z',
   lock: 'M6 11h12a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1zM8 11V7a4 4 0 1 1 8 0v4',
   logout: 'M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l5-5-5-5M15 12H3',
@@ -115,7 +116,7 @@ export function TopBar({ user, onSignOut, children }) {
     <header className="topbar">
       <div className="topbar-in">
         <a className="brand" href="#/" aria-label="Jaathiya Vaartalu, home">
-          <img src={MARK} alt="" /><span className="brand-txt"><b>Jaathiya Vaartalu</b><small>{user?.role === 'reporter' ? 'Reporter' : 'News desk'}</small></span>
+          <img src={MARK} alt="" /><span className="brand-txt"><b>Jaathiya Vaartalu</b><small>{user?.role === 'reporter' ? 'Reporter' : 'Admin'}</small></span>
         </a>
         <nav className="nav">{children}</nav>
         {user ? <ProfileMenu user={user} onSignOut={onSignOut} /> : null}
