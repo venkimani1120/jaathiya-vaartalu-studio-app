@@ -1489,10 +1489,12 @@ async function printEdition() {
 }
 // Every studio page needs a signed-in editor or admin; until then only this form shows.
 // Inside the web app or the JV Studio mobile app, the app itself goes back to its sign-in page.
+// Opened on its own with the web app on the same server, it goes to the app's sign-in (unless that would lose unsaved work).
 function showLogin() {
   $('#app').classList.add('locked');
   if (NATIVE) return toNative({ type: 'jv:signed-out' });   // the app goes back to its own sign-in
   if (EMBEDDED) try { window.parent.postMessage({ type: 'jv:signed-out' }, location.origin); } catch (_) {}
+  else if (CFG && CFG.loginUrl && !unsaved.size) return location.replace(CFG.loginUrl);
   if (!$('#modal').hidden && $('#lgEmail')) return;
   openModal(`<h2>Sign in</h2><p style="color:var(--muted);margin:0">Editors and admins only.</p>
     <label>Email</label><input id="lgEmail" type="email" autocomplete="username">

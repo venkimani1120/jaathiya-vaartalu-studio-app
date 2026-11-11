@@ -39,17 +39,20 @@ app.use('/api/public', require('./routes/public'));
 app.use('/uploads', express.static(path.join(__dirname, '../uploads'), { maxAge: '7d' }));
 for (const f of ['logo.png', 'mark.png']) app.get('/' + f, (_req, res) => res.sendFile(path.join(__dirname, '../public', f), { maxAge: '7d' }));
 
-// E-paper studio (editors) and public reader share one page; the server tells it where the API is.
-const studioFile = path.join(__dirname, '../public/epaper-studio.html');
-const studio = () => fs.readFileSync(studioFile, 'utf8').replace('<!--JV_CONFIG-->', '<script>window.JV_CONFIG={apiBase:"/api"}</script>');
-app.get(['/studio', '/e/:slug'], (_req, res) => res.type('html').send(studio()));
-
 // The web app for every role, when built (npm run build:web). It uses hash routes, so static files are enough.
 // The old Reporter (/reporter) and Desk (/desk) addresses forward to it so saved links keep working.
 const webDist = path.join(__dirname, '../../jaathiya-vaartalu-web/dist');
-if (fs.existsSync(webDist)) app.use('/app', express.static(webDist));
+const hasWeb = fs.existsSync(webDist);
+if (hasWeb) app.use('/app', express.static(webDist));
 app.get(/^\/(reporter|desk)(\/.*)?$/, (_req, res) => res.redirect(301, '/app/'));
-app.get('/', (_req, res) => res.redirect('/studio'));
+app.get('/', (_req, res) => res.redirect(hasWeb ? '/app/' : '/studio'));
+
+// E-paper studio (editors) and public reader share one page; the server tells it where the API is.
+// With the web app built, a signed-out visit to /studio goes to the site root (the app's sign-in) instead of its own form.
+const studioFile = path.join(__dirname, '../public/epaper-studio.html');
+const studioCfg = JSON.stringify({ apiBase: '/api', ...(hasWeb ? { loginUrl: '/' } : {}) });
+const studio = () => fs.readFileSync(studioFile, 'utf8').replace('<!--JV_CONFIG-->', `<script>window.JV_CONFIG=${studioCfg}</script>`);
+app.get(['/studio', '/e/:slug'], (_req, res) => res.type('html').send(studio()));
 
 app.use((req, res) => res.status(404).json({ message: `Not found: ${req.method} ${req.path}` }));
 app.use((err, _req, res, _next) => {
