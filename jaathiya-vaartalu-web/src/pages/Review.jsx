@@ -3,6 +3,7 @@ import { api, errMsg } from '../api';
 import { SECTIONS } from '../constants';
 import { Avatar, Badge, Button, SourceBadge, Field, Icon, Spinner } from '../ui';
 import { go } from '../router';
+import { DownloadButton } from '../DownloadClipping';
 
 export default function Review({ id }) {
   const [n, setN] = useState(null);
@@ -78,9 +79,14 @@ export default function Review({ id }) {
           <Button kind="ok" onClick={() => review('approve')} disabled={busy}><Icon name="check" size={16} />Approve for e-paper</Button>
           <Button kind="danger" onClick={() => review('reject')} disabled={busy}>Send back to reporter</Button>
           <div className="spacer" />
+          <DownloadButton news={n} disabled={busy} />
           <Button kind="secondary" onClick={() => go(`/news/${id}`)} disabled={busy}>Edit text or photos</Button>
         </div>
-      </div> : null}
+      </div> : <div className="panel">
+        <h3>In a published edition</h3>
+        <p className="sub">Download it as an e-paper clipping.</p>
+        <div className="row"><DownloadButton news={n} /></div>
+      </div>}
     </main>
   );
 }

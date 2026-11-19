@@ -9,6 +9,7 @@ rm -rf jv-mobile/src   # drop screens removed from this app
 cp -r App.js app.json eas.json src assets jv-mobile/
 cd jv-mobile
 npx expo install @react-navigation/native @react-navigation/native-stack react-native-screens react-native-safe-area-context \
-  expo-image-picker expo-secure-store expo-constants expo-splash-screen @expo/vector-icons expo-font expo-status-bar expo-build-properties @react-native-community/datetimepicker expo-document-picker
+  expo-image-picker expo-secure-store expo-constants expo-splash-screen @expo/vector-icons expo-font expo-status-bar expo-build-properties @react-native-community/datetimepicker expo-document-picker \
+  react-native-view-shot expo-file-system expo-sharing
 npm install axios
 echo "Done. Start the local API (npm run dev in jaathiya-vaartalu-backend), then: cd jv-mobile && npx expo start"

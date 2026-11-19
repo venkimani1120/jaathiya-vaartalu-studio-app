@@ -3,6 +3,7 @@ import { Alert, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { api, errMsg } from '../api';
 import { SOURCES, STATUS } from '../constants';
 import { Badge, Button, C, Card, Field, Icon, Loading, Meta, SectionTitle } from '../ui';
+import { DownloadButton } from '../Clipping';
 
 export default function ReviewScreen({ navigation, route }) {
   const { id } = route.params;
@@ -57,9 +58,15 @@ export default function ReviewScreen({ navigation, route }) {
             <Button title="Approve for e-paper" icon="checkmark-circle-outline" onPress={() => review('approve')} loading={busy} />
             <Button title="Send back to reporter" icon="arrow-undo-outline" kind="danger" onPress={() => review('reject')} disabled={busy} />
             <Button title="Edit text or photos" icon="create-outline" kind="secondary" onPress={() => navigation.replace('NewsEditor', { id })} disabled={busy} />
+            <DownloadButton news={n} disabled={busy} />
           </View>
         </Card>
-      ) : null}
+      ) : (
+        <Card>
+          <SectionTitle icon="download-outline" title="In a published edition" sub="Download it as an e-paper clipping" />
+          <DownloadButton news={n} />
+        </Card>
+      )}
     </ScrollView>
   );
 }

@@ -14,6 +14,8 @@ Live: `https://jaathiya-vaartalu-studio-app.onrender.com/app/`
 | Editor | **News** (review queue and all news, with filters, paging and deleting several at once), **E-paper** (editions), **Imports** (upload other papers' e-papers and pick their news for the feed), **Layout studio**, **New news card** |
 | Admin | Everything an editor sees, plus **Team accounts** (approve sign-ups, change roles, turn accounts off) |
 
+**Download** sits beside **Edit** on approved and published news (the review page and the news editor, so reporters can download their own approved news too). It asks for the e-paper header title and the date (both needed, prefilled with జాతియ వార్తలు and today), shows a preview, and saves the story as a **PDF** or **PNG** clipping: the header and a date bar, then the section and place, the headline, highlights, the first photo and the text.
+
 Everyone also gets **My profile** (photo, name, phone) and **Change password**. New reporters can sign up here; an admin then approves them.
 
 The layout studio is a page served by the API at `/studio`. When this site is on the same address as the API (served at `/app/`, or through the dev proxy), the studio opens inside the app and is already signed in. On another address it opens in a new tab and asks for the sign-in again.
@@ -68,6 +70,8 @@ src/pages/               Login, Signup, MyNews, Approved, NewsEditor, DeskNews, 
                          ImportPaper, Studio, Users, Profile, ChangePassword
 src/ui.jsx, styles.css   shared components and styles
 src/Cropper.jsx          photo cropping in the news editor
+src/clipping.js          draws a news story as an e-paper clipping (canvas) and saves it as PNG or a one-page PDF
+src/DownloadClipping.jsx Download button and its dialog (header title, date, format, preview)
 src/PlacePicker.jsx      State → District → Constituency picker (data in src/locations.json)
 ```
 
