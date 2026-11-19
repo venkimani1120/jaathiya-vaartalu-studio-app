@@ -49,6 +49,7 @@ export function Empty({ title, children }) {
 }
 
 const PATHS = {
+  download: 'M12 4v11M7 10l5 5 5-5M5 20h14',
   plus: 'M12 5v14M5 12h14',
   news: 'M4 5h13a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zM19 9h1a1 1 0 0 1 1 1v8a2 2 0 0 1-2 2M8 9h7M8 13h7M8 17h4',
   check: 'M20 6 9 17l-5-5',
