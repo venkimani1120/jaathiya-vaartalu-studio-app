@@ -8,7 +8,7 @@ const { HttpError, wrap, pick, today } = require('../utils/http');
 
 const FIELDS = ['title', 'highlights', 'body', 'images', 'section', 'state', 'district', 'constituency', 'dateline'];
 const REPORTER_EDITABLE = ['draft', 'submitted', 'rejected'];
-const isDesk = u => u.role === 'admin' || u.role === 'editor';
+const isDesk = u => u.roles.includes('admin') || u.roles.includes('editor');
 
 router.use(authenticate);
 

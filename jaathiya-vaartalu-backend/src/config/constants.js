@@ -4,7 +4,10 @@ const STATES = require('./locations.json');
 const DISTRICTS = Object.assign({}, ...Object.values(STATES));
 const STATE_OF = Object.fromEntries(Object.entries(STATES).flatMap(([st, ds]) => Object.keys(ds).map(d => [d, st])));
 const SECTIONS = { state: 'రాష్ట్రం', district: 'జిల్లా', constituency: 'నియోజకవర్గం', sports: 'క్రీడలు', business: 'వాణిజ్యం' };
-const ROLES = ['admin', 'editor', 'reporter'];
+const ROLES = ['admin', 'editor', 'reporter'];   // highest first
+// A member can hold several roles. Their main role (`role`) is the highest one: it sets the news source and which home page they get.
+const cleanRoles = list => ROLES.filter(r => [].concat(list || []).includes(r));
+const mainRole = roles => cleanRoles(roles)[0] || 'reporter';
 // 'imported': read from an imported e-paper, waiting on that import's page until the desk adds it to the news feed.
 const NEWS_STATUS = ['draft', 'submitted', 'approved', 'rejected', 'published', 'imported'];
 // Where a news card came from. Set by the server from the uploader's role (or 'epaper' for imports).
@@ -12,4 +15,4 @@ const NEWS_SOURCES = ['reporter', 'editor', 'admin', 'epaper'];
 const EDITION_TYPES = ['state', 'district', 'constituency', 'sports', 'business'];
 const DAILY_NEWS_LIMIT = Number(process.env.DAILY_NEWS_LIMIT || 50);
 const MAX_IMAGES_PER_CARD = 10;
-module.exports = { STATES, DISTRICTS, STATE_OF, SECTIONS, ROLES, NEWS_STATUS, NEWS_SOURCES, EDITION_TYPES, DAILY_NEWS_LIMIT, MAX_IMAGES_PER_CARD };
+module.exports = { STATES, DISTRICTS, STATE_OF, SECTIONS, ROLES, cleanRoles, mainRole, NEWS_STATUS, NEWS_SOURCES, EDITION_TYPES, DAILY_NEWS_LIMIT, MAX_IMAGES_PER_CARD };

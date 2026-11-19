@@ -4,14 +4,21 @@ import { api, saveTokens, clearTokens, hasSession, logout, setSignedOutHandler }
 const Ctx = createContext(null);
 export const useAuth = () => useContext(Ctx);
 
-// What each role can do in this app. UI hints only; the server enforces every rule.
-export const permissionsFor = role => ({
-  desk: role === 'editor' || role === 'admin',   // review, edit any news, e-paper
-  users: role === 'admin',                        // approve accounts, change roles
-  deleteAny: role === 'editor' || role === 'admin', // delete any news not in a published e-paper
-  deleteEdition: role === 'admin',                // delete editions from the E-paper list
-});
+// Every role a member holds (a member can have several, e.g. Admin and Editor).
+export const rolesOf = user => (user?.roles?.length ? user.roles : user?.role ? [user.role] : []);
+// What a member's roles let them do in this app. UI hints only; the server enforces every rule.
+export const permissionsFor = user => {
+  const has = r => rolesOf(user).includes(r);
+  return {
+    desk: has('editor') || has('admin'),       // review, edit any news, e-paper
+    imports: has('editor'),                    // upload other papers and pick their news (admins need the Editor role too)
+    users: has('admin'),                       // approve accounts, change roles
+    deleteAny: has('editor') || has('admin'),  // delete any news not in a published e-paper
+    deleteEdition: has('admin'),               // delete editions from the E-paper list
+  };
+};
 export const ROLE_LABEL = { reporter: 'Reporter', editor: 'Editor', admin: 'Admin' };
+export const roleNames = user => rolesOf(user).map(r => ROLE_LABEL[r] || r).join(' · ');
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -40,6 +47,7 @@ export function AuthProvider({ children }) {
   };
   const signUp = form => api('/auth/signup', { method: 'POST', body: form });
   const signOut = async () => { await logout(); setUser(null); window.location.hash = '/'; };
+  const refreshUser = async () => setUser((await api('/auth/me')).user);
   const updateProfile = async body => { const me = (await api('/auth/me', { method: 'PATCH', body })).user; setUser(me); return me; };
   // The server signs other devices out and returns fresh tokens for this one.
   const changePassword = async (currentPassword, newPassword) => {
@@ -47,6 +55,6 @@ export function AuthProvider({ children }) {
     saveTokens(data); setUser(data.user);
   };
 
-  const can = permissionsFor(user?.role);
-  return <Ctx.Provider value={{ user, ready, can, signIn, signUp, signOut, updateProfile, changePassword }}>{children}</Ctx.Provider>;
+  const can = permissionsFor(user);
+  return <Ctx.Provider value={{ user, ready, can, signIn, signUp, signOut, updateProfile, changePassword, refreshUser }}>{children}</Ctx.Provider>;
 }

@@ -1,15 +1,15 @@
 # Jaathiya Vaartalu – Admin app (editors and admins)
 
-The mobile app for **editors and admins**: review news from reporters, write news, and manage the team. It runs on **Android and iOS** and uses the same [API server](../jaathiya-vaartalu-backend/README.md) and MongoDB data as the other apps.
+The mobile app for **editors and admins**: review news from reporters, write news, upload other newspapers and pick their news, and manage the team. It runs on **Android and iOS** and uses the same [API server](../jaathiya-vaartalu-backend/README.md) and MongoDB data as the other apps.
 
 | | |
 |---|---|
 | App name | JV Admin |
 | Android package / iOS bundle id | `com.jaathiyavaartalu.desk` (kept from when the app was called JV Desk, so installed phones keep updating) |
-| Who can sign in | Editors and admins. Reporters are asked to use JV Reporter. The e-paper layout studio and newspaper uploads are in the separate **JV Studio** app. |
+| Who can sign in | Editors and admins. Reporters are asked to use JV Reporter. The e-paper layout studio is in the separate **JV Studio** app. |
 | API | `https://jaathiya-vaartalu-studio-app.onrender.com` in release builds |
 
-**Tech:** React Native with Expo (SDK 58), React Navigation, axios, Expo SecureStore (sign-in tokens), Expo Image Picker.
+**Tech:** React Native with Expo (SDK 58), React Navigation, axios, Expo SecureStore (sign-in tokens), Expo Image Picker, Expo Document Picker.
 
 ## Features
 
@@ -18,7 +18,9 @@ The mobile app for **editors and admins**: review news from reporters, write new
 - **My news:** cards you wrote. Editors' and admins' cards skip review and go straight to the approved pool.
 - **Filters:** by source (reporter, editor, admin, e-paper) and place, with a count of stories for each.
 - **News card editor:** like the reporter's, plus editing any card and deleting cards.
-- **Team accounts** (admins): approve new sign-ups, change roles, and deactivate accounts.
+- **Upload newspaper** (members with the Editor role; an admin needs the Editor role too): another paper's e-paper as **one PDF** or **up to 40 page photos** (gallery or camera, reordered with arrows), with the paper, edition, date, edition type and an optional district. Names already used are suggested.
+- **Imported paper:** its pages, and the news the server read from each page. Tick news to **add to the feed** (it then waits for review) or **delete** it. You can read a page or the whole paper again, or delete the import.
+- **Team accounts** (admins): approve new sign-ups, give each member one or more roles (for example Admin and Editor), and deactivate accounts.
 
 **One device at a time:** an account can be signed in on one device. Signing in to this app signs the same account out of JV Studio and the web app.
 
@@ -87,13 +89,13 @@ To remake the icons, run `node scripts/make-app-icons.js` in `jaathiya-vaartalu-
 
 ```
 App.js               navigation: sign-in screens, then the app's screens
-src/screens/         LoginScreen, HomeScreen (review / ready to place / my news), ReviewScreen, NewsEditorScreen, UsersScreen
+src/screens/         LoginScreen, HomeScreen (review / ready to place / my news), ReviewScreen, NewsEditorScreen, ImportsScreen, ImportPaperScreen, UsersScreen
 src/LoginView.js     sign-in page shared by the three mobile apps
 src/api.js           axios client with token refresh, photo uploads
 src/auth.js          signed-in user, which roles may use this app
 src/config.js        which API server to call
 src/ui.js            colours and shared components (buttons, fields, chips, cards, banners)
-src/constants.js     sections, statuses, sources
+src/constants.js     sections, statuses, sources, edition types
 src/PlacePicker.js   State → District → Constituency picker (data in src/locations.json)
 ```
 

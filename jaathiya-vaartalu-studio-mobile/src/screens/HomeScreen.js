@@ -1,7 +1,7 @@
 import React, { useCallback, useLayoutEffect, useState } from 'react';
 import { FlatList, Platform, Pressable, RefreshControl, Share, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { useAuth } from '../auth';
+import { rolesOf, useAuth } from '../auth';
 import { api, errMsg } from '../api';
 import { API_BASE } from '../config';
 import { Avatar, Badge, Banner, Button, C, Card, EmptyState, Icon, Meta } from '../ui';
@@ -18,7 +18,7 @@ const Action = ({ icon, title, text, onPress }) => (
   </Pressable>
 );
 
-// The studio app's start: what to do (layout, upload a paper, upload a news cut), then the editions made so far.
+// The studio app's start: what to do (layout, upload a news cut), then the editions made so far.
 export default function HomeScreen({ navigation }) {
   const { user } = useAuth();
   const [items, setItems] = useState([]);
@@ -54,7 +54,10 @@ export default function HomeScreen({ navigation }) {
           <Avatar name={user.name} uri={user.avatar} size={46} />
           <View style={{ flex: 1, marginLeft: 12 }}>
             <Text style={s.hello} numberOfLines={1}>{user.name}</Text>
-            <Badge text={user.role === 'admin' ? 'Admin' : 'Editor'} color={user.role === 'admin' ? C.ok : C.blue} />
+            <View style={s.roles}>
+              {rolesOf(user).includes('admin') ? <Badge text="Admin" color={C.ok} /> : null}
+              {rolesOf(user).includes('editor') ? <Badge text="Editor" color={C.blue} /> : null}
+            </View>
           </View>
           <Icon name="chevron-forward" size={18} color={C.faint} />
         </Pressable>
@@ -66,9 +69,6 @@ export default function HomeScreen({ navigation }) {
         <Button title="Open layout studio" icon="open-outline" kind="secondary" onPress={() => navigation.navigate('Studio')} style={{ marginTop: 14, borderColor: '#fff' }} />
       </View>
       <Card>
-        <Action icon="newspaper-outline" title="Upload newspaper" text="A PDF or page photos of a paper. Its news is read and listed for you to add to the feed."
-          onPress={() => navigation.navigate('Imports')} />
-        <View style={s.sep} />
         <Action icon="cut-outline" title="Upload news cut" text="A photo of a small news cutting with its headline and text. It goes straight to the approved pool."
           onPress={() => navigation.navigate('NewsCut')} />
       </Card>
@@ -102,6 +102,7 @@ export default function HomeScreen({ navigation }) {
 }
 
 const s = StyleSheet.create({
+  roles: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   headAvatar: { borderRadius: 18, borderWidth: 2, borderColor: 'rgba(255,255,255,.7)' },
   hello: { fontSize: 17, fontWeight: '800', color: C.ink, marginBottom: 4 },
   hero: { backgroundColor: C.blue, borderRadius: 16, padding: 18, marginBottom: 12, borderBottomWidth: 4, borderBottomColor: C.saffron },
@@ -112,7 +113,6 @@ const s = StyleSheet.create({
   actionIcon: { width: 44, height: 44, borderRadius: 12, backgroundColor: C.blueSoft, alignItems: 'center', justifyContent: 'center' },
   actionTitle: { fontSize: 15, fontWeight: '800', color: C.ink },
   actionText: { fontSize: 13, color: C.muted, lineHeight: 18, marginTop: 2 },
-  sep: { height: 1, backgroundColor: C.line, marginVertical: 8 },
   heading: { fontSize: 13, fontWeight: '800', color: C.muted, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 10 },
   row: { flexDirection: 'row', gap: 12 },
   edIcon: { width: 44, height: 44, borderRadius: 12, backgroundColor: C.blueSoft, alignItems: 'center', justifyContent: 'center' },

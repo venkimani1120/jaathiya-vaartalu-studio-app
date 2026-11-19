@@ -5,7 +5,7 @@ const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
 const connectDB = require('./config/db');
-const backfillNewsSource = require('./utils/backfill');
+const { backfillRoles, backfillNewsSource } = require('./utils/backfill');
 const { recoverInterrupted } = require('./services/importer');
 const extractor = require('./services/extractor');
 
@@ -66,6 +66,7 @@ app.use((err, _req, res, _next) => {
 const port = process.env.PORT || 4000;
 connectDB().then(() => {
   app.listen(port, () => console.log(`API on :${port} (${APP_ENV})`));
+  backfillRoles().catch(e => console.error('Roles backfill failed:', e.message));
   backfillNewsSource().catch(e => console.error('News source backfill failed:', e.message));
   recoverInterrupted().catch(e => console.error('Import recovery failed:', e.message)).then(() => extractor.start())
     .catch(e => console.error('Extractor start failed:', e.message));

@@ -13,7 +13,8 @@ const extractor = require('../services/extractor');
 const News = require('../models/News');
 
 // Other papers' e-papers, uploaded by the desk so their news can be extracted and reused.
-router.use(authenticate, authorize('editor', 'admin'));
+// Uploading other papers is editors' work: an admin needs the Editor role too.
+router.use(authenticate, authorize('editor'));
 
 const MAX_MB = Number(process.env.IMPORT_MAX_MB || 60);
 const MAX_PAGES = 40;

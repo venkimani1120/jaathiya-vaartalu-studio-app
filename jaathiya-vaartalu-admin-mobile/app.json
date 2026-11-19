@@ -43,8 +43,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Pick photos for news cards.",
-          "cameraPermission": "Take photos for news cards."
+          "photosPermission": "Pick photos for news cards and newspaper pages to upload.",
+          "cameraPermission": "Take photos for news cards and newspaper pages."
         }
       ],
       "expo-secure-store",

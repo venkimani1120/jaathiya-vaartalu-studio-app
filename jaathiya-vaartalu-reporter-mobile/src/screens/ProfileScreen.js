@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ActionSheetIOS, Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { useAuth } from '../auth';
+import { rolesOf, useAuth } from '../auth';
 import { errMsg, uploadImages } from '../api';
 import { Avatar, Badge, Banner, Button, C, Card, Field, Icon, SectionTitle } from '../ui';
 
@@ -18,7 +18,6 @@ export default function ProfileScreen({ navigation }) {
   const [msg, setMsg] = useState({ ok: '', err: '' });
   const set = k => v => { setF(s => ({ ...s, [k]: v })); setMsg({ ok: '', err: '' }); };
   const changed = f.name.trim() !== (user.name || '') || f.phone.trim() !== (user.phone || '');
-  const [roleLabel, roleColor] = ROLES[user.role] || [user.role, C.muted];
   const area = [user.constituency, user.district, user.state].filter(Boolean).join(', ');
 
   const save = async () => {
@@ -68,7 +67,9 @@ export default function ProfileScreen({ navigation }) {
         </Pressable>
         <Text style={s.name} numberOfLines={1}>{user.name}</Text>
         <Text style={s.email} numberOfLines={1}>{user.email}</Text>
-        <Badge text={roleLabel} color={roleColor} />
+        <View style={s.roles}>
+          {rolesOf(user).map(r => { const [label, color] = ROLES[r] || [r, C.muted]; return <Badge key={r} text={label} color={color} />; })}
+        </View>
         <View style={s.photoBtns}>
           <Button title={user.avatar ? 'Change photo' : 'Add photo'} icon="camera-outline" kind="secondary" small loading={photoBusy} onPress={photoMenu} />
           {user.avatar && !photoBusy ? <Button title="Remove" kind="danger" small onPress={removePhoto} /> : null}
@@ -105,6 +106,7 @@ const Row = ({ icon, title, color = C.ink, onPress }) => (
 );
 
 const s = StyleSheet.create({
+  roles: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 6 },
   cam: { position: 'absolute', right: 0, bottom: 0, width: 32, height: 32, borderRadius: 16, backgroundColor: C.blue,
     borderWidth: 2, borderColor: '#fff', alignItems: 'center', justifyContent: 'center' },
   name: { fontSize: 19, fontWeight: '800', color: C.ink, marginTop: 12 },

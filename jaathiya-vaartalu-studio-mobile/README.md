@@ -1,22 +1,20 @@
 # Jaathiya Vaartalu – Studio app (e-paper)
 
-The e-paper app for **editors and admins**: lay out and publish the e-paper, upload other newspapers, and add small news cuts. It runs on **Android and iOS** and uses the same [API server](../jaathiya-vaartalu-backend/README.md) and MongoDB data as the other apps.
+The e-paper app for **editors and admins**: lay out and publish the e-paper, and add small news cuts. It runs on **Android and iOS** and uses the same [API server](../jaathiya-vaartalu-backend/README.md) and MongoDB data as the other apps.
 
 | | |
 |---|---|
 | App name | JV Studio |
 | Android package / iOS bundle id | `com.jaathiyavaartalu.studio` |
-| Who can sign in | Editors and admins, with the same accounts as JV Admin and the web app. Reporters are asked to use JV Reporter. |
+| Who can sign in | Editors and admins, with the same accounts as JV Admin and the web app. Reporters are asked to use JV Reporter. Uploading other newspapers and reading their news is in **JV Admin**. |
 | API | `https://jaathiya-vaartalu-studio-app.onrender.com` in release builds |
 
-**Tech:** React Native with Expo (SDK 58), React Navigation, axios, Expo SecureStore (sign-in tokens), Expo Image Picker, Expo Document Picker, react-native-webview.
+**Tech:** React Native with Expo (SDK 58), React Navigation, axios, Expo SecureStore (sign-in tokens), Expo Image Picker, react-native-webview.
 
 ## Features
 
 - **Layout studio:** the same drag-and-drop studio as the web app (served by the API at `/studio`), shown inside the app. Arrange approved news on pages, merge pages and publish. The open edition is saved before you leave the studio. It works best on a tablet or with the phone turned sideways.
 - **Editions:** drafts and published editions, with a **Share** link for published ones.
-- **Upload newspaper:** another paper's e-paper as **one PDF** or **up to 40 page photos** (gallery or camera, reordered with arrows), with the paper, edition, date, edition type and an optional district. Names already used are suggested.
-- **Imported paper:** its pages, and the news the server read from each page. Tick news to **add to the feed** (it then waits for review) or **delete** it. You can read a page or the whole paper again, or delete the import.
 - **Upload news cut:** photograph or pick a small news cutting and crop it, type its headline and text, and choose section and place. It is saved as an approved news card, so it is ready to place in the studio right away.
 
 **One device at a time:** an account can be signed in on one device. Signing in to this app signs the same account out of JV Admin and the web app.
@@ -86,13 +84,13 @@ To remake the icons, run `node scripts/make-app-icons.js` in `jaathiya-vaartalu-
 
 ```
 App.js               navigation: sign-in screens, then the app's screens
-src/screens/         LoginScreen, HomeScreen (studio, uploads, editions), StudioScreen (WebView), ImportsScreen, ImportPaperScreen, NewsCutScreen
+src/screens/         LoginScreen, HomeScreen (studio, news cut, editions), StudioScreen (WebView), NewsCutScreen
 src/LoginView.js     sign-in page shared by the three mobile apps
 src/api.js           axios client with token refresh, photo uploads
 src/auth.js          signed-in user, which roles may use this app
 src/config.js        which API server to call
 src/ui.js            colours and shared components (buttons, fields, chips, cards, banners)
-src/constants.js     sections, statuses, sources, edition types
+src/constants.js     sections, statuses, sources
 src/PlacePicker.js   State → District → Constituency picker (data in src/locations.json)
 ```
 

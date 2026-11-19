@@ -1,9 +1,15 @@
 const News = require('../models/News');
 const User = require('../models/User');
 
+// Accounts saved before members could hold several roles get `roles` = [their one role].
+async function backfillRoles() {
+  const r = await User.updateMany({ $or: [{ roles: { $exists: false } }, { roles: { $size: 0 } }] }, [{ $set: { roles: ['$role'] } }]);
+  if (r.modifiedCount) console.log(`Set roles for ${r.modifiedCount} account(s)`);
+}
+
 // Cards saved before `source` existed get it from their author's current role. Runs at start-up;
 // once every card has a source it is a single empty query.
-module.exports = async function backfillNewsSource() {
+async function backfillNewsSource() {
   const authors = await News.distinct('author', { source: { $exists: false } });
   if (!authors.length) return;
   const users = await User.find({ _id: { $in: authors } }, 'role');
@@ -13,4 +19,6 @@ module.exports = async function backfillNewsSource() {
     if (ids.length) await News.updateMany({ source: { $exists: false }, author: { $in: ids } }, { $set: { source } });
   }
   console.log(`Set news source for cards by ${authors.length} author(s)`);
-};
+}
+
+module.exports = { backfillRoles, backfillNewsSource };

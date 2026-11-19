@@ -8,7 +8,7 @@ const User = require('../src/models/User');
   await mongoose.connect(MONGODB_URI);
   const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, 12);
   await User.findOneAndUpdate({ email: ADMIN_EMAIL.toLowerCase() },
-    { name: ADMIN_NAME || 'Admin', email: ADMIN_EMAIL.toLowerCase(), passwordHash, role: 'admin', active: true },
+    { name: ADMIN_NAME || 'Admin', email: ADMIN_EMAIL.toLowerCase(), passwordHash, role: 'admin', roles: ['admin'], active: true },
     { upsert: true, new: true });
   console.log('Admin ready:', ADMIN_EMAIL);
   await mongoose.disconnect();

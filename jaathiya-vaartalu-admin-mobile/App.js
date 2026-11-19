@@ -12,6 +12,8 @@ import PasswordScreen from './src/screens/PasswordScreen';
 import NewsEditorScreen from './src/screens/NewsEditorScreen';
 import ReviewScreen from './src/screens/ReviewScreen';
 import UsersScreen from './src/screens/UsersScreen';
+import ImportsScreen from './src/screens/ImportsScreen';
+import ImportPaperScreen from './src/screens/ImportPaperScreen';
 
 const Stack = createNativeStackNavigator();
 // Logo mark beside the title on the home screen.
@@ -35,6 +37,8 @@ function Routes() {
           <Stack.Screen name="NewsEditor" component={NewsEditorScreen} options={({ route }) => ({ title: route.params?.id ? 'Edit news' : 'New news card' })} />
           <Stack.Screen name="Review" component={ReviewScreen} options={{ title: 'Review news' }} />
           <Stack.Screen name="Users" component={UsersScreen} options={{ title: 'Team accounts' }} />
+          <Stack.Screen name="Imports" component={ImportsScreen} options={{ title: 'Upload newspaper' }} />
+          <Stack.Screen name="ImportPaper" component={ImportPaperScreen} options={({ route }) => ({ title: route.params?.title || 'Imported paper' })} />
           <Stack.Screen name="Profile" component={ProfileScreen} options={{ title: 'My profile' }} />
           <Stack.Screen name="Password" component={PasswordScreen} options={{ title: 'Change password' }} />
         </>

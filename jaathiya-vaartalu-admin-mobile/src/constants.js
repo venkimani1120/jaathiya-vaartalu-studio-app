@@ -21,3 +21,5 @@ export const SOURCES = {
   epaper: { label: 'E-paper', color: '#B4231F' },
 };
 export const MAX_IMAGES = 10;
+// Edition types for e-papers (imported ones), as the server knows them.
+export const EDITION_TYPES = { state: 'State', district: 'District', constituency: 'Constituency', sports: 'Sports', business: 'Business' };
