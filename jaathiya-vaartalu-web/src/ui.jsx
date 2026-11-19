@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { SOURCES, STATUS } from './constants';
-import { ROLE_LABEL } from './auth';
+import { roleNames } from './auth';
 
 export const LOGO = './logo.png';   // public/logo.png: full logo
 export const MARK = './mark.png';   // public/mark.png: torch and map only, for small sizes
@@ -17,15 +17,17 @@ export function Field({ label, hint, multiline, ...props }) {
     </label>
   );
 }
+// value: the chosen key, or an array of keys when several can be on.
 export function Chips({ label, options, value, onChange, disabled }) {
   return (
     <div className="field" style={label ? undefined : { margin: 0 }}>
       {label ? <span>{label}</span> : null}
       <div className="chips" role="group" aria-label={label}>
-        {options.map(([k, v]) => (
-          <button type="button" key={k} disabled={disabled} aria-pressed={value === k}
-            className={`chip ${value === k ? 'on' : ''}`} onClick={() => onChange(k)}>{v}</button>
-        ))}
+        {options.map(([k, v]) => {
+          const on = Array.isArray(value) ? value.includes(k) : value === k;
+          return <button type="button" key={k} disabled={disabled} aria-pressed={on}
+            className={`chip ${on ? 'on' : ''}`} onClick={() => onChange(k)}>{v}</button>;
+        })}
       </div>
     </div>
   );
@@ -100,7 +102,7 @@ function ProfileMenu({ user, onSignOut }) {
       </button>
       {open ? (
         <div className="menu" role="menu">
-          <div className="menu-head"><Avatar user={user} size={40} /><div><b>{user.name}</b><span>{user.email}</span><em className="role-pill">{ROLE_LABEL[user.role] || user.role}</em></div></div>
+          <div className="menu-head"><Avatar user={user} size={40} /><div><b>{user.name}</b><span>{user.email}</span><em className="role-pill">{roleNames(user)}</em></div></div>
           <a role="menuitem" href="#/profile"><Icon name="user" />My profile</a>
           <a role="menuitem" href="#/password"><Icon name="lock" />Change password</a>
           <hr />

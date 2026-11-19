@@ -12,7 +12,7 @@ async function authenticate(req, _res, next) {
   let p;
   try { p = verifyAccess(token); } catch { return next(new HttpError(401, 'Session expired. Sign in again.')); }
   try {
-    const user = await User.findById(p.sub).select('name role active sessionId sessionSeenAt');
+    const user = await User.findById(p.sub).select('name role roles active sessionId sessionSeenAt');
     const problem = sessionProblem(user, p.sid);
     if (problem) {
       if (user && user.sessionId === p.sid) await User.updateOne({ _id: user._id, sessionId: p.sid }, { $unset: { sessionId: 1, sessionSeenAt: 1 } });
@@ -20,10 +20,11 @@ async function authenticate(req, _res, next) {
     }
     if (Date.now() - user.sessionSeenAt.getTime() > 60 * 1000)
       await User.updateOne({ _id: user._id, sessionId: p.sid }, { $set: { sessionSeenAt: new Date() } });
-    req.user = { id: String(user._id), role: user.role, name: user.name, sid: p.sid };
+    req.user = { id: String(user._id), role: user.role, roles: user.roleList(), name: user.name, sid: p.sid };
     next();
   } catch (e) { next(e); }
 }
+// Lets the request through when the member holds any of the given roles.
 const authorize = (...roles) => (req, _res, next) =>
-  roles.includes(req.user.role) ? next() : next(new HttpError(403, 'Your role cannot do this.'));
+  roles.some(r => req.user.roles.includes(r)) ? next() : next(new HttpError(403, 'Your role cannot do this.'));
 module.exports = { authenticate, authorize };

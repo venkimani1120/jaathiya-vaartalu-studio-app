@@ -43,8 +43,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Pick e-paper pages and news cuts to upload.",
-          "cameraPermission": "Photograph e-paper pages and news cuts to upload."
+          "photosPermission": "Pick news cuts to upload.",
+          "cameraPermission": "Photograph news cuts to upload."
         }
       ],
       "expo-secure-store",

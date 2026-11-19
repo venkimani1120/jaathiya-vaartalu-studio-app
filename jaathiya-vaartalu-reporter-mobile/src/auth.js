@@ -9,6 +9,10 @@ export const useAuth = () => useContext(Ctx);
 const ALLOWED_ROLES = ['reporter'];
 const WRONG_APP = 'This app is for reporters. Editors and admins, please use the JV Admin app.';
 
+// Every role a member holds (a member can have several, e.g. Admin and Editor).
+export const rolesOf = user => (user?.roles?.length ? user.roles : user?.role ? [user.role] : []);
+const allowed = user => rolesOf(user).some(r => ALLOWED_ROLES.includes(r));
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [ready, setReady] = useState(false);
@@ -19,7 +23,7 @@ export function AuthProvider({ children }) {
       try {
         if (await SecureStore.getItemAsync('refresh')) {
           const me = (await api.get('/auth/me')).data.user;
-          if (ALLOWED_ROLES.includes(me.role)) setUser(me); else await clearTokens();
+          if (allowed(me)) setUser(me); else await clearTokens();
         }
       } catch { await clearTokens(); }
       setReady(true);
@@ -28,7 +32,7 @@ export function AuthProvider({ children }) {
 
   const signIn = async (email, password) => {
     const { data } = await api.post('/auth/login', { email: email.trim(), password });
-    if (!ALLOWED_ROLES.includes(data.user.role)) throw new Error(WRONG_APP);
+    if (!allowed(data.user)) throw new Error(WRONG_APP);
     await saveTokens(data);
     setUser(data.user);
   };

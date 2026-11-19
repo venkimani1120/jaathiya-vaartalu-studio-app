@@ -23,7 +23,7 @@ const ID = '[a-f0-9]{24}';
 // Top navigation per role: [tab id, hash, icon, label, permission needed]
 const NAV = {
   reporter: [['home', '#/', 'news', 'My news'], ['approved', '#/approved', 'check', 'Approved · 30 days'], ['new', '#/news/new', 'plus', 'New news card']],
-  desk: [['home', '#/', 'news', 'News'], ['epapers', '#/epapers', 'image', 'E-paper'], ['imports', '#/imports', 'upload', 'Imports'], ['studio', '#/studio', 'layout', 'Layout studio'], ['users', '#/users', 'users', 'Team accounts', 'users'], ['new', '#/news/new', 'plus', 'New news card']],
+  desk: [['home', '#/', 'news', 'News'], ['epapers', '#/epapers', 'image', 'E-paper'], ['imports', '#/imports', 'upload', 'Imports', 'imports'], ['studio', '#/studio', 'layout', 'Layout studio'], ['users', '#/users', 'users', 'Team accounts', 'users'], ['new', '#/news/new', 'plus', 'New news card']],
 };
 
 // Returns [active tab, page] for the current route. Pages a role may not use fall back to its home page.
@@ -35,8 +35,8 @@ function page(route, can) {
   if (can.desk) {
     if ((m = route.match(new RegExp(`^/review/(${ID})$`)))) return ['home', <Review key={m[1]} id={m[1]} />];
     if (route === '/epapers') return ['epapers', <Epapers />];
-    if (route === '/imports') return ['imports', <Imports />];
-    if ((m = route.match(new RegExp(`^/imports/(${ID})$`)))) return ['imports', <ImportPaper key={m[1]} id={m[1]} />];
+    if (route === '/imports' && can.imports) return ['imports', <Imports />];
+    if (can.imports && (m = route.match(new RegExp(`^/imports/(${ID})$`)))) return ['imports', <ImportPaper key={m[1]} id={m[1]} />];
     if (route === '/studio') return ['studio', null];   // StudioFrame below
     if (route === '/users' && can.users) return ['users', <Users />];
     return ['home', <DeskNews />];

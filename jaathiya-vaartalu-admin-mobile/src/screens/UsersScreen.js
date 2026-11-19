@@ -2,11 +2,14 @@ import React, { useCallback, useState } from 'react';
 import { Alert, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { api, errMsg } from '../api';
+import { rolesOf, useAuth } from '../auth';
 import { Avatar, Badge, Button, C, Card, Chips, EmptyState, Meta } from '../ui';
 
 const ROLES = [['reporter', 'Reporter', 'mic-outline'], ['editor', 'Editor', 'create-outline'], ['admin', 'Admin', 'shield-checkmark-outline']];
 
+// Admins approve accounts and choose each member's roles (one or more). An admin needs the Editor role too to upload newspapers.
 export default function UsersScreen() {
+  const { user: me, refreshUser } = useAuth();
   const [filter, setFilter] = useState('pending');
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -19,7 +22,18 @@ export default function UsersScreen() {
   useFocusEffect(useCallback(() => { load(); }, [load]));
   const update = async (u, body) => {
     setBusy(u.id);
-    try { await api.patch(`/users/${u.id}`, body); await load(); } catch (e) { Alert.alert('Not saved', errMsg(e)); } finally { setBusy(null); }
+    try {
+      await api.patch(`/users/${u.id}`, body); await load();
+      if (String(u.id) === String(me.id)) await refreshUser();   // own roles changed: update the home screen
+    } catch (e) { Alert.alert('Not saved', errMsg(e)); } finally { setBusy(null); }
+  };
+  // Turns one role on or off; at least one role stays on, and admins cannot take Admin off themselves.
+  const toggleRole = (u, r) => {
+    const has = rolesOf(u);
+    if (String(u.id) === String(me.id) && r === 'admin') return Alert.alert('Not changed', 'You cannot remove your own Admin role.');
+    const roles = has.includes(r) ? has.filter(x => x !== r) : [...has, r];
+    if (!roles.length) return Alert.alert('Not changed', 'A member needs at least one role.');
+    update(u, { roles });
   };
   const toggle = u => (u.active
     ? Alert.alert(`Deactivate ${u.name}?`, 'They will be signed out and cannot sign in until an admin turns the account back on.', [
@@ -48,7 +62,7 @@ export default function UsersScreen() {
             <Meta icon="call-outline" text={u.phone} />
             <Meta icon="location-outline" text={u.constituency || u.district} />
           </View>
-          <Chips label="Role" options={ROLES} value={u.role} onChange={role => role !== u.role && update(u, { role })} />
+          <Chips label="Roles (tap to turn on or off)" options={ROLES} value={rolesOf(u)} onChange={r => busy !== u.id && toggleRole(u, r)} />
           <Button title={u.active ? 'Deactivate' : 'Approve account'} icon={u.active ? 'ban-outline' : 'checkmark-circle-outline'}
             kind={u.active ? 'danger' : 'primary'} small loading={busy === u.id} onPress={() => toggle(u)} />
         </Card>

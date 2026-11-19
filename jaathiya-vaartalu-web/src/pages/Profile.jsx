@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { useAuth } from '../auth';
+import { roleNames, useAuth } from '../auth';
 import { errMsg, uploadImages } from '../api';
 import { Avatar, Button, Field, Icon } from '../ui';
 
@@ -64,7 +64,7 @@ export default function Profile() {
           <div style={{ flex: 1, minWidth: 200 }}>
             <h3>{user.name}</h3>
             <div className="muted" style={{ fontSize: 14 }}>{user.email}</div>
-            <span className="role-pill">{user.role}</span>
+            <span className="role-pill">{roleNames(user)}</span>
           </div>
           <div className="row">
             <Button kind="secondary" onClick={() => pick.current.click()} disabled={photoBusy}>

@@ -10,8 +10,6 @@ import HomeScreen from './src/screens/HomeScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import PasswordScreen from './src/screens/PasswordScreen';
 import StudioScreen from './src/screens/StudioScreen';
-import ImportsScreen from './src/screens/ImportsScreen';
-import ImportPaperScreen from './src/screens/ImportPaperScreen';
 import NewsCutScreen from './src/screens/NewsCutScreen';
 
 const Stack = createNativeStackNavigator();
@@ -35,8 +33,6 @@ function Routes() {
           <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'జాతియ వార్తలు Studio', headerTitle: () => <BrandTitle title={'జాతియ వార్తలు Studio'} /> }} />
           {/* No iOS swipe-back here: dragging stories near the left edge would leave the studio. */}
           <Stack.Screen name="Studio" component={StudioScreen} options={{ title: 'Layout studio', gestureEnabled: false }} />
-          <Stack.Screen name="Imports" component={ImportsScreen} options={{ title: 'Upload newspaper' }} />
-          <Stack.Screen name="ImportPaper" component={ImportPaperScreen} options={({ route }) => ({ title: route.params?.title || 'Imported paper' })} />
           <Stack.Screen name="NewsCut" component={NewsCutScreen} options={({ route }) => ({ title: route.params?.id ? 'Edit news cut' : 'New news cut' })} />
           <Stack.Screen name="Profile" component={ProfileScreen} options={{ title: 'My profile' }} />
           <Stack.Screen name="Password" component={PasswordScreen} options={{ title: 'Change password' }} />

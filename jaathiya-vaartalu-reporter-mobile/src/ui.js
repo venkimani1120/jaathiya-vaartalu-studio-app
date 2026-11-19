@@ -54,13 +54,14 @@ export function Field({ label, icon, right, error, hint, inputRef, style, ...pro
   );
 }
 
+// value: the chosen key, or an array of keys when several can be on.
 export function Chips({ label, options, value, onChange, icon }) {
   return (
     <View style={{ marginBottom: 12 }}>
       {label ? <Text style={st.label}>{label}</Text> : null}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 8 }}>
         {options.map(([k, v, ic]) => {
-          const on = value === k;
+          const on = Array.isArray(value) ? value.includes(k) : value === k;
           return (
             <Pressable key={k} onPress={() => onChange(k)} style={[st.chip, on && st.chipOn]} accessibilityRole="button" accessibilityState={{ selected: on }}>
               {ic || (on && icon) ? <Ionicons name={ic || icon} size={14} color={on ? '#fff' : C.muted} style={{ marginRight: 5 }} /> : null}

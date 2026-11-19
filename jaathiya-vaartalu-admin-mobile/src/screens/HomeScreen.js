@@ -1,7 +1,7 @@
 import React, { useCallback, useLayoutEffect, useMemo, useState } from 'react';
 import { Pressable, RefreshControl, SectionList, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { useAuth } from '../auth';
+import { rolesOf, useAuth } from '../auth';
 import { api, errMsg } from '../api';
 import { SOURCES, STATUS } from '../constants';
 import PlacePicker from '../PlacePicker';
@@ -83,12 +83,16 @@ export default function HomeScreen({ navigation }) {
           <Avatar name={user.name} uri={user.avatar} size={46} />
           <View style={{ flex: 1, marginLeft: 12 }}>
             <Text style={s.hello} numberOfLines={1}>{user.name}</Text>
-            <Badge text={user.role === 'admin' ? 'Admin' : 'Editor'} color={user.role === 'admin' ? C.ok : C.blue} />
+            <View style={s.roles}>
+              {rolesOf(user).includes('admin') ? <Badge text="Admin" color={C.ok} /> : null}
+              {rolesOf(user).includes('editor') ? <Badge text="Editor" color={C.blue} /> : null}
+            </View>
           </View>
           <Icon name="chevron-forward" size={18} color={C.faint} />
         </Pressable>
-        {can.users ? <View style={s.tiles}>
-          <Tile icon="people-outline" title="Team" onPress={() => navigation.navigate('Users')} />
+        {can.imports || can.users ? <View style={s.tiles}>
+          {can.imports ? <Tile icon="newspaper-outline" title="Upload newspaper" onPress={() => navigation.navigate('Imports')} /> : null}
+          {can.users ? <Tile icon="people-outline" title="Team" onPress={() => navigation.navigate('Users')} /> : null}
         </View> : null}
       </Card>
 
@@ -138,6 +142,7 @@ export default function HomeScreen({ navigation }) {
 }
 
 const s = StyleSheet.create({
+  roles: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   headAvatar: { borderRadius: 18, borderWidth: 2, borderColor: 'rgba(255,255,255,.7)' },
   hello: { fontSize: 17, fontWeight: '800', color: C.ink, marginBottom: 4 },
   tiles: { flexDirection: 'row', gap: 8, marginTop: 14 },
