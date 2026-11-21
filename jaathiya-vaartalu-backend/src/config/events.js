@@ -4,16 +4,15 @@
 // An event that is not listed here leaves the header plain.
 
 // How each style looks. header: picture set (jaathiyavaartalu-<header>-1x/2x.png, made by
-// shared/make_event_headers.py, which has the pictures' own colours); title: colour stops for the studio's
-// masthead text, top to bottom of its box (the letters fill about 8-80% of it); stripe: the greeting strip
+// shared/make_event_headers.py, which has the pictures' own colours); stripe: the greeting strip
 // (top edge, middle, bottom edge); text: greeting colour on the middle; ink: dark colour for headings and
 // bands; rule: accent for lines; font: greeting font.
 const STYLES = {
-  tricolour: { header: 'tricolour', title: [[0, '#E8730C'], [0.31, '#E8730C'], [0.31, '#0B2F8A'], [0.45, '#0B2F8A'], [0.45, '#138808'], [1, '#138808']],
+  tricolour: { header: 'tricolour',
     stripe: ['#FF9933', '#FFFFFF', '#138808'], text: '#0B2F8A', ink: '#0B2F8A', rule: '#138808', font: 'Ramabhadra' },
-  green: { header: 'green', title: [[0, '#2E7D32'], [1, '#1B5E20']],
+  green: { header: 'green',
     stripe: ['#81C784', '#2E7D32', '#1B5E20'], text: '#FFFFFF', ink: '#1B5E20', rule: '#5D9C3A', font: 'Ramabhadra' },
-  festive: { header: 'festive', title: [[0, '#C62828'], [1, '#8E0000']],
+  festive: { header: 'festive',
     stripe: ['#F9A825', '#B71C1C', '#F9A825'], text: '#FFFFFF', ink: '#B71C1C', rule: '#C8930F', font: 'Ramabhadra' },
 };
 

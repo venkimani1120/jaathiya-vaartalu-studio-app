@@ -1,11 +1,11 @@
 # Makes the event versions of the e-paper header from the plain one (python3 shared/make_event_headers.py).
 # Reads jaathiya-vaartalu-web/public/jaathiyavaartalu{1,2}x.png and writes jaathiyavaartalu-<style>-{1,2}x.png
-# to the web app and the Admin app. Every pixel of the plain header is cream blended with one key colour
+# to the web app, the Admin app and the server (for the e-paper studio). Every pixel of the plain header is cream blended with one key colour
 # (maroon title, gold frame, dark text); the maroon and gold are swapped for the style's colours, so edges
 # stay smooth. Styles match STYLES in jaathiya-vaartalu-backend/src/config/events.js.
 import pathlib, shutil, struct, zlib
 root = pathlib.Path(__file__).resolve().parent.parent
-WEB = root / 'jaathiya-vaartalu-web/public'; ADMIN = root / 'jaathiya-vaartalu-admin-mobile/assets'
+WEB = root / 'jaathiya-vaartalu-web/public'; ADMIN = root / 'jaathiya-vaartalu-admin-mobile/assets'; SERVER = root / 'jaathiya-vaartalu-backend/public'
 
 def load(f):
   d=open(f,'rb').read(); i=8; idat=b''
@@ -75,5 +75,5 @@ for style in STYLES:
     for s in (1, 2):
         out = WEB / f'jaathiyavaartalu-{style}-{s}x.png'
         recolour(WEB / f'jaathiyavaartalu{s}x.png', out, s, style)
-        shutil.copy(out, ADMIN / out.name)
+        for d in (ADMIN, SERVER): shutil.copy(out, d / out.name)
         print('made', out.name)

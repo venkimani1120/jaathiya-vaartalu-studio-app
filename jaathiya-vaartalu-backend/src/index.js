@@ -39,6 +39,8 @@ app.use('/api/imports', require('./routes/imports'));
 app.use('/api/public', require('./routes/public'));
 app.use('/uploads', express.static(path.join(__dirname, '../uploads'), { maxAge: '7d' }));
 for (const f of ['logo.png', 'mark.png']) app.get('/' + f, (_req, res) => res.sendFile(path.join(__dirname, '../public', f), { maxAge: '7d' }));
+// E-paper header pictures for the studio's masthead (plain and event colours, 1x and 2x; same as the apps').
+app.get(/^\/jaathiyavaartalu(-(tricolour|green|festive)-)?[12]x\.png$/, (req, res) => res.sendFile(path.join(__dirname, '../public', req.path.slice(1)), { maxAge: '7d' }));
 
 // The web app for every role, when built (npm run build:web). It uses hash routes, so static files are enough.
 // The old Reporter (/reporter) and Desk (/desk) addresses forward to it so saved links keep working.

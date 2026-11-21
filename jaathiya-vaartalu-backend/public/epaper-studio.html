@@ -7,7 +7,7 @@
 <link rel="icon" id="favicon" href="data:,">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Telugu:wght@400;600;700&family=Noto+Serif+Telugu:wght@400;700&family=Ramabhadra&family=Anek+Telugu:wdth,wght@75..100,600..800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Telugu:wght@400;500;600;700&family=Noto+Serif+Telugu:wght@400;700&family=Ramabhadra&family=Anek+Telugu:wdth,wght@75..100,600..800&display=swap" rel="stylesheet">
 <!--JV_CONFIG-->
 <style>
 :root{
@@ -85,46 +85,38 @@ select{border:1px solid var(--line);background:var(--panel2);padding:7px 8px;bor
 /* ---------- newspaper ---------- */
 .pg-outer{width:calc(820px*var(--s));height:calc(1240px*var(--s));margin:0 auto 22px;position:relative}
 .paper{position:absolute;top:0;left:0;width:820px;height:1240px;transform:scale(var(--s));transform-origin:0 0;background:var(--paper);color:var(--np-ink);padding:22px 24px 16px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.2),0 10px 30px rgba(15,25,45,.18)}
-.mast{display:grid;grid-template-columns:150px 1fr 168px;gap:14px;height:168px}
-.tribute.haslogo{background:transparent}
-.tribute .mlogo{width:100%;height:100%;object-fit:contain}
+/* Masthead: the e-paper header picture, the same one the news download uses (in the event's colours on an
+   event's date), with the edition date and place written into its blank spots. Sizes are in cqw, 1/100 of
+   the picture's width, so they follow the picture; the numbers are the 1x picture's pixels / 12.4. */
+/* The page's colours follow the masthead picture: maroon title, gold frame and rules, cream ground,
+   dark-brown text (the editing tools keep their own pink). Event themes override them, see .paper[data-ev]. */
+.paper,.reader{--np-red:#7A0919;--np-deep:#5C0612;--np-blue:#8A6A2B;--np-gold:#8A6A2B;--np-yellow:#F7F1E3;--np-navy:#2A1A12;--np-deck:#8A6A2B}
+.mast{display:grid;grid-template-columns:1fr;gap:14px}
+.mast.withphoto{grid-template-columns:150px 1fr}
+.nameplate{position:relative;container-type:inline-size;min-width:0}
+.nameplate img{display:block;width:100%;height:auto}
+.nameplate span{position:absolute;height:2.419cqw;line-height:2.419cqw;white-space:nowrap;overflow:hidden;color:#2A1A12;font-family:"Noto Sans Telugu",sans-serif}
+.np-date{left:6.452cqw;width:93.548cqw;top:1.694cqw;font-size:1.129cqw;font-weight:600;text-align:center}
+.np-place{left:13.548cqw;width:22.581cqw;top:24.677cqw;font-size:1.048cqw;font-weight:500}
+/* bottom right: సంపుటి, సంచిక and the website, ending where the editor's line mirrors it (x 1151) */
+.np-meta{right:7.177cqw;width:36.29cqw;top:24.677cqw;font-size:1.048cqw;font-weight:500;text-align:right}
+.np-meta a{color:inherit;text-decoration:none}
+/* the logo in the space left of the title (x 70-245, centred on it) */
+.nameplate .np-logo{position:absolute;left:5.645cqw;top:6.29cqw;width:14.113cqw;height:12.097cqw;object-fit:contain}
 .ilogo{height:52px;width:auto}
 .tribute{background:#ECECEC;overflow:hidden;display:grid;place-items:center;color:#999;font-size:13px;text-align:center}
 .tribute img{width:100%;height:100%;object-fit:cover}
-.mtitle{display:flex;flex-direction:column;align-items:center;justify-content:center}
-.mtitle{min-width:0;overflow:hidden}
-/* Masthead title: Anek Telugu ExtraBold (condensed), crimson-to-deep-red fill with a gold and navy
-   3D edge that picks up the logo's colours. Falls back to solid red where text gradients aren't supported. */
-.mt{font:800 96px/1.1 'Anek Telugu',Ramabhadra,sans-serif;font-stretch:75%;color:var(--np-red);white-space:nowrap;transform-origin:center;
-  /* Telugu vowel signs rise above the line box and the gradient only paints inside the element's box,
-     so pad it to cover the full glyph height (otherwise the tops of ి, ా… are clipped). */
-  padding:.24em .06em .14em;margin:-.2em 0 -.1em;
-  filter:drop-shadow(2px 2px 0 var(--np-gold)) drop-shadow(2px 2px 0 var(--np-navy))}
-@supports ((-webkit-background-clip:text) or (background-clip:text)){
-  .mt{background:linear-gradient(180deg,#FF3A3F 0%,var(--np-red) 52%,#9E0C12 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
-}
-.tg{font:700 15px 'Anek Telugu',"Noto Sans Telugu",sans-serif;color:var(--np-navy);letter-spacing:.5px;margin-top:4px}
-.adbox{border:2px solid var(--np-red);padding:5px;text-align:center;font:600 12px/1.35 "Noto Sans Telugu",sans-serif;display:flex;flex-direction:column;gap:4px}
-.adbox b{background:var(--np-red);color:var(--np-yellow);font:400 24px/1.15 Ramabhadra,sans-serif;padding:3px}
-.adbox p{margin:0;flex:1;overflow:hidden}
-.adbox .ph{background:var(--np-red);color:#fff;font-weight:700;padding:2px 6px;align-self:center}
 .band{background:var(--np-red);color:#fff;font:600 13px/1.35 "Noto Sans Telugu",sans-serif;text-align:center;padding:5px 8px;margin-top:10px}
 .info{display:flex;width:max-content;min-width:100%;margin:6px 0 12px;font:700 14px/1 "Noto Sans Telugu",sans-serif;transform-origin:left center}
 .info span{padding:7px 9px;white-space:nowrap}
 .info .b{background:var(--np-blue);color:#fff}.info .y{background:var(--np-yellow);color:var(--np-ink)}.info .r{background:var(--np-yellow);color:var(--np-red)}
 .info .grow{flex:1;text-align:center}
-/* Event themes (GET /api/public/events): on an event's date the masthead, a greeting strip, the red band, the
+/* Event themes (GET /api/public/events): on an event's date the masthead picture, a greeting strip, the red band, the
    issue strip and the inner-page header take the event's colours (set as --ev-* on .paper); stories keep theirs. */
 .evbar{display:none}
 .paper[data-ev] .evbar{display:block;margin-top:8px;padding:3px 8px 0;border-top:6px solid var(--ev-s1);border-bottom:6px solid var(--ev-s3);
   background:var(--ev-s2);color:var(--ev-text);font:400 26px/1.35 var(--ev-font),"Noto Sans Telugu",sans-serif;text-align:center;white-space:nowrap;overflow:hidden}
-.paper[data-ev] .mt{color:var(--ev-ink);filter:drop-shadow(2px 2px 0 rgba(0,0,0,.18))}
-@supports ((-webkit-background-clip:text) or (background-clip:text)){
-  .paper[data-ev] .mt{background:var(--ev-title);-webkit-background-clip:text;background-clip:text;color:transparent}
-}
-.paper[data-ev] .tg{color:var(--ev-ink)}
-.paper[data-ev] .band,.paper[data-ev] .info .b,.paper[data-ev] .pno,.paper[data-ev] .datebar,.paper[data-ev] .adbox b,.paper[data-ev] .adbox .ph{background:var(--ev-ink)}
-.paper[data-ev] .adbox{border-color:var(--ev-ink)}
+.paper[data-ev] .band,.paper[data-ev] .info .b,.paper[data-ev] .pno,.paper[data-ev] .datebar{background:var(--ev-ink)}
 .paper[data-ev] .ihead{border-bottom-color:var(--ev-rule)}
 .paper[data-ev] .minimast{color:var(--ev-ink);border-color:var(--ev-ink);text-shadow:1px 1px 0 var(--ev-rule)}
 .ihead{display:flex;align-items:center;gap:12px;border-bottom:3px solid var(--np-blue);padding-bottom:7px;margin-bottom:12px}
@@ -145,7 +137,7 @@ select{border:1px solid var(--line);background:var(--panel2);padding:7px 8px;bor
 .s-blue h3{background:var(--np-blue);color:#fff;padding:5px 10px}
 .s-boxed{border:3px solid var(--np-red);padding:7px}
 .s-boxed h3{color:var(--np-blue);text-align:center}
-.deck{list-style:none;margin:0;padding:6px 10px;background:var(--np-pink);color:#fff;font:700 calc(14px*var(--fs,1))/1.55 "Noto Sans Telugu",sans-serif;text-align:center}
+.deck{list-style:none;margin:0;padding:6px 10px;background:var(--np-deck,var(--np-pink));color:#fff;font:700 calc(14px*var(--fs,1))/1.55 "Noto Sans Telugu",sans-serif;text-align:center}
 .deck li::before{content:"- "}
 /* auto-fit (fitStories): the photo takes the space the text leaves, between --ph and --pmax */
 .pics{flex:1 1 var(--ph,130px);min-height:var(--ph,70px);max-height:var(--pmax,none);display:flex;gap:6px}
@@ -354,10 +346,9 @@ const store = {
 const BRAND = {
   logo: MODE === 'api' ? '/logo.png' : 'logo.png', // server/public/logo.png
   masthead: 'జాతియ వార్తలు',
-  tagline: 'జాతియ తెలుగు దిన పత్రిక',
   publishedFrom: 'Published from Guntur, Bapatla, Palnadu, Amaravathi, Nellore, Visakhapatnam, Kakinada, Rayalaseema – All Districts of Andhra Pradesh',
+  website: 'https://jaathiya-vaartalu-studio-app.onrender.com/',
   editor: 'మామిడి రాజేష్', centre: 'గుంటూరు', price: 'రూ.2/-',
-  ad: { title: 'విలేఖరులు కావలెను', text: '‘జాతియ వార్తలు’ తెలుగు దినపత్రికలో పనిచేయుటకు ఆంధ్ర, తెలంగాణా రాష్ట్రాలలో విలేఖరులు కావలెను', phone: '9989 71 6940' },
   imprint: 'PRINTED, PUBLISHED and OWNED by Mamidi Rajesh, printed at Vasanth Printers, 2-348/40, Main Road, Mulapalem, Guntur, Andhra Pradesh – 522113, and published at Door No. 6-10-46, Arundelpeta, Guntur, Andhra Pradesh – 522002. Editor & Pro: Mamidi Rajesh, Ph: 99 89 71 69 40. R.N.I & PRGI: APTEL/25/A5264'
 };
 // State -> district -> constituencies (generated from shared/locations.json)
@@ -493,8 +484,7 @@ function editionTheme(e) {
 // data-ev and the --ev-* colours on .paper for a theme.
 function themeAttrs(t) {
   if (!t) return '';
-  const title = `linear-gradient(180deg,${t.title.map(([at, c]) => `${c} ${Math.round(at * 100)}%`).join(',')})`;
-  const vars = { '--ev-title': title, '--ev-s1': t.stripe[0], '--ev-s2': t.stripe[1], '--ev-s3': t.stripe[2], '--ev-text': t.text,
+  const vars = { '--ev-s1': t.stripe[0], '--ev-s2': t.stripe[1], '--ev-s3': t.stripe[2], '--ev-text': t.text,
     '--ev-ink': t.ink, '--ev-rule': t.rule, '--ev-font': `'${t.font}'` };
   return ` data-ev="${esc(t.id)}" style="${esc(Object.entries(vars).map(([k, v]) => `${k}:${v}`).join(';'))}"`;
 }
@@ -569,7 +559,7 @@ function makeEdition(type, key, date) {
   const editionDate = date || todayISO();
   return { id: 'e' + uid(), type, key: key || '', editionDate,
     title: t.label + (key ? ' – ' + key : ''), status: 'draft', shareSlug: null, dirty: false,
-    ...issueDetails(editionDate), theme: 'auto', price: BRAND.price, ad: { ...BRAND.ad }, tribute: null,
+    ...issueDetails(editionDate), theme: 'auto', price: BRAND.price, tribute: null,
     pages: t.pages.map(([template, label]) => ({ id: 'p' + uid(), template, label, slots: {}, styles: {} })) };
 }
 function placements() {
@@ -616,7 +606,7 @@ const API = {
 };
 const mapNews = n => ({ id: n._id || n.id, section: n.section, state: n.state || STATE_OF[n.district], district: n.district, constituency: n.constituency, dateline: n.dateline,
   title: n.title, highlights: n.highlights || [], body: n.body, images: n.images || [], reporter: (n.author && n.author.name) || n.reporter || '', source: n.source || 'reporter' });
-const mapEd = e => ({ ...e, id: e._id || e.id, editionDate: String(e.editionDate).slice(0, 10), ad: e.ad || { ...BRAND.ad },
+const mapEd = e => ({ ...e, id: e._id || e.id, editionDate: String(e.editionDate).slice(0, 10),
   pages: (e.pages || []).map(p => ({ ...p, slots: p.slots || {}, styles: p.styles || {}, content: p.content || {} })) });
 // Adds new stories and refreshes the ones already here, so edits made since (text, a cropped or
 // changed photo) show in the pool and on the pages.
@@ -655,7 +645,7 @@ async function loadEditionNews() {
   if (i >= 0) S.editions[i] = mapEd(d.epaper);
 }
 const stripEd = e => ({ title: e.title, type: e.type, key: e.key, editionDate: e.editionDate, ...issueDetails(e.editionDate), theme: e.theme || 'auto',
-  price: e.price, ad: e.ad, tribute: e.tribute,
+  price: e.price, tribute: e.tribute,
   pages: e.pages.map(p => { const on = new Set(Object.values(p.slots || {}));
     return { ...p, content: Object.fromEntries(Object.entries(p.content || {}).filter(([nid]) => on.has(nid))) }; }) });
 
@@ -813,14 +803,23 @@ function filterForEdition(e) {
 }
 
 /* ---------- rendering ---------- */
+// The header picture for a theme (null: plain), 1x and 2x; the browser takes the 2x one when the page
+// is drawn wider than 1240 screen pixels, as the news download does.
+function nameplateImg(t) {
+  const base = MODE === 'api' ? '/' : '', f = s => `${base}jaathiyavaartalu${t ? `-${t.header}-` : ''}${s}x.png`;
+  return `<img src="${f(1)}" srcset="${f(1)} 1240w, ${f(2)} 2480w" sizes="772px" alt="${esc(BRAND.masthead)}">`;
+}
+// "శనివారం, 15 ఆగస్టు 2026", the date as the header picture shows it.
+const headDate = iso => { const d = new Date(iso + 'T00:00:00'); return `${DAYS[d.getDay()]}, ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`; };
 function mastHTML(e) {
-  const pages = e.pages.length, { volume, issue } = issueDetails(e.editionDate);
-  return `<header class="mast">
-    <div class="tribute${e.tribute ? '' : ' haslogo'}">${e.tribute ? `<img src="${e.tribute}" alt="">` : `<img class="mlogo" src="${BRAND.logo}" alt="Jaathiya Vaartalu News">`}</div>
-    <div class="mtitle"><div class="mt">${esc(BRAND.masthead)}</div><div class="tg">${esc(BRAND.tagline)}</div></div>
-    <div class="adbox"><b>${esc(e.ad.title)}</b><p>${esc(e.ad.text)}</p><span class="ph">Cell : ${esc(e.ad.phone)}</span></div>
+  const pages = e.pages.length, { volume, issue } = issueDetails(e.editionDate), t = editionTheme(e);
+  return `<header class="mast${e.tribute ? ' withphoto' : ''}">
+    ${e.tribute ? `<div class="tribute"><img src="${e.tribute}" alt=""></div>` : ''}
+    <div class="nameplate">${nameplateImg(t)}<img class="np-logo" src="${BRAND.logo}" alt="">
+      <span class="np-date">${headDate(e.editionDate)}</span>${e.key ? `<span class="np-place">· ${esc(e.key)}</span>` : ''}
+      <span class="np-meta">సంపుటి: ${volume} · సంచిక: ${issue} · <a href="${esc(BRAND.website)}" target="_blank" rel="noopener">${esc(BRAND.website.replace(/^https?:\/\//, '').replace(/\/$/, ''))}</a></span></div>
   </header>
-  ${(t => t ? `<div class="evbar">${esc(t.greeting)}</div>` : '')(editionTheme(e))}
+  ${t ? `<div class="evbar">${esc(t.greeting)}</div>` : ''}
   <div class="band">${esc(BRAND.publishedFrom)}</div>
   <div class="info"><span class="b">సంపుటి : ${volume}</span><span class="b">సంచిక : ${issue}</span>
     <span class="y grow">${teDate(e.editionDate)}</span><span class="b">ఎడిటర్ : ${esc(BRAND.editor)}</span>
@@ -1047,7 +1046,7 @@ function fit() {
   fitText();
 }
 function fitText() {
-  document.querySelectorAll('.mt, .info').forEach(el => {
+  document.querySelectorAll('.info').forEach(el => {
     el.style.transform = '';
     const par = el.parentElement, cs = getComputedStyle(par);
     const avail = par.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
@@ -1463,10 +1462,7 @@ function openSettings() {
     <div class="two"><div><label>Date</label><input id="sDate" type="date" value="${e.editionDate}"></div><div><label>వెల (Price)</label><input id="sPrice" value="${esc(e.price)}"></div></div>
     <label for="sTheme">Header theme</label><select id="sTheme"></select>
     <label>Edition name</label><input id="sTitle" value="${esc(e.title)}">
-    <label>Box heading (right of masthead)</label><input id="sAdT" value="${esc(e.ad.title)}">
-    <label>Box text</label><textarea id="sAdX" rows="3">${esc(e.ad.text)}</textarea>
-    <label>Phone</label><input id="sAdP" value="${esc(e.ad.phone)}">
-    <label>Photo left of masthead (shows the logo when empty)</label><input id="sImg" type="file" accept="image/*">
+    <label>Photo left of the masthead (optional)</label><input id="sImg" type="file" accept="image/*">
     ${e.tribute ? '<button class="btn danger" id="sImgDel" style="margin-top:8px">Remove photo</button>' : ''}
     <div class="acts"><button class="btn" data-close>Cancel</button><button class="btn primary" id="sSave">Save details</button></div>`, sh => {
     let img = e.tribute;
@@ -1486,8 +1482,7 @@ function openSettings() {
     sh.querySelector('#sSave').onclick = () => {
       const editionDate = sh.querySelector('#sDate').value || e.editionDate;
       Object.assign(e, { editionDate, ...issueDetails(editionDate), theme: themeSel.value || 'auto',
-        price: sh.querySelector('#sPrice').value, title: sh.querySelector('#sTitle').value || e.title, tribute: img,
-        ad: { title: sh.querySelector('#sAdT').value, text: sh.querySelector('#sAdX').value, phone: sh.querySelector('#sAdP').value } });
+        price: sh.querySelector('#sPrice').value, title: sh.querySelector('#sTitle').value || e.title, tribute: img });
       closeModal(); commit(); toast('Details saved');
     };
   });

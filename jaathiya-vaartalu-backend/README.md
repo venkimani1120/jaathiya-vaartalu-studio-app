@@ -90,7 +90,7 @@ GET  /studio   GET /e/:slug   GET /app/
 - **Days on fixed dates** (Independence Day, Republic Day, Gandhi Jayanti, World Environment Day, AP and Telangana Formation Days, …) are listed by month and day.
 - **Festivals whose date moves** (Sankranti, Ugadi, Vinayaka Chavithi, Dasara, Deepavali, …) come from Google's public Indian holidays calendar, matched by name. `src/services/calendar.js` copies that calendar into the `calendarevents` collection at start and then once a day, with no API key. If Google can't be reached, the last copy stays. Google lists festival dates about two years ahead.
 
-To add an event, add a line to `EVENTS` in `src/config/events.js`. To add a look, add it to `STYLES` there and to `shared/make_event_headers.py`, then run `python3 shared/make_event_headers.py` to make its header pictures.
+To add an event, add a line to `EVENTS` in `src/config/events.js`. To add a look, add it to `STYLES` there and to `shared/make_event_headers.py`, then run `python3 shared/make_event_headers.py` to make its header pictures (it writes them to the web app, the Admin app and `public/` here).
 
 The [root README](../README.md) has the news flow (`draft → submitted → approved → published`), the e-paper studio and how imported e-papers are read.
 
@@ -104,7 +104,7 @@ src/models/         User, News, Epaper, SourcePaper (imported e-papers), DailyQu
 src/routes/         auth, users, news, uploads, epapers, imports, public
 src/services/       importer, pageStore (Cloudinary/local), extractor + gemini (news extraction), pdfPhotos, snap, calendar (holiday sync)
 src/utils/          HTTP errors, tokens, data backfills
-public/             epaper-studio.html (layout studio and public reader)
+public/             epaper-studio.html (layout studio and public reader), logo, e-paper header pictures (jaathiyavaartalu*.png)
 scripts/            create-admin, seed-test-data, make-app-icons
 ```
 
