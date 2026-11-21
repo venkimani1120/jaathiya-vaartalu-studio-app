@@ -24,6 +24,7 @@ const epaperSchema = new Schema({
   volume: String, issue: String, price: String,
   ad: { title: String, text: String, phone: String },
   tribute: { type: String, maxlength: 400000 },    // small masthead photo (data URL)
+  theme: { type: String, default: 'auto', maxlength: 40 },   // header theme: 'auto' (by date), 'none' or an event id (config/events.js)
   pages: [pageSchema],
   status: { type: String, enum: ['draft', 'published'], default: 'draft', index: true },
   shareSlug: { type: String, unique: true, sparse: true },

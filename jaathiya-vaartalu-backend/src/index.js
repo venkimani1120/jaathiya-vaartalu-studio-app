@@ -8,6 +8,7 @@ const connectDB = require('./config/db');
 const { backfillRoles, backfillNewsSource } = require('./utils/backfill');
 const { recoverInterrupted } = require('./services/importer');
 const extractor = require('./services/extractor');
+const calendar = require('./services/calendar');
 
 const app = express();
 app.set('trust proxy', 1); // behind Render/Koyeb proxy, needed for rate limiting
@@ -66,6 +67,7 @@ app.use((err, _req, res, _next) => {
 const port = process.env.PORT || 4000;
 connectDB().then(() => {
   app.listen(port, () => console.log(`API on :${port} (${APP_ENV})`));
+  calendar.start();
   backfillRoles().catch(e => console.error('Roles backfill failed:', e.message));
   backfillNewsSource().catch(e => console.error('News source backfill failed:', e.message));
   recoverInterrupted().catch(e => console.error('Import recovery failed:', e.message)).then(() => extractor.start())

@@ -113,6 +113,20 @@ select{border:1px solid var(--line);background:var(--panel2);padding:7px 8px;bor
 .info span{padding:7px 9px;white-space:nowrap}
 .info .b{background:var(--np-blue);color:#fff}.info .y{background:var(--np-yellow);color:var(--np-ink)}.info .r{background:var(--np-yellow);color:var(--np-red)}
 .info .grow{flex:1;text-align:center}
+/* Event themes (GET /api/public/events): on an event's date the masthead, a greeting strip, the red band, the
+   issue strip and the inner-page header take the event's colours (set as --ev-* on .paper); stories keep theirs. */
+.evbar{display:none}
+.paper[data-ev] .evbar{display:block;margin-top:8px;padding:3px 8px 0;border-top:6px solid var(--ev-s1);border-bottom:6px solid var(--ev-s3);
+  background:var(--ev-s2);color:var(--ev-text);font:400 26px/1.35 var(--ev-font),"Noto Sans Telugu",sans-serif;text-align:center;white-space:nowrap;overflow:hidden}
+.paper[data-ev] .mt{color:var(--ev-ink);filter:drop-shadow(2px 2px 0 rgba(0,0,0,.18))}
+@supports ((-webkit-background-clip:text) or (background-clip:text)){
+  .paper[data-ev] .mt{background:var(--ev-title);-webkit-background-clip:text;background-clip:text;color:transparent}
+}
+.paper[data-ev] .tg{color:var(--ev-ink)}
+.paper[data-ev] .band,.paper[data-ev] .info .b,.paper[data-ev] .pno,.paper[data-ev] .datebar,.paper[data-ev] .adbox b,.paper[data-ev] .adbox .ph{background:var(--ev-ink)}
+.paper[data-ev] .adbox{border-color:var(--ev-ink)}
+.paper[data-ev] .ihead{border-bottom-color:var(--ev-rule)}
+.paper[data-ev] .minimast{color:var(--ev-ink);border-color:var(--ev-ink);text-shadow:1px 1px 0 var(--ev-rule)}
 .ihead{display:flex;align-items:center;gap:12px;border-bottom:3px solid var(--np-blue);padding-bottom:7px;margin-bottom:12px}
 .pno{width:46px;height:46px;border-radius:50%;background:var(--np-red);color:#fff;display:grid;place-items:center;font:28px Ramabhadra,sans-serif}
 .minimast{background:var(--np-yellow);color:var(--np-red);font:800 32px/1.45 'Anek Telugu',Ramabhadra,sans-serif;font-stretch:75%;padding:2px 14px 0;border:2px solid var(--np-red);text-shadow:1px 1px 0 var(--np-navy)}
@@ -452,6 +466,38 @@ const todayISO = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.g
 // సంచిక is the day number (17/12/2025 is 1, 18/12/2025 is 2, …) and సంపుటి the running year (01 until
 // 16/12/2026, 02 from 17/12/2026, …). A date before registration has neither.
 const REGISTERED = '2025-12-17';
+// Event themes for the header, from the server: THEMES lists them all (to pick one by hand) and
+// EVENTS_ON caches the theme for each date (null: no event). Without the server the header stays plain.
+let THEMES = [];
+const EVENTS_ON = new Map();
+function loadThemes() {
+  if (MODE !== 'api') return Promise.resolve();
+  return fetch(CFG.apiBase + '/public/themes').then(r => r.ok ? r.json() : { themes: [] })
+    .then(d => { THEMES = d.themes || []; }).catch(() => {});
+}
+// The theme found for a date, fetched once; calls back when it arrives so the page can be drawn again.
+function eventTheme(date, then) {
+  if (EVENTS_ON.has(date)) { const v = EVENTS_ON.get(date); return v instanceof Promise ? undefined : v; }
+  if (MODE !== 'api') return null;
+  EVENTS_ON.set(date, fetch(CFG.apiBase + '/public/events?date=' + date).then(r => r.ok ? r.json() : { theme: null })
+    .catch(() => ({ theme: null })).then(d => { EVENTS_ON.set(date, d.theme || null); then && then(); }));
+  return undefined;
+}
+// The edition's header theme: chosen by hand, none, or (auto) the event on its date.
+function editionTheme(e) {
+  const pick = e.theme || 'auto';
+  if (pick === 'none') return null;
+  if (pick !== 'auto') return THEMES.find(t => t.id === pick) || null;
+  return eventTheme(e.editionDate, () => { if (ed() && ed().editionDate === e.editionDate) renderCanvas(); }) || null;
+}
+// data-ev and the --ev-* colours on .paper for a theme.
+function themeAttrs(t) {
+  if (!t) return '';
+  const title = `linear-gradient(180deg,${t.title.map(([at, c]) => `${c} ${Math.round(at * 100)}%`).join(',')})`;
+  const vars = { '--ev-title': title, '--ev-s1': t.stripe[0], '--ev-s2': t.stripe[1], '--ev-s3': t.stripe[2], '--ev-text': t.text,
+    '--ev-ink': t.ink, '--ev-rule': t.rule, '--ev-font': `'${t.font}'` };
+  return ` data-ev="${esc(t.id)}" style="${esc(Object.entries(vars).map(([k, v]) => `${k}:${v}`).join(';'))}"`;
+}
 function issueDetails(date) {
   const [y, m, d] = String(date).split('-').map(Number), [ry, rm, rd] = REGISTERED.split('-').map(Number);
   const days = Math.round((Date.UTC(y, m - 1, d) - Date.UTC(ry, rm - 1, rd)) / 864e5);
@@ -523,7 +569,7 @@ function makeEdition(type, key, date) {
   const editionDate = date || todayISO();
   return { id: 'e' + uid(), type, key: key || '', editionDate,
     title: t.label + (key ? ' – ' + key : ''), status: 'draft', shareSlug: null, dirty: false,
-    ...issueDetails(editionDate), price: BRAND.price, ad: { ...BRAND.ad }, tribute: null,
+    ...issueDetails(editionDate), theme: 'auto', price: BRAND.price, ad: { ...BRAND.ad }, tribute: null,
     pages: t.pages.map(([template, label]) => ({ id: 'p' + uid(), template, label, slots: {}, styles: {} })) };
 }
 function placements() {
@@ -608,7 +654,7 @@ async function loadEditionNews() {
   const i = S.editions.findIndex(e => e.id === S.cur);
   if (i >= 0) S.editions[i] = mapEd(d.epaper);
 }
-const stripEd = e => ({ title: e.title, type: e.type, key: e.key, editionDate: e.editionDate, ...issueDetails(e.editionDate),
+const stripEd = e => ({ title: e.title, type: e.type, key: e.key, editionDate: e.editionDate, ...issueDetails(e.editionDate), theme: e.theme || 'auto',
   price: e.price, ad: e.ad, tribute: e.tribute,
   pages: e.pages.map(p => { const on = new Set(Object.values(p.slots || {}));
     return { ...p, content: Object.fromEntries(Object.entries(p.content || {}).filter(([nid]) => on.has(nid))) }; }) });
@@ -774,6 +820,7 @@ function mastHTML(e) {
     <div class="mtitle"><div class="mt">${esc(BRAND.masthead)}</div><div class="tg">${esc(BRAND.tagline)}</div></div>
     <div class="adbox"><b>${esc(e.ad.title)}</b><p>${esc(e.ad.text)}</p><span class="ph">Cell : ${esc(e.ad.phone)}</span></div>
   </header>
+  ${(t => t ? `<div class="evbar">${esc(t.greeting)}</div>` : '')(editionTheme(e))}
   <div class="band">${esc(BRAND.publishedFrom)}</div>
   <div class="info"><span class="b">సంపుటి : ${volume}</span><span class="b">సంచిక : ${issue}</span>
     <span class="y grow">${teDate(e.editionDate)}</span><span class="b">ఎడిటర్ : ${esc(BRAND.editor)}</span>
@@ -857,7 +904,7 @@ function pageHTML(e, p, i, edit) {
   const add = !auto || !edit ? ''
     : extra > 0 ? `<div class="addslot over" role="alert">Page ${i + 1} holds up to ${auto.cap} stories: remove ${extra}</div>`
     : auto.free ? `<div class="slot addslot" data-drop="slot" data-page="${i}" data-slot="${auto.free}" tabindex="0">${S.sel ? `Tap here to add it to page ${i + 1}` : `+ Add a story (${auto.ids.length}/${auto.cap}): drop or tap here`}</div>` : '';
-  return `<div class="pg-outer" id="pg-${i}"><div class="paper${edit && S.sel ? ' pick' : ''}${edit && S.layoutMode && auto ? ' layoutmode' : ''}"${auto ? ` data-auto="${i}"` : ''}>${head}<div class="grid" style="${areasStyle(layout)}">${cells}</div>${add}${foot}</div></div>`;
+  return `<div class="pg-outer" id="pg-${i}"><div class="paper${edit && S.sel ? ' pick' : ''}${edit && S.layoutMode && auto ? ' layoutmode' : ''}"${auto ? ` data-auto="${i}"` : ''}${themeAttrs(editionTheme(e))}>${head}<div class="grid" style="${areasStyle(layout)}">${cells}</div>${add}${foot}</div></div>`;
 }
 const areasStyle = L => `grid-template-columns:repeat(${L.rows[0].length},minmax(0,1fr));grid-template-areas:${L.rows.map(r => `'${r.join(' ')}'`).join(' ')};` +
   `grid-template-rows:${(L.w || L.rows.map(() => 1)).map(x => `minmax(0,${+x.toFixed(3)}fr)`).join(' ')}`;
@@ -1414,6 +1461,7 @@ function openSettings() {
     <div class="two"><div><label>సంపుటి (Volume)</label><input id="sVol" value="${num.volume}" readonly></div><div><label>సంచిక (Issue)</label><input id="sIss" value="${num.issue}" readonly></div></div>
     <p style="color:var(--muted);margin:4px 0 0;font-size:13px">Set by the date, counted from registration on 17/12/2025: సంచిక is the day number, సంపుటి the running year.</p>
     <div class="two"><div><label>Date</label><input id="sDate" type="date" value="${e.editionDate}"></div><div><label>వెల (Price)</label><input id="sPrice" value="${esc(e.price)}"></div></div>
+    <label for="sTheme">Header theme</label><select id="sTheme"></select>
     <label>Edition name</label><input id="sTitle" value="${esc(e.title)}">
     <label>Box heading (right of masthead)</label><input id="sAdT" value="${esc(e.ad.title)}">
     <label>Box text</label><textarea id="sAdX" rows="3">${esc(e.ad.text)}</textarea>
@@ -1422,12 +1470,22 @@ function openSettings() {
     ${e.tribute ? '<button class="btn danger" id="sImgDel" style="margin-top:8px">Remove photo</button>' : ''}
     <div class="acts"><button class="btn" data-close>Cancel</button><button class="btn primary" id="sSave">Save details</button></div>`, sh => {
     let img = e.tribute;
-    sh.querySelector('#sDate').oninput = ev => { const n = issueDetails(ev.target.value); sh.querySelector('#sVol').value = n.volume; sh.querySelector('#sIss').value = n.issue; };
+    // Header theme: Automatic names the event found for the date in the box (if any).
+    const themeSel = sh.querySelector('#sTheme');
+    const themeOpts = (date, cur) => {
+      const found = eventTheme(date, () => { if (sh.isConnected && sh.querySelector('#sDate').value === date) themeOpts(date, themeSel.value); });
+      const auto = found === undefined ? 'Automatic (checking the date…)' : found ? `Automatic: ${found.name}` : 'Automatic: no event on this date';
+      themeSel.innerHTML = [['auto', auto], ['none', 'Plain'], ...THEMES.map(t => [t.id, t.name])]
+        .map(([k, v]) => `<option value="${esc(k)}"${k === cur ? ' selected' : ''}>${esc(v)}</option>`).join('');
+    };
+    themeOpts(e.editionDate, e.theme || 'auto');
+    sh.querySelector('#sDate').oninput = ev => { const n = issueDetails(ev.target.value); sh.querySelector('#sVol').value = n.volume; sh.querySelector('#sIss').value = n.issue;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(ev.target.value)) themeOpts(ev.target.value, themeSel.value); };
     sh.querySelector('#sImg').onchange = async ev => { const f = ev.target.files[0]; if (f) img = await shrinkImage(f, 420); };
     const del = sh.querySelector('#sImgDel'); if (del) del.onclick = () => { img = null; del.textContent = 'Photo will be removed'; };
     sh.querySelector('#sSave').onclick = () => {
       const editionDate = sh.querySelector('#sDate').value || e.editionDate;
-      Object.assign(e, { editionDate, ...issueDetails(editionDate),
+      Object.assign(e, { editionDate, ...issueDetails(editionDate), theme: themeSel.value || 'auto',
         price: sh.querySelector('#sPrice').value, title: sh.querySelector('#sTitle').value || e.title, tribute: img,
         ad: { title: sh.querySelector('#sAdT').value, text: sh.querySelector('#sAdX').value, phone: sh.querySelector('#sAdP').value } });
       closeModal(); commit(); toast('Details saved');
@@ -1680,6 +1738,7 @@ new ResizeObserver(fit).observe($('#canvas'));
 
 /* ---------- boot ---------- */
 async function boot() {
+  await loadThemes();
   const m = location.pathname.match(/\/e\/([\w-]+)/) || location.search.match(/[?&]view=([\w-]+)/);
   try {
     if (m) {

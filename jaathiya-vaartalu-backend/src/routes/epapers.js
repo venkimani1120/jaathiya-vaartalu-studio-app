@@ -6,7 +6,7 @@ const { authenticate, authorize } = require('../middleware/auth');
 const { HttpError, wrap, pick } = require('../utils/http');
 const { EDITION_TYPES } = require('../config/constants');
 
-const FIELDS = ['title', 'type', 'key', 'editionDate', 'volume', 'issue', 'price', 'ad', 'tribute', 'pages'];
+const FIELDS = ['title', 'type', 'key', 'editionDate', 'volume', 'issue', 'price', 'ad', 'tribute', 'theme', 'pages'];
 router.use(authenticate, authorize('editor', 'admin'));
 
 // ?status=published&type=district&from=2026-10-01&to=2026-10-17 (dates are edition dates, both ends included)

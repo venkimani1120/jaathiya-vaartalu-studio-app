@@ -82,8 +82,15 @@ GET|POST /api/imports   GET|DELETE /api/imports/:id   POST /api/imports/:id/extr
 GET  /api/imports/publishers | /status      (imports: editor, admin; POST is multipart "file" = one PDF, or "pages" = page images)
 GET  /api/users?pending=true   PATCH /api/users/:id {role, active}   (admin)
 GET  /api/public/meta | /epapers | /epapers/:slug | /news?days=30&page=1   (no sign-in)
+GET  /api/public/events?date=2026-08-15 | /themes                           (no sign-in)
 GET  /studio   GET /e/:slug   GET /app/
 ```
+
+**Event themes.** On an event's date the e-paper header (studio masthead and news downloads) takes the event's colours and greeting. `/api/public/events?date=` returns the theme to use (`theme`, or `null` for the plain header). `/api/public/themes` lists every theme, for picking one by hand. The events and their looks are in `src/config/events.js`:
+- **Days on fixed dates** (Independence Day, Republic Day, Gandhi Jayanti, World Environment Day, AP and Telangana Formation Days, …) are listed by month and day.
+- **Festivals whose date moves** (Sankranti, Ugadi, Vinayaka Chavithi, Dasara, Deepavali, …) come from Google's public Indian holidays calendar, matched by name. `src/services/calendar.js` copies that calendar into the `calendarevents` collection at start and then once a day, with no API key. If Google can't be reached, the last copy stays. Google lists festival dates about two years ahead.
+
+To add an event, add a line to `EVENTS` in `src/config/events.js`. To add a look, add it to `STYLES` there and to `shared/make_event_headers.py`, then run `python3 shared/make_event_headers.py` to make its header pictures.
 
 The [root README](../README.md) has the news flow (`draft → submitted → approved → published`), the e-paper studio and how imported e-papers are read.
 
@@ -91,11 +98,11 @@ The [root README](../README.md) has the news flow (`draft → submitted → appr
 
 ```
 src/index.js        Express app: security headers, CORS, routes, /studio, /e/:slug, /app/
-src/config/         environment loading, MongoDB connection, constants, states/districts/constituencies
+src/config/         environment loading, MongoDB connection, constants, states/districts/constituencies, event themes
 src/middleware/     authenticate / authorize (roles)
-src/models/         User, News, Epaper, SourcePaper (imported e-papers), DailyQuota
+src/models/         User, News, Epaper, SourcePaper (imported e-papers), DailyQuota, CalendarEvent
 src/routes/         auth, users, news, uploads, epapers, imports, public
-src/services/       importer, pageStore (Cloudinary/local), extractor + gemini (news extraction), pdfPhotos, snap
+src/services/       importer, pageStore (Cloudinary/local), extractor + gemini (news extraction), pdfPhotos, snap, calendar (holiday sync)
 src/utils/          HTTP errors, tokens, data backfills
 public/             epaper-studio.html (layout studio and public reader)
 scripts/            create-admin, seed-test-data, make-app-icons

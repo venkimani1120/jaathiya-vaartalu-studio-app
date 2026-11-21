@@ -22,8 +22,12 @@ export const HEADER = {
   date: { cx: 660, base: 40, px: 14, ink: '#2A1A12' },
   place: { x: 168, base: 325, px: 13, maxW: 280 },
 };
-// The smallest header picture that is at least `px` pixels across, so it is never stretched.
-export const headerFor = px => HEADER.src[px > HEADER.width ? 2 : 1];
+// The smallest header picture that is at least `px` pixels across, so it is never stretched. An event
+// theme (GET /api/public/events) has its own coloured copy of the picture, with the same spots.
+export const headerFor = (px, theme) => {
+  const s = px > HEADER.width ? 2 : 1;
+  return theme ? `./jaathiyavaartalu-${theme.header}-${s}x.png` : HEADER.src[s];
+};
 // The story's place for the header: its constituency, or its district when it has none.
 export const placeOf = n => (n.constituency || n.district || '').trim();
 
@@ -72,7 +76,7 @@ function wrap(ctx, text, maxW) {
 }
 
 // Lays the clipping out from top to bottom. With draw = false it only measures, to size the canvas.
-function layout(ctx, n, { date }, photo, header, draw) {
+function layout(ctx, n, { date, theme }, photo, header, draw) {
   let y = PAD;
   const text = (str, x, yy, k, px, color, align = 'left') => {
     if (!draw) return;
@@ -96,9 +100,22 @@ function layout(ctx, n, { date }, photo, header, draw) {
   }
   y += HEADER.height * k + 30;
 
+  // On an event's date: its greeting on a strip in the event's colours (edge, middle, edge).
+  if (theme) {
+    const [s1, s2, s3] = theme.stripe, gf = `400 {px}px "${theme.font}", "Noto Sans Telugu", sans-serif`;
+    y -= 14;
+    rect(PAD, y, INNER, 8, s1); rect(PAD, y + 8, INNER, 52, s2); rect(PAD, y + 60, INNER, 8, s3);
+    let px = 34;
+    ctx.font = gf.replace('{px}', px);
+    while (px > 16 && ctx.measureText(theme.greeting).width > INNER - 40) ctx.font = gf.replace('{px}', --px);
+    if (draw) { ctx.fillStyle = theme.text; ctx.textAlign = 'center'; ctx.fillText(theme.greeting, W / 2, y + 34 + px * 0.36); }
+    y += 68 + 30;
+  }
+  const accent = theme ? theme.rule : COLOR.blue;
+
   // Section and place.
   const where = [SECTIONS[n.section] || n.section, [n.constituency, n.district].filter(Boolean).join(', ')].filter(Boolean).join(' · ');
-  if (where) { text(where, PAD, y + 26, 'bold', 26, COLOR.red); y += 26 + 18; }
+  if (where) { text(where, PAD, y + 26, 'bold', 26, theme ? theme.ink : COLOR.red); y += 26 + 18; }
 
   // Headline.
   ctx.font = font('head', 54);
@@ -112,11 +129,11 @@ function layout(ctx, n, { date }, photo, header, draw) {
     ctx.font = font('bold', 30);
     for (const h of highlights) {
       const lines = wrap(ctx, h, INNER - 52);
-      text('►', PAD + 22, y + 32, 'bold', 22, COLOR.blue);
+      text('►', PAD + 22, y + 32, 'bold', 22, accent);
       for (const line of lines) { text(line, PAD + 52, y + 32, 'bold', 30, COLOR.navy); y += 30 * 1.55; }
       y += 6;
     }
-    rect(PAD, top, 6, y - top - 6, COLOR.blue);
+    rect(PAD, top, 6, y - top - 6, accent);
     y += 18;
   }
 
@@ -146,17 +163,19 @@ function layout(ctx, n, { date }, photo, header, draw) {
   });
 
   y += 16;
-  rect(PAD, y, INNER, 3, COLOR.red);
+  if (theme) { theme.stripe.forEach((c, i) => rect(PAD, y + i * 3, INNER, 3, c)); y += 6; }
+  else rect(PAD, y, INNER, 3, COLOR.red);
   return y + 3 + PAD;
 }
 
-// Draws the clipping and returns { canvas, photoMissing }.
+// Draws the clipping and returns { canvas, photoMissing }. opts: { date, theme } (theme: null for the plain header).
 export async function renderClipping(news, opts) {
-  await Promise.all(['400 32px "Noto Sans Telugu"', '500 32px "Noto Sans Telugu"', '600 32px "Noto Sans Telugu"', '700 32px "Noto Sans Telugu"']
+  await Promise.all(['400 32px "Noto Sans Telugu"', '500 32px "Noto Sans Telugu"', '600 32px "Noto Sans Telugu"', '700 32px "Noto Sans Telugu"',
+    ...(opts.theme ? [`400 32px "${opts.theme.font}"`] : [])]
     .map(f => document.fonts?.load(f, 'తెలుగు').catch(() => {})));
   const [photo, header] = await Promise.all([
     news.images?.[0] ? loadImage(news.images[0], true) : null,
-    loadImage(headerFor(INNER), false),
+    loadImage(headerFor(INNER, opts.theme), false),
   ]);
   if (!header) throw new Error('Could not load the e-paper header picture.');
   const canvas = document.createElement('canvas');
@@ -200,8 +219,8 @@ async function toPdf(canvas) {
 }
 
 // Renders the clipping and saves it as 'pdf' or 'png'. Returns { photoMissing }.
-export async function downloadClipping(news, { date, format }) {
-  const { canvas, photoMissing } = await renderClipping(news, { date });
+export async function downloadClipping(news, { date, theme, format }) {
+  const { canvas, photoMissing } = await renderClipping(news, { date, theme });
   const blob = format === 'png' ? await toBlob(canvas, 'image/png') : await toPdf(canvas);
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
