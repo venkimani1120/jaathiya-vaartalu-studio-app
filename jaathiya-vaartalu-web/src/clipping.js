@@ -1,7 +1,5 @@
 import { SECTIONS } from './constants';
-import { MARK } from './ui';
-
-// One approved news story drawn as an e-paper clipping: the masthead (header title and date) on top, then
+// One approved news story drawn as an e-paper clipping: the e-paper header picture (with the chosen date) on top, then
 // the section and place, headline, highlights, the first photo and the text. The browser draws the Telugu
 // text, so the canvas is saved as a PNG as is, or placed on a one-page PDF of the same shape.
 
@@ -13,12 +11,27 @@ export function teluguDate(v) {
   const day = new Date(y, m - 1, d);
   return `${TE_DAYS[day.getDay()]}, ${d} ${TE_MONTHS[m - 1]} ${y}`;
 }
-export const DEFAULT_HEADER = 'జాతియ వార్తలు';
+
+// The e-paper header picture, in public/ at two sizes (1240 and 2480 pixels across; same files in the Admin
+// app). Its date spot is left blank for the chosen date, and the bottom line has room after తెలుగు దినపత్రిక
+// for the story's place: `date` and `place` are where they go, in the 1x picture's pixels.
+// (The pictures have no సంపుటి / సంచిక line, page count or price.)
+export const HEADER = {
+  width: 1240, height: 360,
+  src: { 1: './jaathiyavaartalu1x.png', 2: './jaathiyavaartalu2x.png' },
+  date: { cx: 660, base: 40, px: 14, ink: '#2A1A12' },
+  place: { x: 168, base: 325, px: 13, maxW: 280 },
+};
+// The smallest header picture that is at least `px` pixels across, so it is never stretched.
+export const headerFor = px => HEADER.src[px > HEADER.width ? 2 : 1];
+// The story's place for the header: its constituency, or its district when it has none.
+export const placeOf = n => (n.constituency || n.district || '').trim();
 
 const W = 1080, PAD = 56, INNER = W - PAD * 2;
 const COLOR = { red: '#E31E24', blue: '#1F3C99', navy: '#1B2A6B', ink: '#141414', muted: '#5A6275', line: '#D5DAE2' };
 const FONT = {
-  mast: '700 {px}px "Anek Telugu", "Noto Sans Telugu", sans-serif',
+  date: '600 {px}px "Noto Sans Telugu", sans-serif',
+  place: '500 {px}px "Noto Sans Telugu", sans-serif',
   head: '700 {px}px "Noto Sans Telugu", sans-serif',
   text: '400 {px}px "Noto Sans Telugu", sans-serif',
   bold: '700 {px}px "Noto Sans Telugu", sans-serif',
@@ -59,7 +72,7 @@ function wrap(ctx, text, maxW) {
 }
 
 // Lays the clipping out from top to bottom. With draw = false it only measures, to size the canvas.
-function layout(ctx, n, { title, date }, photo, mark, draw) {
+function layout(ctx, n, { date }, photo, header, draw) {
   let y = PAD;
   const text = (str, x, yy, k, px, color, align = 'left') => {
     if (!draw) return;
@@ -68,21 +81,20 @@ function layout(ctx, n, { title, date }, photo, mark, draw) {
   };
   const rect = (x, yy, w, h, color) => { if (draw) { ctx.fillStyle = color; ctx.fillRect(x, yy, w, h); } };
 
-  // Masthead: logo mark and the header title, shrunk to fit one line.
-  const markSize = mark ? 104 : 0, gap = mark ? 22 : 0;
-  let px = 92;
-  ctx.font = font('mast', px);
-  while (px > 40 && ctx.measureText(title).width > INNER - markSize - gap) ctx.font = font('mast', --px);
-  const tw = ctx.measureText(title).width;
-  const left = PAD + (INNER - (markSize + gap + tw)) / 2;
-  if (draw && mark) ctx.drawImage(mark, left, y, markSize, markSize);
-  text(title, left + markSize + gap, y + Math.max(markSize, px) / 2 + px * 0.36, 'mast', px, COLOR.red);
-  y += Math.max(markSize, px * 1.2) + 14;
-  rect(PAD, y, INNER, 6, COLOR.red); y += 6;
-  // Blue date bar, as on the e-paper's inner pages.
-  rect(PAD, y + 8, INNER, 58, COLOR.blue);
-  text(teluguDate(date), W / 2, y + 8 + 40, 'bold', 28, '#fff', 'center');
-  y += 8 + 58 + 30;
+  // E-paper header across the width, with the chosen date in its date spot.
+  const k = INNER / HEADER.width, d = HEADER.date;
+  if (draw) {
+    ctx.drawImage(header, PAD, y, INNER, HEADER.height * k);
+    text(teluguDate(date), PAD + d.cx * k, y + d.base * k, 'date', Math.round(d.px * k * 10) / 10, d.ink, 'center');
+    const p = HEADER.place, place = placeOf(n);
+    if (place) {
+      let px = p.px * k;   // shrunk if a long name would run into the editor's line
+      ctx.font = font('place', px);
+      while (px > 6 && ctx.measureText(`· ${place}`).width > p.maxW * k) ctx.font = font('place', px -= 0.5);
+      text(`· ${place}`, PAD + p.x * k, y + p.base * k, 'place', px, d.ink);
+    }
+  }
+  y += HEADER.height * k + 30;
 
   // Section and place.
   const where = [SECTIONS[n.section] || n.section, [n.constituency, n.district].filter(Boolean).join(', ')].filter(Boolean).join(' · ');
@@ -140,18 +152,19 @@ function layout(ctx, n, { title, date }, photo, mark, draw) {
 
 // Draws the clipping and returns { canvas, photoMissing }.
 export async function renderClipping(news, opts) {
-  await Promise.all(['700 92px "Anek Telugu"', '400 32px "Noto Sans Telugu"', '700 32px "Noto Sans Telugu"']
+  await Promise.all(['400 32px "Noto Sans Telugu"', '500 32px "Noto Sans Telugu"', '600 32px "Noto Sans Telugu"', '700 32px "Noto Sans Telugu"']
     .map(f => document.fonts?.load(f, 'తెలుగు').catch(() => {})));
-  const [photo, mark] = await Promise.all([
+  const [photo, header] = await Promise.all([
     news.images?.[0] ? loadImage(news.images[0], true) : null,
-    loadImage(MARK, false),
+    loadImage(headerFor(INNER), false),
   ]);
+  if (!header) throw new Error('Could not load the e-paper header picture.');
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
   canvas.width = W;
-  canvas.height = Math.ceil(layout(ctx, news, opts, photo, mark, false));
+  canvas.height = Math.ceil(layout(ctx, news, opts, photo, header, false));
   ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-  layout(ctx, news, opts, photo, mark, true);
+  layout(ctx, news, opts, photo, header, true);
   return { canvas, photoMissing: !!news.images?.[0] && !photo };
 }
 
@@ -187,8 +200,8 @@ async function toPdf(canvas) {
 }
 
 // Renders the clipping and saves it as 'pdf' or 'png'. Returns { photoMissing }.
-export async function downloadClipping(news, { title, date, format }) {
-  const { canvas, photoMissing } = await renderClipping(news, { title, date });
+export async function downloadClipping(news, { date, format }) {
+  const { canvas, photoMissing } = await renderClipping(news, { date });
   const blob = format === 'png' ? await toBlob(canvas, 'image/png') : await toPdf(canvas);
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);

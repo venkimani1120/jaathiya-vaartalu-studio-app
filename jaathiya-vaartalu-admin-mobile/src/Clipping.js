@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, Image, Modal, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, Modal, PixelRatio, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { captureRef } from 'react-native-view-shot';
 import { File, Paths } from 'expo-file-system';
@@ -8,8 +8,8 @@ import { SECTIONS } from './constants';
 import { iso } from './DateFilter';
 import { Banner, Button, C, Card, Chips, Field, IconButton } from './ui';
 
-// "Download" beside "Edit" on approved news, like the web app: asks for the e-paper header title and date
-// (both needed, prefilled), shows the clipping, and shares it as a PDF or PNG (Save to Files / Photos,
+// "Download" beside "Edit" on approved news, like the web app: asks for the e-paper date (prefilled with
+// today), shows the clipping under the e-paper header, and shares it as a PDF or PNG (Save to Files / Photos,
 // WhatsApp, …). The clipping is drawn as a normal view, so the phone's own Telugu font is used; the PDF
 // holds that same picture (as a JPEG) on one page, built here the same way the web app does.
 
@@ -18,11 +18,23 @@ const TE_DAYS = ['ఆదివారం', 'సోమవారం', 'మంగళ
 // 'YYYY-MM-DD' -> "బుధవారం, 19 నవంబర్ 2026" (same wording as the web app).
 const teluguDate = v => { const [y, m, d] = v.split('-').map(Number); return `${TE_DAYS[new Date(y, m - 1, d).getDay()]}, ${d} ${TE_MONTHS[m - 1]} ${y}`; };
 const isDay = v => /^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(new Date(v).getTime());
-const DEFAULT_HEADER = 'జాతియ వార్తలు';
 const DATES = [[iso(new Date()), 'Today'], [iso(new Date(Date.now() + 864e5)), 'Tomorrow'], [iso(new Date(Date.now() - 864e5)), 'Yesterday']];
 const FORMATS = [['pdf', 'PDF', 'document-outline'], ['png', 'PNG image', 'image-outline']];
 const OUT_WIDTH = 1080;   // pixels across the saved clipping, as on the web
 export const CAN_DOWNLOAD = ['approved', 'published'];
+// The e-paper header picture at two sizes (1240 and 2480 pixels across; same files as the web app). Its date
+// spot is left blank for the chosen date, and the bottom line has room after తెలుగు దినపత్రిక for the story's
+// place: `date` and `place` are where they go, in the 1x picture's pixels (lines placed as on the web). The pictures have no సంపుటి / సంచిక line, page count or price.
+const HEADER = {
+  width: 1240, height: 360,
+  src: { 1: require('../assets/jaathiyavaartalu1x.png'), 2: require('../assets/jaathiyavaartalu2x.png') },
+  date: { cx: 660, top: 21, h: 30, px: 14, ink: '#2A1A12' },
+  place: { x: 168, top: 306, h: 30, px: 13, maxW: 280 },
+};
+// The smallest header picture that is at least `px` pixels across, so it is never stretched.
+const headerFor = px => HEADER.src[px > HEADER.width ? 2 : 1];
+// The story's place for the header: its constituency, or its district when it has none.
+const placeOf = n => (n.constituency || n.district || '').trim();
 
 const ascii = str => Uint8Array.from(str, c => c.charCodeAt(0));
 const fromBase64 = b64 => Uint8Array.from(atob(b64.replace(/\s/g, '')), c => c.charCodeAt(0));
@@ -74,7 +86,6 @@ export function DownloadButton({ news, disabled }) {
 }
 
 function DownloadSheet({ news, onClose }) {
-  const [title, setTitle] = useState(DEFAULT_HEADER);
   const [date, setDate] = useState(DATES[0][0]);
   const [format, setFormat] = useState('pdf');
   const [photo, setPhoto] = useState(news.images?.[0] ? 'loading' : 'none');   // loading | ready | failed | none
@@ -82,10 +93,10 @@ function DownloadSheet({ news, onClose }) {
   const [busy, setBusy] = useState(false);
   const shot = useRef(null);
   const { top, bottom } = useSafeAreaInsets();
-  const ok = title.trim() && isDay(date);
+  const ok = isDay(date);
 
   const save = async () => {
-    if (!ok) return Alert.alert('Missing details', 'Enter the header title and the date (YYYY-MM-DD).');
+    if (!ok) return Alert.alert('Missing date', 'Enter the date (YYYY-MM-DD).');
     setBusy(true);
     let step = 'Making the picture';   // named in the error, to tell which part failed
     try {
@@ -121,8 +132,6 @@ function DownloadSheet({ news, onClose }) {
       </View>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 24 + bottom }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
         <Card>
-          <Field label="E-paper header title" value={title} onChangeText={setTitle} maxLength={60} icon="newspaper-outline"
-            error={!title.trim()} hint={!title.trim() ? 'The header title is needed.' : undefined} />
           <Chips label="Date" options={DATES} value={date} onChange={setDate} icon="calendar-outline" />
           <Field value={date} onChangeText={setDate} placeholder="YYYY-MM-DD" maxLength={10} error={!isDay(date)}
             hint={isDay(date) ? teluguDate(date) : 'Type a date like 2026-11-19.'} />
@@ -133,15 +142,43 @@ function DownloadSheet({ news, onClose }) {
         </Card>
         <Text style={s.previewLabel}>Preview</Text>
         <View ref={shot} collapsable={false} style={s.paper} onLayout={e => setSize(e.nativeEvent.layout)}>
-          <Clipping news={news} title={title.trim() || ' '} date={isDay(date) ? date : DATES[0][0]} photo={photo} onPhoto={setPhoto} />
+          <Clipping news={news} date={isDay(date) ? date : DATES[0][0]} photo={photo} onPhoto={setPhoto}
+            outScale={size ? OUT_WIDTH / size.width : 1} />
         </View>
       </ScrollView>
     </View>
   );
 }
 
-// The clipping itself: masthead with the header title, a blue date bar, then the story.
-function Clipping({ news: n, title, date, photo, onPhoto }) {
+// The e-paper header with the chosen date in its date spot. It is laid out at the picture's own size
+// (1240 wide), so the date has a normal font size and sits where it does on the web, then scaled down to
+// the clipping's width. The picture is picked by the pixels it fills: on screen, or in the saved file
+// (outScale times the view) when that is more.
+function Header({ date, place, outScale }) {
+  const [w, setW] = useState(0);
+  const k = w / HEADER.width, d = HEADER.date, p = HEADER.place, half = Math.min(d.cx, HEADER.width - d.cx);
+  const src = headerFor(Math.max(PixelRatio.getPixelSizeForLayoutSize(w), w * outScale));
+  return (
+    <View onLayout={e => setW(e.nativeEvent.layout.width)} style={{ width: '100%', aspectRatio: HEADER.width / HEADER.height, overflow: 'hidden' }}>
+      {w ? (
+        <View style={{ width: HEADER.width, height: HEADER.height, transformOrigin: 'top left', transform: [{ scale: k }] }}>
+          <Image source={src} style={{ width: HEADER.width, height: HEADER.height }} resizeMode="stretch" />
+          <Text allowFontScaling={false} numberOfLines={1}
+            style={{ position: 'absolute', left: d.cx - half, width: half * 2, top: d.top, height: d.h, lineHeight: d.h,
+              fontSize: d.px, fontWeight: '600', color: d.ink, textAlign: 'center' }}>{teluguDate(date)}</Text>
+          {place ? (
+            <Text allowFontScaling={false} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}
+              style={{ position: 'absolute', left: p.x, width: p.maxW, top: p.top, height: p.h, lineHeight: p.h,
+                fontSize: p.px, fontWeight: '500', color: d.ink }}>· {place}</Text>
+          ) : null}
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+// The clipping itself: the e-paper header, then the story.
+function Clipping({ news: n, date, photo, onPhoto, outScale }) {
   const src = n.images?.[0];
   const [ratio, setRatio] = useState(4 / 3);
   useEffect(() => { if (src) Image.getSize(src, (w, h) => setRatio(Math.max(w / h, 1)), () => onPhoto('failed')); }, [src]);
@@ -149,12 +186,8 @@ function Clipping({ news: n, title, date, photo, onPhoto }) {
   const dateline = (n.dateline || n.constituency || n.district || '').trim();
   return (
     <View>
-      <View style={s.mast}>
-        <Image source={require('../assets/mark.png')} style={s.mark} resizeMode="contain" />
-        <Text style={s.mastText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>{title}</Text>
-      </View>
-      <View style={s.redRule} />
-      <View style={s.dateBar}><Text style={s.dateText}>{teluguDate(date)}</Text></View>
+      <Header date={date} place={placeOf(n)} outScale={outScale} />
+      <View style={{ height: 12 }} />
       {where ? <Text style={s.where}>{where}</Text> : null}
       <Text style={s.title}>{n.title}</Text>
       {(n.highlights || []).filter(Boolean).length ? (
@@ -178,12 +211,7 @@ const s = StyleSheet.create({
   headTitle: { fontSize: 18, fontWeight: '800', color: C.ink },
   previewLabel: { fontSize: 13, fontWeight: '800', color: C.muted, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8 },
   paper: { backgroundColor: '#fff', padding: 18, borderRadius: 4, borderWidth: 1, borderColor: C.line },
-  mast: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
-  mark: { width: 36, height: 36 },
-  mastText: { flexShrink: 1, fontSize: 32, lineHeight: 44, fontWeight: '800', color: C.red },
   redRule: { height: 3, backgroundColor: C.red, marginTop: 4 },
-  dateBar: { backgroundColor: C.blue, paddingVertical: 6, marginTop: 4, marginBottom: 12 },
-  dateText: { color: '#fff', fontWeight: '700', fontSize: 13, textAlign: 'center' },
   where: { color: C.red, fontWeight: '700', fontSize: 12, marginBottom: 6 },
   title: { fontSize: 21, lineHeight: 31, fontWeight: '800', color: '#141414', marginBottom: 8 },
   hls: { borderLeftWidth: 3, borderLeftColor: C.blue, paddingLeft: 10, marginBottom: 10 },

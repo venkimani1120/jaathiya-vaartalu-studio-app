@@ -448,6 +448,17 @@ const EDITION_TYPES = {
 };
 
 const todayISO = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
+// సంపుటి and సంచిక follow from the edition date, counted from the paper's registration on 17/12/2025:
+// సంచిక is the day number (17/12/2025 is 1, 18/12/2025 is 2, …) and సంపుటి the running year (01 until
+// 16/12/2026, 02 from 17/12/2026, …). A date before registration has neither.
+const REGISTERED = '2025-12-17';
+function issueDetails(date) {
+  const [y, m, d] = String(date).split('-').map(Number), [ry, rm, rd] = REGISTERED.split('-').map(Number);
+  const days = Math.round((Date.UTC(y, m - 1, d) - Date.UTC(ry, rm - 1, rd)) / 864e5);
+  if (!(days >= 0)) return { volume: '–', issue: '–' };
+  const years = y - ry - (m < rm || (m === rm && d < rd) ? 1 : 0);
+  return { volume: String(years + 1).padStart(2, '0'), issue: String(days + 1) };
+}
 const teDate = iso => { const d = new Date(iso + 'T00:00:00'); return `${d.getDate()} ${DAYS[d.getDay()]} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`; };
 const datelineDate = iso => { const d = new Date(iso + 'T00:00:00'); d.setDate(d.getDate() - 1); return `${MONTHS[d.getMonth()]} ${d.getDate()}`; };
 
@@ -509,9 +520,10 @@ const narrow = () => window.matchMedia('(max-width:860px)').matches;
 
 function makeEdition(type, key, date) {
   const t = EDITION_TYPES[type];
-  return { id: 'e' + uid(), type, key: key || '', editionDate: date || todayISO(),
+  const editionDate = date || todayISO();
+  return { id: 'e' + uid(), type, key: key || '', editionDate,
     title: t.label + (key ? ' – ' + key : ''), status: 'draft', shareSlug: null, dirty: false,
-    volume: '01', issue: String(store.get('jv_issue', 236)), price: BRAND.price, ad: { ...BRAND.ad }, tribute: null,
+    ...issueDetails(editionDate), price: BRAND.price, ad: { ...BRAND.ad }, tribute: null,
     pages: t.pages.map(([template, label]) => ({ id: 'p' + uid(), template, label, slots: {}, styles: {} })) };
 }
 function placements() {
@@ -596,7 +608,7 @@ async function loadEditionNews() {
   const i = S.editions.findIndex(e => e.id === S.cur);
   if (i >= 0) S.editions[i] = mapEd(d.epaper);
 }
-const stripEd = e => ({ title: e.title, type: e.type, key: e.key, editionDate: e.editionDate, volume: e.volume, issue: e.issue,
+const stripEd = e => ({ title: e.title, type: e.type, key: e.key, editionDate: e.editionDate, ...issueDetails(e.editionDate),
   price: e.price, ad: e.ad, tribute: e.tribute,
   pages: e.pages.map(p => { const on = new Set(Object.values(p.slots || {}));
     return { ...p, content: Object.fromEntries(Object.entries(p.content || {}).filter(([nid]) => on.has(nid))) }; }) });
@@ -756,14 +768,14 @@ function filterForEdition(e) {
 
 /* ---------- rendering ---------- */
 function mastHTML(e) {
-  const pages = e.pages.length;
+  const pages = e.pages.length, { volume, issue } = issueDetails(e.editionDate);
   return `<header class="mast">
     <div class="tribute${e.tribute ? '' : ' haslogo'}">${e.tribute ? `<img src="${e.tribute}" alt="">` : `<img class="mlogo" src="${BRAND.logo}" alt="Jaathiya Vaartalu News">`}</div>
     <div class="mtitle"><div class="mt">${esc(BRAND.masthead)}</div><div class="tg">${esc(BRAND.tagline)}</div></div>
     <div class="adbox"><b>${esc(e.ad.title)}</b><p>${esc(e.ad.text)}</p><span class="ph">Cell : ${esc(e.ad.phone)}</span></div>
   </header>
   <div class="band">${esc(BRAND.publishedFrom)}</div>
-  <div class="info"><span class="b">సంపుటి : ${esc(e.volume)}</span><span class="b">సంచిక : ${esc(e.issue)}</span>
+  <div class="info"><span class="b">సంపుటి : ${volume}</span><span class="b">సంచిక : ${issue}</span>
     <span class="y grow">${teDate(e.editionDate)}</span><span class="b">ఎడిటర్ : ${esc(BRAND.editor)}</span>
     <span class="r">ప్రచురణ : ${esc(BRAND.centre)}</span><span class="r">పేజీలు : ${pages}</span><span class="r">వెల : ${esc(e.price)}</span></div>`;
 }
@@ -1360,7 +1372,6 @@ function openNewEdition() {
       let e = makeEdition(t, k, sh.querySelector('#neDate').value || todayISO());
       try {
         if (MODE === 'api') e = mapEd((await API.req('/epapers', { method: 'POST', body: JSON.stringify(stripEd(e)) })).epaper);
-        else store.set('jv_issue', Number(e.issue) + 1);
         S.editions.unshift(e); S.cur = e.id; S.pageIdx = 0; filterForEdition(e); closeModal(); persistNow(); renderAll();
         toast('Edition created. Use Auto-fill or drag news onto each page.');
       } catch (err) { toast(err.message); }
@@ -1398,9 +1409,10 @@ function openDeleteEdition() {
   });
 }
 function openSettings() {
-  const e = ed();
+  const e = ed(), num = issueDetails(e.editionDate);
   openModal(`<h2>Masthead and issue details</h2>
-    <div class="two"><div><label>సంపుటి (Volume)</label><input id="sVol" value="${esc(e.volume)}"></div><div><label>సంచిక (Issue)</label><input id="sIss" value="${esc(e.issue)}"></div></div>
+    <div class="two"><div><label>సంపుటి (Volume)</label><input id="sVol" value="${num.volume}" readonly></div><div><label>సంచిక (Issue)</label><input id="sIss" value="${num.issue}" readonly></div></div>
+    <p style="color:var(--muted);margin:4px 0 0;font-size:13px">Set by the date, counted from registration on 17/12/2025: సంచిక is the day number, సంపుటి the running year.</p>
     <div class="two"><div><label>Date</label><input id="sDate" type="date" value="${e.editionDate}"></div><div><label>వెల (Price)</label><input id="sPrice" value="${esc(e.price)}"></div></div>
     <label>Edition name</label><input id="sTitle" value="${esc(e.title)}">
     <label>Box heading (right of masthead)</label><input id="sAdT" value="${esc(e.ad.title)}">
@@ -1410,10 +1422,12 @@ function openSettings() {
     ${e.tribute ? '<button class="btn danger" id="sImgDel" style="margin-top:8px">Remove photo</button>' : ''}
     <div class="acts"><button class="btn" data-close>Cancel</button><button class="btn primary" id="sSave">Save details</button></div>`, sh => {
     let img = e.tribute;
+    sh.querySelector('#sDate').oninput = ev => { const n = issueDetails(ev.target.value); sh.querySelector('#sVol').value = n.volume; sh.querySelector('#sIss').value = n.issue; };
     sh.querySelector('#sImg').onchange = async ev => { const f = ev.target.files[0]; if (f) img = await shrinkImage(f, 420); };
     const del = sh.querySelector('#sImgDel'); if (del) del.onclick = () => { img = null; del.textContent = 'Photo will be removed'; };
     sh.querySelector('#sSave').onclick = () => {
-      Object.assign(e, { volume: sh.querySelector('#sVol').value, issue: sh.querySelector('#sIss').value, editionDate: sh.querySelector('#sDate').value || e.editionDate,
+      const editionDate = sh.querySelector('#sDate').value || e.editionDate;
+      Object.assign(e, { editionDate, ...issueDetails(editionDate),
         price: sh.querySelector('#sPrice').value, title: sh.querySelector('#sTitle').value || e.title, tribute: img,
         ad: { title: sh.querySelector('#sAdT').value, text: sh.querySelector('#sAdX').value, phone: sh.querySelector('#sAdP').value } });
       closeModal(); commit(); toast('Details saved');
