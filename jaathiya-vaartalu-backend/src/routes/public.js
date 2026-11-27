@@ -1,10 +1,25 @@
 const router = require('express').Router();
 const Epaper = require('../models/Epaper');
 const News = require('../models/News');
+const CalendarEvent = require('../models/CalendarEvent');
+const { THEMES, themesOn } = require('../config/events');
 const { STATES, SECTIONS, DAILY_NEWS_LIMIT } = require('../config/constants');
-const { HttpError, wrap } = require('../utils/http');
+const { HttpError, wrap, today } = require('../utils/http');
 
 router.get('/meta', (_req, res) => res.json({ states: STATES, sections: SECTIONS, dailyLimit: DAILY_NEWS_LIMIT }));
+
+// Event themes for the e-paper header (config/events.js). No login: the public reader uses them too.
+// /events?date=2026-08-15 -> { date, theme, events }: theme is the one to use (null for a plain header),
+// events every listed event that day, calendar the names in Google's calendar that day.
+router.get('/events', wrap(async (req, res) => {
+  const date = req.query.date ? String(req.query.date) : today();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new HttpError(400, 'The date must look like 2026-08-15.');
+  const calendar = (await CalendarEvent.find({ day: date }).select('name').lean()).map(e => e.name);
+  const events = themesOn(date, calendar);
+  res.set('Cache-Control', 'public, max-age=3600').json({ date, theme: events[0] || null, events, calendar });
+}));
+// Every event theme, for choosing one by hand.
+router.get('/themes', (_req, res) => res.set('Cache-Control', 'public, max-age=3600').json({ themes: THEMES }));
 
 // Anyone with the link can read a published edition. No login.
 router.get('/epapers/:slug', wrap(async (req, res) => {

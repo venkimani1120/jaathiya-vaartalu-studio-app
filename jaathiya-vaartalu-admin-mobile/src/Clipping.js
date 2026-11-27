@@ -1,15 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, Image, Modal, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, Modal, PixelRatio, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { captureRef } from 'react-native-view-shot';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
+import { api } from './api';
 import { SECTIONS } from './constants';
 import { iso } from './DateFilter';
 import { Banner, Button, C, Card, Chips, Field, IconButton } from './ui';
 
-// "Download" beside "Edit" on approved news, like the web app: asks for the e-paper header title and date
-// (both needed, prefilled), shows the clipping, and shares it as a PDF or PNG (Save to Files / Photos,
+// "Download" beside "Edit" on approved news, like the web app: asks for the e-paper date (prefilled with
+// today), shows the clipping under the e-paper header, and shares it as a PDF or PNG (Save to Files / Photos,
 // WhatsApp, …). The clipping is drawn as a normal view, so the phone's own Telugu font is used; the PDF
 // holds that same picture (as a JPEG) on one page, built here the same way the web app does.
 
@@ -18,11 +19,33 @@ const TE_DAYS = ['ఆదివారం', 'సోమవారం', 'మంగళ
 // 'YYYY-MM-DD' -> "బుధవారం, 19 నవంబర్ 2026" (same wording as the web app).
 const teluguDate = v => { const [y, m, d] = v.split('-').map(Number); return `${TE_DAYS[new Date(y, m - 1, d).getDay()]}, ${d} ${TE_MONTHS[m - 1]} ${y}`; };
 const isDay = v => /^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(new Date(v).getTime());
-const DEFAULT_HEADER = 'జాతియ వార్తలు';
 const DATES = [[iso(new Date()), 'Today'], [iso(new Date(Date.now() + 864e5)), 'Tomorrow'], [iso(new Date(Date.now() - 864e5)), 'Yesterday']];
 const FORMATS = [['pdf', 'PDF', 'document-outline'], ['png', 'PNG image', 'image-outline']];
 const OUT_WIDTH = 1080;   // pixels across the saved clipping, as on the web
 export const CAN_DOWNLOAD = ['approved', 'published'];
+// The e-paper header picture at two sizes (1240 and 2480 pixels across; same files as the web app). Its date
+// spot is left blank for the chosen date, and the bottom line has room after తెలుగు దినపత్రిక for the story's
+// place: `date` and `place` are where they go, in the 1x picture's pixels (lines placed as on the web). The pictures have no సంపుటి / సంచిక line, page count or price.
+const HEADER = {
+  width: 1240, height: 360,
+  // plain, and a coloured copy per event style (GET /api/public/events), all with the same spots
+  src: {
+    plain: { 1: require('../assets/jaathiyavaartalu1x.png'), 2: require('../assets/jaathiyavaartalu2x.png') },
+    tricolour: { 1: require('../assets/jaathiyavaartalu-tricolour-1x.png'), 2: require('../assets/jaathiyavaartalu-tricolour-2x.png') },
+    green: { 1: require('../assets/jaathiyavaartalu-green-1x.png'), 2: require('../assets/jaathiyavaartalu-green-2x.png') },
+    festive: { 1: require('../assets/jaathiyavaartalu-festive-1x.png'), 2: require('../assets/jaathiyavaartalu-festive-2x.png') },
+  },
+  date: { cx: 660, top: 21, h: 30, px: 14, ink: '#2A1A12' },
+  place: { x: 168, top: 306, h: 30, px: 13, maxW: 280 },
+};
+// The smallest header picture that is at least `px` pixels across, so it is never stretched.
+const headerFor = (px, theme) => (HEADER.src[theme?.header] || HEADER.src.plain)[px > HEADER.width ? 2 : 1];
+
+// Every event theme, fetched once. Without the server the header is plain.
+let themesOnce = null;
+const loadThemes = () => (themesOnce = themesOnce || api.get('/public/themes').then(r => r.data.themes || []).catch(() => { themesOnce = null; return []; }));
+// The story's place for the header: its constituency, or its district when it has none.
+const placeOf = n => (n.constituency || n.district || '').trim();
 
 const ascii = str => Uint8Array.from(str, c => c.charCodeAt(0));
 const fromBase64 = b64 => Uint8Array.from(atob(b64.replace(/\s/g, '')), c => c.charCodeAt(0));
@@ -74,18 +97,32 @@ export function DownloadButton({ news, disabled }) {
 }
 
 function DownloadSheet({ news, onClose }) {
-  const [title, setTitle] = useState(DEFAULT_HEADER);
   const [date, setDate] = useState(DATES[0][0]);
   const [format, setFormat] = useState('pdf');
+  const [pick, setPick] = useState('auto');   // header theme: auto (by date), none, or an event id
+  const [themes, setThemes] = useState([]);
+  const [found, setFound] = useState(undefined);   // the event theme for the date; undefined while asking
   const [photo, setPhoto] = useState(news.images?.[0] ? 'loading' : 'none');   // loading | ready | failed | none
   const [size, setSize] = useState(null);   // the clipping view's size on screen
   const [busy, setBusy] = useState(false);
   const shot = useRef(null);
   const { top, bottom } = useSafeAreaInsets();
-  const ok = title.trim() && isDay(date);
+  const ok = isDay(date);
+  useEffect(() => { loadThemes().then(setThemes); }, []);
+  useEffect(() => {
+    if (!ok) return;
+    let live = true;
+    setFound(undefined);
+    api.get('/public/events', { params: { date } }).then(r => live && setFound(r.data.theme || null)).catch(() => live && setFound(null));
+    return () => { live = false; };
+  }, [date, ok]);
+  const theme = pick === 'none' ? null : pick === 'auto' ? found || null : themes.find(t => t.id === pick) || null;
+  const waiting = pick === 'auto' && found === undefined;
+  const HEADS = [['auto', found === undefined ? 'Automatic…' : found ? `Automatic: ${found.name}` : 'Automatic: none', 'sparkles-outline'],
+    ['none', 'Plain'], ...themes.map(t => [t.id, t.name])];
 
   const save = async () => {
-    if (!ok) return Alert.alert('Missing details', 'Enter the header title and the date (YYYY-MM-DD).');
+    if (!ok) return Alert.alert('Missing date', 'Enter the date (YYYY-MM-DD).');
     setBusy(true);
     let step = 'Making the picture';   // named in the error, to tell which part failed
     try {
@@ -121,27 +158,66 @@ function DownloadSheet({ news, onClose }) {
       </View>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 24 + bottom }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
         <Card>
-          <Field label="E-paper header title" value={title} onChangeText={setTitle} maxLength={60} icon="newspaper-outline"
-            error={!title.trim()} hint={!title.trim() ? 'The header title is needed.' : undefined} />
           <Chips label="Date" options={DATES} value={date} onChange={setDate} icon="calendar-outline" />
           <Field value={date} onChangeText={setDate} placeholder="YYYY-MM-DD" maxLength={10} error={!isDay(date)}
             hint={isDay(date) ? teluguDate(date) : 'Type a date like 2026-11-19.'} />
+          <Chips label="Header" options={HEADS} value={pick} onChange={setPick} />
           <Chips label="Format" options={FORMATS} value={format} onChange={setFormat} />
           {photo === 'failed' ? <Banner kind="warn">The photo could not be loaded, so the clipping is made without it.</Banner> : null}
           <Button title={`Download ${format.toUpperCase()}`} icon="download-outline" onPress={save} loading={busy}
-            disabled={!ok || !size || photo === 'loading'} />
+            disabled={!ok || !size || photo === 'loading' || waiting} />
         </Card>
         <Text style={s.previewLabel}>Preview</Text>
         <View ref={shot} collapsable={false} style={s.paper} onLayout={e => setSize(e.nativeEvent.layout)}>
-          <Clipping news={news} title={title.trim() || ' '} date={isDay(date) ? date : DATES[0][0]} photo={photo} onPhoto={setPhoto} />
+          <Clipping news={news} date={isDay(date) ? date : DATES[0][0]} photo={photo} onPhoto={setPhoto}
+            outScale={size ? OUT_WIDTH / size.width : 1} theme={theme} />
         </View>
       </ScrollView>
     </View>
   );
 }
 
-// The clipping itself: masthead with the header title, a blue date bar, then the story.
-function Clipping({ news: n, title, date, photo, onPhoto }) {
+// The e-paper header with the chosen date in its date spot. It is laid out at the picture's own size
+// (1240 wide), so the date has a normal font size and sits where it does on the web, then scaled down to
+// the clipping's width. The picture is picked by the pixels it fills: on screen, or in the saved file
+// (outScale times the view) when that is more; an event theme has its own coloured copy.
+function Header({ date, place, outScale, theme }) {
+  const [w, setW] = useState(0);
+  const k = w / HEADER.width, d = HEADER.date, p = HEADER.place, half = Math.min(d.cx, HEADER.width - d.cx);
+  const src = headerFor(Math.max(PixelRatio.getPixelSizeForLayoutSize(w), w * outScale), theme);
+  return (
+    <View onLayout={e => setW(e.nativeEvent.layout.width)} style={{ width: '100%', aspectRatio: HEADER.width / HEADER.height, overflow: 'hidden' }}>
+      {w ? (
+        <View style={{ width: HEADER.width, height: HEADER.height, transformOrigin: 'top left', transform: [{ scale: k }] }}>
+          <Image source={src} style={{ width: HEADER.width, height: HEADER.height }} resizeMode="stretch" />
+          <Text allowFontScaling={false} numberOfLines={1}
+            style={{ position: 'absolute', left: d.cx - half, width: half * 2, top: d.top, height: d.h, lineHeight: d.h,
+              fontSize: d.px, fontWeight: '600', color: d.ink, textAlign: 'center' }}>{teluguDate(date)}</Text>
+          {place ? (
+            <Text allowFontScaling={false} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}
+              style={{ position: 'absolute', left: p.x, width: p.maxW, top: p.top, height: p.h, lineHeight: p.h,
+                fontSize: p.px, fontWeight: '500', color: d.ink }}>· {place}</Text>
+          ) : null}
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+// On an event's date: its greeting on a strip in the event's colours (edge, middle, edge), as on the web.
+function Greeting({ theme: t }) {
+  return (
+    <View style={{ marginTop: 8, borderTopWidth: 4, borderTopColor: t.stripe[0], backgroundColor: t.stripe[1], borderBottomWidth: 4, borderBottomColor: t.stripe[2],
+      paddingVertical: 5, paddingHorizontal: 10 }}>
+      <Text allowFontScaling={false} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}
+        style={{ color: t.text, fontSize: 16, fontWeight: '800', textAlign: 'center' }}>{t.greeting}</Text>
+    </View>
+  );
+}
+
+// The clipping itself: the e-paper header (in the event's colours, with its greeting, on an event's date),
+// then the story.
+function Clipping({ news: n, date, photo, onPhoto, outScale, theme }) {
   const src = n.images?.[0];
   const [ratio, setRatio] = useState(4 / 3);
   useEffect(() => { if (src) Image.getSize(src, (w, h) => setRatio(Math.max(w / h, 1)), () => onPhoto('failed')); }, [src]);
@@ -149,17 +225,14 @@ function Clipping({ news: n, title, date, photo, onPhoto }) {
   const dateline = (n.dateline || n.constituency || n.district || '').trim();
   return (
     <View>
-      <View style={s.mast}>
-        <Image source={require('../assets/mark.png')} style={s.mark} resizeMode="contain" />
-        <Text style={s.mastText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>{title}</Text>
-      </View>
-      <View style={s.redRule} />
-      <View style={s.dateBar}><Text style={s.dateText}>{teluguDate(date)}</Text></View>
-      {where ? <Text style={s.where}>{where}</Text> : null}
+      <Header date={date} place={placeOf(n)} outScale={outScale} theme={theme} />
+      {theme ? <Greeting theme={theme} /> : null}
+      <View style={{ height: 12 }} />
+      {where ? <Text style={[s.where, theme && { color: theme.ink }]}>{where}</Text> : null}
       <Text style={s.title}>{n.title}</Text>
       {(n.highlights || []).filter(Boolean).length ? (
-        <View style={s.hls}>
-          {n.highlights.filter(Boolean).map((h, i) => <Text key={i} style={s.hl}><Text style={{ color: C.blue }}>►  </Text>{h}</Text>)}
+        <View style={[s.hls, theme && { borderLeftColor: theme.rule }]}>
+          {n.highlights.filter(Boolean).map((h, i) => <Text key={i} style={s.hl}><Text style={{ color: theme ? theme.rule : C.blue }}>►  </Text>{h}</Text>)}
         </View>
       ) : null}
       {src && photo !== 'failed' ? (
@@ -167,7 +240,8 @@ function Clipping({ news: n, title, date, photo, onPhoto }) {
           onLoad={() => onPhoto('ready')} onError={() => onPhoto('failed')} />
       ) : null}
       <Text style={s.body}>{dateline ? <Text style={{ fontWeight: '700' }}>{dateline}: </Text> : null}{n.body}</Text>
-      <View style={[s.redRule, { height: 2, marginTop: 14 }]} />
+      {theme ? <View style={{ marginTop: 14 }}>{theme.stripe.map((c, i) => <View key={i} style={{ height: 2, backgroundColor: c }} />)}</View>
+        : <View style={[s.redRule, { height: 2, marginTop: 14 }]} />}
     </View>
   );
 }
@@ -178,12 +252,7 @@ const s = StyleSheet.create({
   headTitle: { fontSize: 18, fontWeight: '800', color: C.ink },
   previewLabel: { fontSize: 13, fontWeight: '800', color: C.muted, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8 },
   paper: { backgroundColor: '#fff', padding: 18, borderRadius: 4, borderWidth: 1, borderColor: C.line },
-  mast: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
-  mark: { width: 36, height: 36 },
-  mastText: { flexShrink: 1, fontSize: 32, lineHeight: 44, fontWeight: '800', color: C.red },
   redRule: { height: 3, backgroundColor: C.red, marginTop: 4 },
-  dateBar: { backgroundColor: C.blue, paddingVertical: 6, marginTop: 4, marginBottom: 12 },
-  dateText: { color: '#fff', fontWeight: '700', fontSize: 13, textAlign: 'center' },
   where: { color: C.red, fontWeight: '700', fontSize: 12, marginBottom: 6 },
   title: { fontSize: 21, lineHeight: 31, fontWeight: '800', color: '#141414', marginBottom: 8 },
   hls: { borderLeftWidth: 3, borderLeftColor: C.blue, paddingLeft: 10, marginBottom: 10 },
