@@ -42,7 +42,7 @@ export default function HomeScreen({ navigation }) {
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
   const share = e => {
-    const url = `${API_BASE}/e/${e.shareSlug}`;
+    const url = `${API_BASE}/epaper/${e.shareSlug}`;
     Share.share({ message: `జాతియ వార్తలు ఈ-పేపర్ (${String(e.editionDate).slice(0, 10)}): ${url}`, url });
   };
 

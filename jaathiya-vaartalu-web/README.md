@@ -29,7 +29,7 @@ npm install
 npm run dev        # http://localhost:5173
 ```
 
-In development the page calls its own address, and Vite forwards `/api`, `/uploads`, `/studio` and `/e/` to `DEV_API_TARGET` (`http://localhost:4000` by default). That way there is no CORS setup, and the studio opens signed in.
+In development the page calls its own address, and Vite forwards `/api`, `/uploads`, `/studio` and `/epaper/` to `DEV_API_TARGET` (`http://localhost:4000` by default). That way there is no CORS setup, and the studio opens signed in.
 
 ## Build
 

@@ -66,7 +66,7 @@ router.post('/:id/publish', wrap(async (req, res) => {
   epaper.status = 'published'; epaper.publishedAt = new Date(); epaper.updatedBy = req.user.id;
   await epaper.save();
   await News.updateMany({ _id: { $in: ids } }, { $set: { status: 'published' }, $addToSet: { publishedIn: epaper._id } });
-  res.json({ epaper, shareUrl: `${process.env.PUBLIC_BASE_URL || ''}/e/${epaper.shareSlug}` });
+  res.json({ epaper, shareUrl: `${process.env.PUBLIC_BASE_URL || ''}/epaper/${epaper.shareSlug}` });
 }));
 
 router.post('/:id/unpublish', authorize('admin'), wrap(async (req, res) => {

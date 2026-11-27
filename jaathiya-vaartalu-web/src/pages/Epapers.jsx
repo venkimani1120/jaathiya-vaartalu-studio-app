@@ -40,7 +40,7 @@ export default function Epapers() {
   const filtered = type || range.from || range.to;
   const clear = () => { setType(''); setRange({ from: '', to: '' }); };
 
-  const shareUrl = e => `${SITE_BASE}/e/${e.shareSlug}`;
+  const shareUrl = e => `${SITE_BASE}/epaper/${e.shareSlug}`;
   const copy = async e => {
     try { await navigator.clipboard.writeText(shareUrl(e)); setCopied(e._id); setTimeout(() => setCopied(''), 2000); }
     catch { window.prompt('Copy this link:', shareUrl(e)); }

@@ -7,7 +7,7 @@
 <link rel="icon" id="favicon" href="data:,">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Telugu:wght@400;500;600;700&family=Noto+Serif+Telugu:wght@400;700&family=Ramabhadra&family=Anek+Telugu:wdth,wght@75..100,600..800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Telugu:wght@400;500;600;700&family=Noto+Serif+Telugu:wght@400;700&family=Ramabhadra&family=Anek+Telugu:wdth,wght@75..100,400..800&display=swap" rel="stylesheet">
 <!--JV_CONFIG-->
 <style>
 :root{
@@ -80,6 +80,7 @@ select{border:1px solid var(--line);background:var(--panel2);padding:7px 8px;bor
 .stage{display:flex;flex-direction:column;min-height:0;min-width:0}
 .pagebar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line);background:var(--panel)}
 .pagebar input{border:1px solid var(--line);background:var(--panel2);padding:6px 8px;border-radius:8px;width:150px}
+.pagebar .cnt{display:flex;align-items:center;gap:5px;font-size:13px;color:var(--muted)}
 .canvas{flex:1;overflow:auto;padding:16px 16px 96px} /* bottom room so the pick bar never covers the page */
 
 /* ---------- newspaper ---------- */
@@ -96,18 +97,25 @@ select{border:1px solid var(--line);background:var(--panel2);padding:7px 8px;bor
 .nameplate{position:relative;container-type:inline-size;min-width:0}
 .nameplate img{display:block;width:100%;height:auto}
 .nameplate span{position:absolute;height:2.419cqw;line-height:2.419cqw;white-space:nowrap;overflow:hidden;color:#2A1A12;font-family:"Noto Sans Telugu",sans-serif}
-.np-date{left:6.452cqw;width:93.548cqw;top:1.694cqw;font-size:1.129cqw;font-weight:600;text-align:center}
-.np-place{left:13.548cqw;width:22.581cqw;top:24.677cqw;font-size:1.048cqw;font-weight:500}
-/* bottom right: సంపుటి, సంచిక and the website, ending where the editor's line mirrors it (x 1151) */
-.np-meta{right:7.177cqw;width:36.29cqw;top:24.677cqw;font-size:1.048cqw;font-weight:500;text-align:right}
-.np-meta a{color:inherit;text-decoration:none}
+.nameplate .np-fit{font-size:calc(var(--k,1) * (1.048cqw + 4px));font-weight:500}
+/* top row: RNI at the left (the picture's own, x 84-274, is covered), the day and date in the middle; "తెలుగు దినపత్రిక" and the edition (place) at the right, ending at x 1151 like the bottom row */
+.nameplate .np-rni{left:7.177cqw;width:27cqw;top:1.3cqw;height:3.2cqw;line-height:3.2cqw;font-size:calc(var(--k,1) * (1.129cqw + 5px));font-weight:600}
+.nameplate .np-date{left:35cqw;width:30cqw;top:1.3cqw;height:3.2cqw;line-height:3.2cqw;font-size:calc(var(--k,1) * (1.129cqw + 5px));font-weight:600;text-align:center}
+.nameplate .np-ed{right:7.177cqw;width:27cqw;top:1.3cqw;height:3.2cqw;line-height:3.2cqw;font-size:calc(var(--k,1) * (1.129cqw + 5px));font-weight:600;text-align:right}
+/* bottom row: only the website, in the middle (సంపుటి, సంచిక and the editor are in the strip below).
+   The picture's own "తెలుగు దినపత్రిక" (x 84-170) and editor line (x 470-690) are covered. */
+.nameplate .np-web{left:25cqw;width:50cqw;top:24.677cqw;text-align:center}
+.nameplate .np-web a{color:inherit;text-decoration:none}
+.nameplate .np-cover{top:24.919cqw;height:2.016cqw;background:#F7F1E3}
+.nameplate .np-cover.c0{left:6.774cqw;width:15.323cqw;top:2.339cqw;height:1.532cqw}
+.nameplate .np-cover.c1{left:6.774cqw;width:6.935cqw}
+.nameplate .np-cover.c2{left:37.903cqw;width:17.742cqw}
 /* the logo in the space left of the title (x 70-245, centred on it) */
 .nameplate .np-logo{position:absolute;left:5.645cqw;top:6.29cqw;width:14.113cqw;height:12.097cqw;object-fit:contain}
-.ilogo{height:52px;width:auto}
 .tribute{background:#ECECEC;overflow:hidden;display:grid;place-items:center;color:#999;font-size:13px;text-align:center}
 .tribute img{width:100%;height:100%;object-fit:cover}
-.band{background:var(--np-red);color:#fff;font:600 13px/1.35 "Noto Sans Telugu",sans-serif;text-align:center;padding:5px 8px;margin-top:10px}
-.info{display:flex;width:max-content;min-width:100%;margin:6px 0 12px;font:700 14px/1 "Noto Sans Telugu",sans-serif;transform-origin:left center}
+.band{background:var(--np-red);color:#fff;font:700 16px/1.3 "Noto Sans Telugu",sans-serif;text-align:center;padding:4px 8px 3px;white-space:nowrap;overflow:hidden;margin-top:10px}
+.info{display:flex;width:max-content;min-width:100%;margin:6px 0 12px;font:700 16px/1 "Noto Sans Telugu",sans-serif;transform-origin:left center}
 .info span{padding:7px 9px;white-space:nowrap}
 .info .b{background:var(--np-blue);color:#fff}.info .y{background:var(--np-yellow);color:var(--np-ink)}.info .r{background:var(--np-yellow);color:var(--np-red)}
 .info .grow{flex:1;text-align:center}
@@ -118,12 +126,15 @@ select{border:1px solid var(--line);background:var(--panel2);padding:7px 8px;bor
   background:var(--ev-s2);color:var(--ev-text);font:400 26px/1.35 var(--ev-font),"Noto Sans Telugu",sans-serif;text-align:center;white-space:nowrap;overflow:hidden}
 .paper[data-ev] .band,.paper[data-ev] .info .b,.paper[data-ev] .pno,.paper[data-ev] .datebar{background:var(--ev-ink)}
 .paper[data-ev] .ihead{border-bottom-color:var(--ev-rule)}
-.paper[data-ev] .minimast{color:var(--ev-ink);border-color:var(--ev-ink);text-shadow:1px 1px 0 var(--ev-rule)}
-.ihead{display:flex;align-items:center;gap:12px;border-bottom:3px solid var(--np-blue);padding-bottom:7px;margin-bottom:12px}
-.pno{width:46px;height:46px;border-radius:50%;background:var(--np-red);color:#fff;display:grid;place-items:center;font:28px Ramabhadra,sans-serif}
-.minimast{background:var(--np-yellow);color:var(--np-red);font:800 32px/1.45 'Anek Telugu',Ramabhadra,sans-serif;font-stretch:75%;padding:2px 14px 0;border:2px solid var(--np-red);text-shadow:1px 1px 0 var(--np-navy)}
-.seclabel{font:700 16px "Noto Sans Telugu",sans-serif;color:var(--np-red)}
-.datebar{margin-left:auto;background:var(--np-blue);color:#fff;font:700 17px "Noto Sans Telugu",sans-serif;padding:7px 16px}
+.paper[data-ev] .minimast{color:var(--ev-ink)}
+/* inner-page header: page number, then the logo and title, at the left; the date at the right */
+.ihead{display:grid;grid-template-columns:auto auto 1fr;align-items:center;column-gap:12px;border-bottom:3px solid var(--np-blue);padding-bottom:7px;margin-bottom:12px}
+/* every piece is 36px tall and centred on one line; a thin gold rule parts the page number from the name */
+.pno{width:36px;height:36px;box-sizing:border-box;padding-top:3px;border-radius:50%;background:var(--np-red);color:#fff;display:grid;place-items:center;font:21px/1 Ramabhadra,sans-serif}
+.ihead .ibrand{display:flex;align-items:center;gap:8px;height:36px;padding-left:12px;border-left:1.5px solid color-mix(in srgb,var(--np-blue) 55%,transparent)}
+.ilogo{height:34px;width:auto;display:block}
+.minimast{color:var(--np-red);font:400 29px/36px 'Anek Telugu',Ramabhadra,sans-serif;font-stretch:75%;height:36px;padding-top:4px;box-sizing:border-box;white-space:nowrap}
+.datebar{justify-self:end;height:36px;box-sizing:border-box;display:flex;align-items:center;padding:3px 14px 0;background:var(--np-blue);color:#fff;font:700 15px/1 "Noto Sans Telugu",sans-serif;white-space:nowrap}
 .grid{flex:1;min-height:0;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:14px}
 .slot{position:relative;min-height:0;min-width:0;overflow:hidden}
 .slot.filled{border-bottom:1px solid #BDBDBD;padding-bottom:6px}
@@ -261,6 +272,11 @@ select{border:1px solid var(--line);background:var(--panel2);padding:7px 8px;bor
 .embedded .top .brand,.embedded #logoutBtn{display:none!important}
 .viewer .pool,.viewer .pagebar,.viewer #newEd,.viewer #delEd,.viewer #edSel,.viewer #publishBtn,.viewer #settingsBtn,.viewer #previewBtn,.viewer #saveBtn,.viewer #saveState,.viewer #logoutBtn,.viewer .addpage,.viewer .thumb .handle,.viewer .fab{display:none!important}
 .viewer .main,.previewing .main{grid-template-columns:1fr}
+.pager{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px;margin:0 auto 16px;max-width:820px}
+.pager button{min-width:38px;height:38px;padding:0 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font:600 14px "Noto Sans Telugu",sans-serif;cursor:pointer}
+.pager button[aria-current]{background:var(--act);color:var(--act-ink);border-color:var(--act)}
+.pager button:disabled{opacity:.45;cursor:default}
+.pager .pg-of{flex-basis:100%;text-align:center;font-size:13px;color:var(--muted)}
 .previewing .pool,.previewing .pagebar,.previewing .fab{display:none!important}
 
 @media screen and (max-width:860px){
@@ -280,7 +296,7 @@ select{border:1px solid var(--line);background:var(--panel2);padding:7px 8px;bor
      browser's "Background graphics" option is off, which is its default */
   *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
   html,body{background:#fff!important;height:auto}
-  .top,.strip,.pool,.pagebar,.fab,.pickbar,.toast,.modal{display:none!important}
+  .top,.strip,.pool,.pagebar,.pager,.fab,.pickbar,.toast,.modal{display:none!important}
   .app{display:block;height:auto}.canvas{padding:0;overflow:visible}
   .pg-outer{width:820px!important;height:1240px!important;margin:0;break-after:page}
   .paper{transform:none!important;box-shadow:none}
@@ -345,9 +361,11 @@ const store = {
 /* ---------- Brand (edit here) ---------- */
 const BRAND = {
   logo: MODE === 'api' ? '/logo.png' : 'logo.png', // server/public/logo.png
+  mark: MODE === 'api' ? '/mark.png' : 'mark.png', // the logo's icon alone, for the inner-page header
   masthead: 'జాతియ వార్తలు',
   publishedFrom: 'Published from Guntur, Bapatla, Palnadu, Amaravathi, Nellore, Visakhapatnam, Kakinada, Rayalaseema – All Districts of Andhra Pradesh',
   website: 'https://jaathiya-vaartalu-studio-app.onrender.com/',
+  rni: 'RNI & PRGI: APTEL/25/A5264',
   editor: 'మామిడి రాజేష్', centre: 'గుంటూరు', price: 'రూ.2/-',
   imprint: 'PRINTED, PUBLISHED and OWNED by Mamidi Rajesh, printed at Vasanth Printers, 2-348/40, Main Road, Mulapalem, Guntur, Andhra Pradesh – 522113, and published at Door No. 6-10-46, Arundelpeta, Guntur, Andhra Pradesh – 522002. Editor & Pro: Mamidi Rajesh, Ph: 99 89 71 69 40. R.N.I & PRGI: APTEL/25/A5264'
 };
@@ -375,11 +393,12 @@ for (const t of Object.values(TEMPLATES)) {
   t.areas.join(' ').split(/\s+/).forEach(a => { if (!seen.includes(a)) seen.push(a); });
   t.slots = seen.map(id => ({ id, kind: id === 'lead' ? 'lead' : id[0] === 'b' ? 'brief' : 'story' }));
 }
-// Auto layout: the front page holds up to 10 stories, every other page up to 20, and the boxes are
+// Auto layout: a page holds 6 to 10 stories (the editor picks how many; 10 when not set), and the boxes are
 // generated from how many are placed. Stories keep the order of SLOT_ORDER (the lead first); the
 // template slot ids come first so saved editions keep their order.
-const FRONT_MAX = 10, PAGE_MAX = 20;
-const capFor = i => i === 0 ? FRONT_MAX : PAGE_MAX;
+const PAGE_MIN = 6, PAGE_MAX = 10;
+const capOf = p => p && Number.isInteger(p.count) && p.count >= PAGE_MIN && p.count <= PAGE_MAX ? p.count : PAGE_MAX;
+const capFor = i => capOf(ed().pages[i]);
 const SLOT_ORDER = ['lead', 's1', 's2', 's3', 's4', 's5', 's6', 's7', 's8', 'b1', 'b2', 'b3', 'b4', 'b5', 'b6', 'b7', 'b8', 'b9', 'b10', 'b11'];
 const COLS = 12;
 const genCache = {};
@@ -423,7 +442,12 @@ function shown(p, n) {
     highlights: c.deck === false ? [] : (n.highlights || []) };
 }
 function autoInfo(p, i) {
-  let ids = pageIds(p); if (!ids.length) return null;
+  let ids = pageIds(p);
+  // While editing, a page set to hold N news gets N boxes: the free ones are empty boxes to drop news
+  // into, so the arrangements are for N. Readers (and Preview, PDF) only get the filled ones.
+  const need = p.count && !S.preview && !S.viewer ? p.count - ids.length : 0;
+  if (need > 0) { const free = SLOT_ORDER.filter(id => !ids.includes(id)).slice(0, need); ids = SLOT_ORDER.filter(id => ids.includes(id) || free.includes(id)); }
+  if (!ids.length) return null;
   // Stories set to Story or Brief: put the stories before the rest and the briefs last (the lead stays
   // first), keep only arrangements that give each its role, and show it in that role either way.
   const pins = {};
@@ -439,7 +463,7 @@ function autoInfo(p, i) {
   // Box sizes set by hand (dragging the lines between boxes) are kept while the same boxes are filled.
   const custom = p.layout && p.layout.ids === ids.join(',') && Array.isArray(p.layout.rows) ? { rows: p.layout.rows, w: p.layout.w, kinds: { ...p.layout.kinds, ...pins } } : null;
   return {
-    ids, cap: capFor(i), free: ids.length < capFor(i) ? SLOT_ORDER.find(id => !p.slots[id] || !byId(p.slots[id])) : null, variants, custom, pins,
+    ids, cap: capOf(p), free: ids.length < capOf(p) ? SLOT_ORDER.find(id => !p.slots[id] || !byId(p.slots[id])) : null, variants, custom, pins,
     key: ids.map(id => { const c = contentOf(p, p.slots[id]);
       return [id, p.slots[id], (p.styles || {})[id] || '', c.kind || '', c.images ? c.images.join(',') : '-', (c.title || '').length, (c.body || '').length, c.deck === false ? 0 : 1, c.hs || '', c.fs || ''].join(':'); }).join('|')
   };
@@ -727,9 +751,10 @@ function autoFill(silent) {
   const placed = placements();
   const ids = filteredNews(pageFilter()).filter(n => !placed[n.id]).map(n => n.id);
   if (!ids.length) { if (!silent) toast('No unplaced news matches this page. Change the filters or approve more news.'); return; }
-  // Auto-fill stops at the layout's usual size; more stories (up to the page limit) can be added by hand.
-  const page = ed().pages[S.pageIdx]; const max = capFor(S.pageIdx);
-  const cap = Math.min(max, (TEMPLATES[page.template] || TEMPLATES.merged).slots.length);
+  // Auto-fill fills the page to the number of news chosen for it; without one it stops at the layout's
+  // usual size, and more stories (up to the page limit) can be added by hand.
+  const page = ed().pages[S.pageIdx]; const max = capOf(page);
+  const cap = page.count ? max : Math.min(max, (TEMPLATES[page.template] || TEMPLATES.merged).slots.length);
   const before = pageIds(page).length; fill(page, ids, cap);
   if (!silent) { if (pageIds(page).length === before) toast(before >= max ? `This page is full (${max} stories).` : `This page already has ${before} stories. Drag more onto it to add up to ${max}.`); commit(); }
 }
@@ -776,6 +801,31 @@ function deletePage(i) {
   const [p] = e.pages.splice(i, 1); S.pageIdx = Math.max(0, i - 1); commit();
   toast('Page deleted', 'Undo', () => { e.pages.splice(i, 0, p); S.pageIdx = i; commit(); });
 }
+// Moves the stories past the page's limit onto a new page right after it, with the same layout type.
+function splitPage(i) {
+  const e = ed(), p = e.pages[i], ids = pageIds(p), cap = capFor(i);
+  if (ids.length <= cap) return;
+  const next = { id: 'p' + uid(), template: p.template, label: p.label, slots: {}, styles: {}, ...(p.count ? { count: p.count } : {}) };
+  const over = ids.slice(cap).map(id => { const n = p.slots[id]; delete p.slots[id]; return n; });
+  delete p.layout; const back = fill(next, over, capOf(next));
+  e.pages.splice(i + 1, 0, next); S.pageIdx = i; commit();
+  toast(`${over.length - back.length} stories moved to a new page ${i + 2}.` + (back.length ? ` ${back.length} went back to the news pool.` : ''));
+}
+// Sets how many news page i holds (6-10): extra stories go back to the pool (the lead and the first
+// ones stay), and a page with fewer is auto-filled up to the number. The arrangements follow.
+function setCount(i, n) {
+  const e = ed(), p = e.pages[i], before = JSON.stringify({ slots: p.slots, layout: p.layout, count: p.count });
+  const ids = pageIds(p); p.count = n;
+  ids.slice(n).forEach(id => delete p.slots[id]);
+  S.pageIdx = i; autoFill(true);
+  const now = pageIds(p).length;
+  if (now !== ids.length) delete p.layout;
+  commit();
+  const msg = now < ids.length ? `${ids.length - now} stories went back to the news pool.` : now > ids.length ? `${now - ids.length} stories added.` : '';
+  const short = now < n ? ` ${n - now} boxes are empty: drag news into them.` : '';
+  toast(`Page ${i + 1} holds ${n} news. ${msg}${short}`.trim(), 'Undo', () => { const b = JSON.parse(before);
+    p.slots = b.slots; if (b.layout) p.layout = b.layout; else delete p.layout; if (b.count) p.count = b.count; else delete p.count; commit(); });
+}
 function addPage(template) {
   const e = ed(); e.pages.push({ id: 'p' + uid(), template, label: TEMPLATES[template].name, slots: {}, styles: {} });
   S.pageIdx = e.pages.length - 1; commit();
@@ -816,8 +866,12 @@ function mastHTML(e) {
   return `<header class="mast${e.tribute ? ' withphoto' : ''}">
     ${e.tribute ? `<div class="tribute"><img src="${e.tribute}" alt=""></div>` : ''}
     <div class="nameplate">${nameplateImg(t)}<img class="np-logo" src="${BRAND.logo}" alt="">
-      <span class="np-date">${headDate(e.editionDate)}</span>${e.key ? `<span class="np-place">· ${esc(e.key)}</span>` : ''}
-      <span class="np-meta">సంపుటి: ${volume} · సంచిక: ${issue} · <a href="${esc(BRAND.website)}" target="_blank" rel="noopener">${esc(BRAND.website.replace(/^https?:\/\//, '').replace(/\/$/, ''))}</a></span></div>
+      <span class="np-cover c0"></span><span class="np-cover c1"></span><span class="np-cover c2"></span>
+      <span class="np-rni np-fit">${esc(BRAND.rni)}</span>
+      <span class="np-date np-fit">${headDate(e.editionDate)}</span>
+      <span class="np-ed np-fit">తెలుగు దినపత్రిక${e.key ? ` · ${esc(e.key)}` : ''}</span>
+      <span class="np-web np-fit"><a href="${esc(BRAND.website)}" target="_blank" rel="noopener">${esc(BRAND.website.replace(/^https?:\/\//, '').replace(/\/$/, ''))}</a></span>
+</div>
   </header>
   ${t ? `<div class="evbar">${esc(t.greeting)}</div>` : ''}
   <div class="band">${esc(BRAND.publishedFrom)}</div>
@@ -826,8 +880,8 @@ function mastHTML(e) {
     <span class="r">ప్రచురణ : ${esc(BRAND.centre)}</span><span class="r">పేజీలు : ${pages}</span><span class="r">వెల : ${esc(e.price)}</span></div>`;
 }
 function innerHead(e, i, p) {
-  return `<div class="ihead"><span class="pno">${i + 1}</span><img class="ilogo" src="${BRAND.logo}" alt=""><span class="minimast">${esc(BRAND.masthead)}</span>
-    <span class="seclabel">${esc(p.label || '')}</span><span class="datebar">${teDate(e.editionDate)}</span></div>`;
+  return `<div class="ihead"><span class="pno">${i + 1}</span><span class="ibrand"><img class="ilogo" src="${BRAND.mark}" alt=""><span class="minimast">${esc(BRAND.masthead)}</span></span>
+    <span class="datebar">${teDate(e.editionDate)}</span></div>`;
 }
 function storyHTML(e, n, kind, style, p, edit) {
   // Same markup for every box size (CSS hides the 2nd photo and, in briefs, the deck), so the
@@ -992,6 +1046,7 @@ function renderPageBar() {
   $('#pagebar').innerHTML = `<b>Page ${S.pageIdx + 1}</b>
     <input id="pageLabel" value="${esc(p.label)}" aria-label="Page name">
     <select id="tplSel" aria-label="Layout">${Object.entries(TEMPLATES).map(([k, t]) => `<option value="${k}"${k === p.template ? ' selected' : ''}>${t.name}</option>`).join('')}</select>
+    <label class="cnt" title="How many news this page holds">News <select id="cntSel" aria-label="News on this page">${Array.from({ length: PAGE_MAX - PAGE_MIN + 1 }, (_, k) => PAGE_MIN + k).map(n => `<option value="${n}"${n === capOf(p) ? ' selected' : ''}>${n}</option>`).join('')}</select></label>
     <button class="btn" id="autoBtn">Auto-fill</button>
     <button class="btn${S.layoutMode ? ' primary' : ''}" id="layoutModeBtn" aria-pressed="${!!S.layoutMode}" title="Resize boxes and choose an arrangement for this page">${S.layoutMode ? 'Done adjusting' : 'Adjust layout'}</button>
     ${p.layout ? '<button class="btn" id="resetLayoutBtn" title="Forget the box sizes set by hand">Auto layout</button>' : ''}
@@ -1002,9 +1057,26 @@ function renderPageBar() {
 }
 function renderCanvas() {
   const e = ed();
-  if (S.preview || S.viewer) $('#canvas').innerHTML = e.pages.map((p, i) => pageHTML(e, p, i, false)).join('');
+  if (S.viewer && !S.preview) $('#canvas').innerHTML = pageHTML(e, e.pages[S.pageIdx], S.pageIdx, false) + pagerHTML(e);
+  else if (S.preview || S.viewer) $('#canvas').innerHTML = e.pages.map((p, i) => pageHTML(e, p, i, false)).join('');
   else $('#canvas').innerHTML = pageHTML(e, e.pages[S.pageIdx], S.pageIdx, true);
   fit(); relayout();
+}
+// The public reader shows one page at a time: previous / page numbers / next under the page.
+function pagerHTML(e) {
+  const n = e.pages.length, i = S.pageIdx; if (n < 2) return '';
+  return `<nav class="pager" aria-label="Pages">
+    <button data-go="${i - 1}"${i ? '' : ' disabled'} aria-label="Previous page">‹ ముందు పేజీ</button>
+    ${e.pages.map((_, k) => `<button data-go="${k}"${k === i ? ' aria-current="page"' : ''} aria-label="Page ${k + 1}">${k + 1}</button>`).join('')}
+    <button data-go="${i + 1}"${i < n - 1 ? '' : ' disabled'} aria-label="Next page">తర్వాతి పేజీ ›</button>
+    <span class="pg-of">పేజీ ${i + 1} / ${n}</span></nav>`;
+}
+function goPage(i) {
+  const n = ed().pages.length; i = Math.max(0, Math.min(n - 1, i));
+  if (i === S.pageIdx) return;
+  S.pageIdx = i; renderStrip(); renderCanvas();
+  $('#canvas').scrollTop = 0; window.scrollTo(0, 0);
+  try { history.replaceState(null, '', i ? `#page-${i + 1}` : location.pathname + location.search); } catch (_) {}
 }
 function renderPool() {
   const f = S.filter; const placed = placements(); const list = filteredNews();
@@ -1046,6 +1118,20 @@ function fit() {
   fitText();
 }
 function fitText() {
+  // The "Published from" band stays on one line: its type shrinks just enough to fit.
+  document.querySelectorAll('.band').forEach(el => {
+    el.style.fontSize = '';
+    const cs = getComputedStyle(el), avail = el.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    const k = Math.min(1, avail / (el.scrollWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight)));
+    if (k < 1) el.style.fontSize = (parseFloat(cs.fontSize) * k * 0.99).toFixed(2) + 'px';
+    // the strip below (సంపుటి, సంచిక, date, editor…) uses the same size
+    const info = el.parentElement.querySelector('.info'); if (info) info.style.fontSize = el.style.fontSize;
+  });
+  // The header picture's text slots are fixed: shrink each line only as far as it needs to fit.
+  document.querySelectorAll('.nameplate .np-fit').forEach(el => {
+    el.style.removeProperty('--k');
+    for (let k = 0.96; el.scrollWidth > el.clientWidth + 0.5 && k > 0.6; k -= 0.04) el.style.setProperty('--k', k.toFixed(2));
+  });
   document.querySelectorAll('.info').forEach(el => {
     el.style.transform = '';
     const par = el.parentElement, cs = getComputedStyle(par);
@@ -1497,12 +1583,15 @@ function shrinkImage(file, max) {
     r.onerror = rej; r.readAsDataURL(file);
   });
 }
-async function publish() {
+async function publish(anyway) {
   const e = ed();
   const empty = e.pages.filter(p => !Object.values(p.slots).some(Boolean)).length;
   if (empty) { toast(`${empty} page${empty > 1 ? 's have' : ' has'} no news. Fill or delete ${empty > 1 ? 'them' : 'it'} before publishing.`); return; }
+  const short = e.pages.findIndex(p => p.count && pageIds(p).length < p.count);
+  if (short >= 0 && anyway !== true) { const p = e.pages[short], n = pageIds(p).length; S.pageIdx = short; S.preview = false; renderAll();
+    toast(`Page ${short + 1} is set to ${p.count} news but has ${n}. Fill the empty boxes or set News to ${Math.max(PAGE_MIN, n)}; readers see only the filled ones.`, 'Publish anyway', () => publish(true)); return; }
   const full = e.pages.findIndex((p, i) => pageIds(p).length > capFor(i));
-  if (full >= 0) { S.pageIdx = full; S.preview = false; renderAll(); toast(`Page ${full + 1} has ${pageIds(e.pages[full]).length} stories; it holds up to ${capFor(full)}. Remove some before publishing.`); return; }
+  if (full >= 0) { S.pageIdx = full; S.preview = false; renderAll(); toast(`Page ${full + 1} has ${pageIds(e.pages[full]).length} stories; it holds up to ${capFor(full)}. Remove some or split the page before publishing.`, 'Split page', () => splitPage(full)); return; }
   if (e.status === 'published' && !e.dirty) { openShare(); return; }
   try {
     if (MODE === 'api') {
@@ -1517,7 +1606,7 @@ async function publish() {
     e.dirty = false; persistNow(); renderAll(); toast('Published'); openShare();
   } catch (err) { toast(err.message); }
 }
-function shareUrl(e) { return e.shareUrl || `${location.origin}/e/${e.shareSlug}`; }
+function shareUrl(e) { return e.shareUrl || `${location.origin}/epaper/${e.shareSlug}`; }
 function openShare() {
   const e = ed(); const url = shareUrl(e);
   const text = `${BRAND.masthead} – ${teDate(e.editionDate)} ఈ-పేపర్: ${url}`;
@@ -1611,7 +1700,7 @@ function endDrag(e, cancel) {
   else if (P.type === 'news' && kind === 'thumb') {
     const i = +t.dataset.index; const p = ed().pages[i]; const prev = placements()[P.id];
     if (prev) delete ed().pages[prev.page].slots[prev.slot];
-    const over = fill(p, [P.id]); if (over.length && prev) ed().pages[prev.page].slots[prev.slot] = P.id;
+    const over = fill(p, [P.id], capOf(p)); if (over.length && prev) ed().pages[prev.page].slots[prev.slot] = P.id;
     S.pageIdx = i; commit(); if (over.length) toast(`That page is full (${capFor(i)} stories). Remove a story or use another page.`);
   }
   else if (P.type === 'page' && kind === 'thumb') movePage(P.index, +t.dataset.index);
@@ -1647,6 +1736,7 @@ $('#poolList').addEventListener('click', e => {
 $('#poolList').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.dataset.card) e.target.click(); });
 $('#canvas').addEventListener('click', e => {
   if (suppressClick) return;
+  if (S.viewer && !S.preview) { const g = e.target.closest('[data-go]'); if (g) { goPage(+g.dataset.go); return; } }
   if (S.preview || S.viewer) { const r = e.target.closest('[data-read]'); if (r) openReader(r.dataset.read); return; }
   const act = e.target.closest('[data-act]');
   const slot = e.target.closest('.slot'); if (!slot) return;
@@ -1669,11 +1759,13 @@ $('#strip').addEventListener('click', e => {
   if (e.target.closest('#addPageBtn')) { addPage('local'); return; }
   const t = e.target.closest('[data-thumb]'); if (!t) return;
   const i = +t.dataset.thumb;
+  if (S.viewer && !S.preview) { goPage(i); return; }
   if (S.preview || S.viewer) { const el = document.getElementById('pg-' + i); el && el.scrollIntoView({ behavior: 'smooth' }); return; }
   S.pageIdx = i; renderAll();
 });
 $('#pagebar').addEventListener('change', e => {
   if (e.target.id === 'tplSel') setTemplate(S.pageIdx, e.target.value);
+  if (e.target.id === 'cntSel') setCount(S.pageIdx, +e.target.value);
   if (e.target.id === 'pageLabel') { ed().pages[S.pageIdx].label = e.target.value; commit(); }
 });
 $('#pagebar').addEventListener('click', e => {
@@ -1708,6 +1800,11 @@ $('#printBtn').onclick = printEdition;
 $('#saveBtn').onclick = saveClick;
 $('#logoutBtn').onclick = logout;
 document.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's' && !S.viewer) { e.preventDefault(); saveClick(); } });
+// Arrow keys turn the pages in the public reader (not while a story is open).
+document.addEventListener('keydown', e => {
+  if (!S.viewer || S.preview || !$('#modal').hidden || e.altKey || e.ctrlKey || e.metaKey) return;
+  if (e.key === 'ArrowLeft') goPage(S.pageIdx - 1); else if (e.key === 'ArrowRight') goPage(S.pageIdx + 1);
+});
 window.addEventListener('beforeunload', e => { if (unsaved.size || saving) { saveAll(); e.preventDefault(); e.returnValue = ''; } });
 function showUser() {
   const u = store.get('jv_user', null);
@@ -1734,7 +1831,7 @@ new ResizeObserver(fit).observe($('#canvas'));
 /* ---------- boot ---------- */
 async function boot() {
   await loadThemes();
-  const m = location.pathname.match(/\/e\/([\w-]+)/) || location.search.match(/[?&]view=([\w-]+)/);
+  const m = location.pathname.match(/\/epaper\/([\w-]+)/) || location.search.match(/[?&]view=([\w-]+)/);
   try {
     if (m) {
       S.viewer = true; document.getElementById('app').classList.add('viewer');
@@ -1745,7 +1842,8 @@ async function boot() {
         S.news = DEMO_NEWS.slice(); S.editions = (store.get('jv_editions', []) || []).filter(e => e.shareSlug === m[1]);
         if (!S.editions.length) throw new Error('Edition not found on this device.');
       }
-      S.cur = S.editions[0].id; document.title = `${BRAND.masthead} – ${teDate(ed().editionDate)}`;
+      const pg = location.hash.match(/^#page-(\d+)$/);   // #page-3 opens that page
+      S.cur = S.editions[0].id; S.pageIdx = pg ? Math.max(0, Math.min(ed().pages.length - 1, pg[1] - 1)) : 0; document.title = `${BRAND.masthead} – ${teDate(ed().editionDate)}`;
       $('#modeTag').textContent = ''; renderAll(); return;
     }
     if (MODE === 'api' && NATIVE && !API.token()) await API.refresh();

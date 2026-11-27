@@ -5,6 +5,7 @@ const pageSchema = new Schema({
   id: { type: String, required: true },
   template: { type: String, required: true },
   label: String,
+  count: { type: Number, min: 6, max: 10 },        // how many news the page holds (chosen in the studio; unset: 10)
   slots: { type: Map, of: String, default: {} },   // slotId -> News id
   styles: { type: Map, of: String, default: {} },  // slotId -> headline style (red / blue / boxed)
   // News id -> how that story shows on this page only (the news card is not changed):
