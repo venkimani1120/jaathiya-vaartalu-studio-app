@@ -6,6 +6,7 @@ import { api, errMsg, uploadImages } from '../api';
 import { SECTIONS, MAX_IMAGES, STATUS, stateOf } from '../constants';
 import PlacePicker from '../PlacePicker';
 import { Banner, Button, C, Card, Chips, Field, Icon, Loading, SectionTitle } from '../ui';
+import { DownloadButton } from '../Clipping';
 
 const EDITABLE_BY_REPORTER = ['draft', 'submitted', 'rejected'];
 
@@ -17,6 +18,7 @@ export default function NewsEditorScreen({ navigation, route }) {
   const [images, setImages] = useState([]);   // { uri, remote: bool, ... }
   const [status, setStatus] = useState('draft');
   const [ownerId, setOwnerId] = useState(user.id);
+  const [saved, setSaved] = useState(null);   // the story as last loaded, for Download
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(!!id);
 
@@ -26,7 +28,7 @@ export default function NewsEditorScreen({ navigation, route }) {
       setF({ title: n.title, highlights: (n.highlights || []).join('\n'), body: n.body, section: n.section,
         state: n.state || stateOf(n.district) || 'ఆంధ్రప్రదేశ్', district: n.district || '', constituency: n.constituency || '', dateline: n.dateline || '' });
       setImages((n.images || []).map(uri => ({ uri, remote: true })));
-      setStatus(n.status); setOwnerId(n.author?._id);
+      setStatus(n.status); setOwnerId(n.author?._id); setSaved(n);
     } catch (e) { Alert.alert('Could not open', errMsg(e)); navigation.goBack(); } finally { setLoading(false); }
   })(); }, [id]);
 
@@ -112,8 +114,9 @@ export default function NewsEditorScreen({ navigation, route }) {
         <Button title={can.review ? 'Save and approve' : 'Submit for review'} icon={can.review ? 'checkmark-circle-outline' : 'send-outline'}
           onPress={() => save(true)} loading={busy} />
         <Button title="Save as draft" icon="save-outline" kind="secondary" onPress={() => save(false)} disabled={busy} />
+        <DownloadButton news={saved} disabled={busy} />
         {id ? <Button title="Delete" icon="trash-outline" kind="danger" onPress={remove} disabled={busy} /> : null}
-      </View> : null}
+      </View> : <View style={{ marginTop: 4 }}><DownloadButton news={saved} /></View>}
     </ScrollView>
   );
 }

@@ -9,7 +9,7 @@ The mobile app for **editors and admins**: review news from reporters, write new
 | Who can sign in | Editors and admins. Reporters are asked to use JV Reporter. The e-paper layout studio is in the separate **JV Studio** app. |
 | API | `https://jaathiya-vaartalu-studio-app.onrender.com` in release builds |
 
-**Tech:** React Native with Expo (SDK 58), React Navigation, axios, Expo SecureStore (sign-in tokens), Expo Image Picker, Expo Document Picker.
+**Tech:** React Native with Expo (SDK 58), React Navigation, axios, Expo SecureStore (sign-in tokens), Expo Image Picker, Expo Document Picker, react-native-view-shot, Expo File System, Expo Sharing.
 
 ## Features
 
@@ -18,6 +18,7 @@ The mobile app for **editors and admins**: review news from reporters, write new
 - **My news:** cards you wrote. Editors' and admins' cards skip review and go straight to the approved pool.
 - **Filters:** by source (reporter, editor, admin, e-paper) and place, with a count of stories for each.
 - **News card editor:** like the reporter's, plus editing any card and deleting cards.
+- **Download:** beside **Edit** on approved and published news (review screen and news editor). Asks for the e-paper header title and the date (both needed, prefilled), shows the clipping, and shares it as a **PDF** or **PNG**, to save in Files or Photos or send on WhatsApp. Same layout as the web app's download.
 - **Upload newspaper** (members with the Editor role; an admin needs the Editor role too): another paper's e-paper as **one PDF** or **up to 40 page photos** (gallery or camera, reordered with arrows), with the paper, edition, date, edition type and an optional district. Names already used are suggested.
 - **Imported paper:** its pages, and the news the server read from each page. Tick news to **add to the feed** (it then waits for review) or **delete** it. You can read a page or the whole paper again, or delete the import.
 - **Team accounts** (admins): approve new sign-ups, give each member one or more roles (for example Admin and Editor), and deactivate accounts.
@@ -97,6 +98,7 @@ src/config.js        which API server to call
 src/ui.js            colours and shared components (buttons, fields, chips, cards, banners)
 src/constants.js     sections, statuses, sources, edition types
 src/PlacePicker.js   State → District → Constituency picker (data in src/locations.json)
+src/Clipping.js      Download button, its sheet and the e-paper clipping it saves as PDF or PNG
 ```
 
 `src/locations.json` is a copy of `shared/locations.json`. Edit the shared file and run `python3 shared/sync_locations.py`.

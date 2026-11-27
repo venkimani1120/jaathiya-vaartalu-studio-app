@@ -6,6 +6,7 @@ import PlacePicker from '../PlacePicker';
 import Cropper, { cropPhoto } from '../Cropper';
 import { Badge, Button, Chips, Field, Icon, Spinner } from '../ui';
 import { go } from '../router';
+import { CAN_DOWNLOAD, DownloadButton } from '../DownloadClipping';
 
 const EDITABLE_BY_REPORTER = ['draft', 'submitted', 'rejected'];
 
@@ -18,6 +19,7 @@ export default function NewsEditor({ id }) {
   const [ownerId, setOwnerId] = useState(user.id);
   const [reviewNote, setReviewNote] = useState('');
   const [fromImport, setFromImport] = useState(false);   // read from an imported e-paper
+  const [saved, setSaved] = useState(null);              // the story as last loaded, for Download
   const [cropping, setCropping] = useState(null);        // index of the photo being cropped
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(!!id);
@@ -31,7 +33,7 @@ export default function NewsEditor({ id }) {
       setF({ title: n.title, highlights: (n.highlights || []).join('\n'), body: n.body, section: n.section,
         state: n.state || stateOf(n.district) || 'ఆంధ్రప్రదేశ్', district: n.district || '', constituency: n.constituency || '', dateline: n.dateline || '' });
       setImages((n.images || []).map(url => ({ url })));
-      setStatus(n.status); setOwnerId(n.author?._id); setReviewNote(n.reviewNote || '');
+      setStatus(n.status); setOwnerId(n.author?._id); setSaved(n); setReviewNote(n.reviewNote || '');
       setFromImport(n.source === 'epaper' && !!n.sourceRef?.paper);
     } catch (e) { setError(errMsg(e)); } finally { setLoading(false); }
   })(); }, [id]);
@@ -143,8 +145,9 @@ export default function NewsEditor({ id }) {
           <Button kind="accent" onClick={() => save(true)} disabled={busy}>{busy ? 'Saving…' : can.desk ? 'Save and approve' : 'Submit for review'}</Button>
           <Button kind="secondary" onClick={() => save(false)} disabled={busy}>Save as draft</Button>
           <div className="spacer" />
+          <DownloadButton news={saved} disabled={busy} />
           {id && canDelete ? <Button kind="danger" onClick={remove} disabled={busy}>{fromImport && can.desk ? 'Remove from feed' : 'Delete'}</Button> : null}
-        </div> : null}
+        </div> : saved && CAN_DOWNLOAD.includes(saved.status) ? <div className="row"><DownloadButton news={saved} /></div> : null}
       </div>
       {cropping !== null && images[cropping] ? <Cropper src={images[cropping].url} onCancel={() => setCropping(null)} onApply={applyCrop} /> : null}
     </main>
