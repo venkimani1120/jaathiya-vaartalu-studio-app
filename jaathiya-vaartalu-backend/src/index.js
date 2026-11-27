@@ -55,7 +55,9 @@ app.get('/', (_req, res) => res.redirect(hasWeb ? '/app/' : '/studio'));
 const studioFile = path.join(__dirname, '../public/epaper-studio.html');
 const studioCfg = JSON.stringify({ apiBase: '/api', ...(hasWeb ? { loginUrl: '/' } : {}) });
 const studio = () => fs.readFileSync(studioFile, 'utf8').replace('<!--JV_CONFIG-->', `<script>window.JV_CONFIG=${studioCfg}</script>`);
-app.get(['/studio', '/e/:slug'], (_req, res) => res.type('html').send(studio()));
+app.get(['/studio', '/epaper/:slug'], (_req, res) => res.type('html').send(studio()));
+// Links shared before the reader moved to /epaper keep working.
+app.get('/e/:slug', (req, res) => res.redirect(301, '/epaper/' + encodeURIComponent(req.params.slug)));
 
 app.use((req, res) => res.status(404).json({ message: `Not found: ${req.method} ${req.path}` }));
 app.use((err, _req, res, _next) => {

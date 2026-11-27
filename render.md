@@ -24,7 +24,7 @@ if (fs.existsSync(webDist)) app.use('/app', express.static(webDist));
 When the backend starts, it serves `dist/` as static files. The web app uses `#/...` addresses for its pages, so only static files are needed.
 
 **3. The e-paper studio is part of the backend itself.**
-`/studio` and the public reader `/e/<link>` come from one HTML file, `jaathiya-vaartalu-backend/public/epaper-studio.html`. The backend sends it with the API address added in. It needs no build step.
+`/studio` and the public reader `/epaper/<link>` come from one HTML file, `jaathiya-vaartalu-backend/public/epaper-studio.html`. The backend sends it with the API address added in. It needs no build step.
 
 **4. The mobile apps aren't on Render.**
 `jaathiya-vaartalu-reporter-mobile` and `jaathiya-vaartalu-admin-mobile` are built into APKs by the GitHub Actions workflows. They're installed on phones and call the Render API over the internet.
@@ -46,7 +46,7 @@ Render (one web service)
                 ├── /api/*        REST API  ──► MongoDB Atlas, Cloudinary
                 ├── /app/         web app (from dist/)
                 ├── /studio       e-paper studio (public/epaper-studio.html)
-                └── /e/<link>     public e-paper reader
+                └── /epaper/<link>     public e-paper reader
 
 GitHub Actions ──► APKs (reporter + admin + studio) ──► phones ──► call /api/* on Render
 ```

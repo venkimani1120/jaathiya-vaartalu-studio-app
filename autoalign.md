@@ -27,7 +27,7 @@ Applies to that edition only; the news card is not changed. Saved in the page's 
 - Headline size (60–175%) and alignment (automatic, left, centre, right).
 - Text size (automatic or 70–135%) and text columns (automatic, 1, 2, 3).
 - Photo position: top full width, left or right with text beside.
-- The public reader `/e/<link>` shows the same headline, photos and text.
+- The public reader `/epaper/<link>` shows the same headline, photos and text.
 
 ### 2. Photos never hidden automatically
 Before: when a page filled up, boxes shrank and the auto-fit hid photos ("Photo hidden: box too small"). Now the photo shrinks to its minimum, then the text gets smaller, then the text is cut and marked **Text cut**. A photo only goes when **No photo** is chosen.

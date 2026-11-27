@@ -4,7 +4,7 @@ The one backend behind every Jaathiya Vaartalu app: the Reporter, Admin and Stud
 
 - REST API under `/api`: sign-in with roles, news cards and their review, photo uploads, e-paper editions, imported e-papers with news extraction, team accounts.
 - `/studio`: the drag-and-drop e-paper layout studio (`public/epaper-studio.html`), used by the web app and inside the JV Studio app.
-- `/e/<link>`: the public reader for published editions.
+- `/epaper/<link>`: the public reader for published editions.
 - `/app/`: the web app, when it has been built (`npm run build:web`).
 
 Live server: `https://jaathiya-vaartalu-studio-app.onrender.com`
@@ -83,7 +83,7 @@ GET  /api/imports/publishers | /status      (imports: editor, admin; POST is mul
 GET  /api/users?pending=true   PATCH /api/users/:id {role, active}   (admin)
 GET  /api/public/meta | /epapers | /epapers/:slug | /news?days=30&page=1   (no sign-in)
 GET  /api/public/events?date=2026-08-15 | /themes                           (no sign-in)
-GET  /studio   GET /e/:slug   GET /app/
+GET  /studio   GET /epaper/:slug   GET /app/
 ```
 
 **Event themes.** On an event's date the e-paper header (studio masthead and news downloads) takes the event's colours and greeting. `/api/public/events?date=` returns the theme to use (`theme`, or `null` for the plain header). `/api/public/themes` lists every theme, for picking one by hand. The events and their looks are in `src/config/events.js`:
@@ -97,7 +97,7 @@ The [root README](../README.md) has the news flow (`draft → submitted → appr
 ## Code layout
 
 ```
-src/index.js        Express app: security headers, CORS, routes, /studio, /e/:slug, /app/
+src/index.js        Express app: security headers, CORS, routes, /studio, /epaper/:slug, /app/
 src/config/         environment loading, MongoDB connection, constants, states/districts/constituencies, event themes
 src/middleware/     authenticate / authorize (roles)
 src/models/         User, News, Epaper, SourcePaper (imported e-papers), DailyQuota, CalendarEvent

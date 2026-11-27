@@ -19,7 +19,7 @@ Shared by all of them:
 | Part | What it does | Tech |
 |---|---|---|
 | `jaathiya-vaartalu-backend/` | REST API, JWT auth with roles, 50-cards-per-day limit, review workflow, e-paper storage and publishing. Also hosts the web app at `/app/` when it is built (the old `/reporter/` and `/desk/` addresses forward there) | Node.js, Express, MongoDB |
-| `jaathiya-vaartalu-backend/public/epaper-studio.html` | Drag-and-drop page layout (matches the printed paper), merge pages, publish, share link, save as PDF. Also the public reader at `/e/<link>` | Plain HTML/JS, served by the API |
+| `jaathiya-vaartalu-backend/public/epaper-studio.html` | Drag-and-drop page layout (matches the printed paper), merge pages, publish, share link, save as PDF. Also the public reader at `/epaper/<link>` | Plain HTML/JS, served by the API |
 | `shared/` | States, districts and constituencies, copied into every project | Python scripts |
 
 Each mobile app only lets in its own roles: a reporter signing in to the Admin or Studio app, or an editor signing in to the Reporter app, is told which app to use. The web app lets everyone in and picks the pages from the signed-in person's roles. The server still enforces every rule on its own.
@@ -61,7 +61,7 @@ GET|POST /api/imports   GET|DELETE /api/imports/:id   POST /api/imports/:id/extr
 GET  /api/users?pending=true   PATCH /api/users/:id {role, active}   (admin)
 GET  /api/public/epapers/:slug   GET /api/public/epapers   GET /api/public/meta   (no login)
 GET  /api/public/news?days=30&page=1  -> { items, more }   approved + published news, 200 per page, for the public website (no login)
-GET  /studio  (layout studio)    GET /e/:slug  (public reader)
+GET  /studio  (layout studio)    GET /epaper/:slug  (public reader)
 GET  /app/  (web app, when built)
 ```
 
@@ -189,7 +189,7 @@ Free tiers change often, so confirm the current limits on each provider's pricin
 | API + studio + reader + web apps | **Render free web service** | Deploy from GitHub, root dir `jaathiya-vaartalu-backend`, build `npm install && npm run build:web`, start `npm start`. Sleeps after ~15 min idle; first request then takes ~30–60 s. Alternatives: Google Cloud Run free tier (no sleep cost issues, needs billing card), Fly.io/Railway (paid now). |
 | Android build | **Expo EAS Build free tier** | `npx eas build -p android --profile preview` (in each app's `jv-mobile/`) gives an APK you can share directly. Free builds are queued and limited per month; or build locally with `npx expo run:android`. |
 | Distribution | APK link / WhatsApp | Free. Google Play needs a one-time US$25 developer fee; Apple App Store needs US$99/year. |
-| Public e-paper site | Served by the API at `/e/<link>` | Optional: put a custom domain in front with Cloudflare (free). |
+| Public e-paper site | Served by the API at `/epaper/<link>` | Optional: put a custom domain in front with Cloudflare (free). |
 | Code & CI | GitHub (free) | Render auto-deploys on each push. |
 | Push notifications (later) | Expo Push | Free. |
 

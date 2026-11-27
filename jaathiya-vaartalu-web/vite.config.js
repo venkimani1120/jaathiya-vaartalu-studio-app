@@ -8,6 +8,6 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     base: './',   // works at any path: /app/ on the API server, GitHub Pages, Netlify, ...
-    server: { port: 5173, proxy: { '/api': server, '/uploads': server, '/studio': server, '/e/': server } },
+    server: { port: 5173, proxy: { '/api': server, '/uploads': server, '/studio': server, '/epaper/': server, '/e/': server } },
   };
 });
